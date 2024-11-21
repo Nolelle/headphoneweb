@@ -23,6 +23,9 @@ const Footer = () => {
             <br />
             Copyright &copy; {new Date().getFullYear()} - All right reserved
           </p>
+          <nav>
+            <a href="#admin">Admin View</a>
+          </nav>
         </aside>
         <nav>
           <h6 className="footer-title">Company</h6>
