@@ -1,6 +1,38 @@
-import React from "react";
+"use client";
+
+import React, { useState } from "react";
 
 const ContactForm: React.FC = () => {
+  const [status, setStatus] = useState<string | null>(null);
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setStatus("loading");
+
+    const formData = {
+      name: event.target.name.value,
+      email: event.target.email.value,
+      message: event.target.message.value
+    };
+
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData)
+      });
+
+      if (response.ok) {
+        setStatus("success");
+      } else {
+        setStatus("error");
+      }
+    } catch (error) {
+      console.error(error);
+      setStatus("error");
+    }
+  };
+
   return (
     <section className="bg-white dark:bg-gray-900">
       <div className="py-8 lg:py-16 px-4 mx-auto max-w-screen-md">
@@ -14,6 +46,7 @@ const ContactForm: React.FC = () => {
         <form
           action="#"
           className="space-y-8"
+          onSubmit={handleSubmit}
         >
           <div>
             <label
@@ -63,9 +96,12 @@ const ContactForm: React.FC = () => {
           <button
             type="submit"
             className="btn btn-primary py-3 px-5 text-sm font-medium text-center text-white rounded-lg bg-primary-700 sm:w-fit hover:bg-primary-800 focus:ring-4 focus:outline-none focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
+            disabled={status === "loading"}
           >
-            Send message
+            {status === "loading" ? "Submitting..." : "Send message"}
           </button>
+          {status === "success" && <p>Message sent successfully!</p>}
+          {status === "error" && <p>Failed to send message.</p>}
         </form>
       </div>
     </section>
