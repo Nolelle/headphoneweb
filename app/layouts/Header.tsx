@@ -24,7 +24,7 @@ const Header = () => {
               <a href="#contact">Contact Us</a>
             </li>
             <li>
-              <a href="#contact">Product</a>
+              <a href="#contact">Headphones</a>
             </li>
           </ul>
         </div>
