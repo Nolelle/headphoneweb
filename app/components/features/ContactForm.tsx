@@ -1,10 +1,10 @@
 "use client";
-
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 
 const ContactForm: React.FC = () => {
   const [status, setStatus] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string>("");
+  const modalRef = useRef<HTMLDialogElement>(null);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -22,7 +22,6 @@ const ContactForm: React.FC = () => {
       )?.value.trim()
     };
 
-    // Basic validation
     if (!formData.name || !formData.email || !formData.message) {
       setStatus("error");
       setErrorMessage("All fields are required");
@@ -39,6 +38,7 @@ const ContactForm: React.FC = () => {
       if (response.ok) {
         setStatus("success");
         form.reset();
+        modalRef.current?.showModal();
       } else {
         const data = await response.json();
         setStatus("error");
@@ -120,24 +120,15 @@ const ContactForm: React.FC = () => {
           <div className="flex flex-col space-y-4">
             <button
               type="submit"
-              className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center w-fit disabled:opacity-50 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 transition-colors"
+              className="btn btn-primary"
               disabled={status === "loading"}
             >
               {status === "loading" ? "Sending..." : "Send message"}
             </button>
 
-            {status === "success" && (
-              <div
-                className="p-4 mb-4 text-sm text-green-800 rounded-lg bg-green-50 dark:bg-gray-800 dark:text-green-400"
-                role="alert"
-              >
-                Message sent successfully!
-              </div>
-            )}
-
             {status === "error" && (
               <div
-                className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400"
+                className="alert alert-error"
                 role="alert"
               >
                 {errorMessage || "Failed to send message"}
@@ -145,6 +136,47 @@ const ContactForm: React.FC = () => {
             )}
           </div>
         </form>
+
+        {/* DaisyUI Modal */}
+        <dialog
+          ref={modalRef}
+          className="modal"
+        >
+          <div className="modal-box">
+            <h3 className="font-bold text-lg flex items-center gap-2">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6 text-success"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              Message Sent Successfully!
+            </h3>
+            <p className="py-4">
+              Thank you for contacting us! We'll get back to you as soon as
+              possible.
+            </p>
+            <div className="modal-action">
+              <form method="dialog">
+                <button className="btn">Close</button>
+              </form>
+            </div>
+          </div>
+          <form
+            method="dialog"
+            className="modal-backdrop"
+          >
+            <button>close</button>
+          </form>
+        </dialog>
       </div>
     </section>
   );

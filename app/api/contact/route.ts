@@ -1,5 +1,5 @@
 // app/api/contact/route.ts
-import pool from "@/lib/db";
+import pool from "@/db/helpers/db";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
