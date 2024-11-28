@@ -5,7 +5,7 @@ INSERT INTO admin(
     email
 ) VALUES (
     'admin',
-    '$2b$10$p8TsY9Zrh2xbZm6CJI2uMumgvwEb117TXHLgPQE5/F.C1QsRu4zFm',
+    '$2y$10$wguKKEBPxD.9RCL.6a4VuO6Ff//s1cm5sD1GcAofy6YXKOb5mfLdq',
     'admin@headphoneplus.com'
 );
 
