@@ -4,16 +4,30 @@ import React, { useState } from "react";
 
 const ContactForm: React.FC = () => {
   const [status, setStatus] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string>("");
 
-  const handleSubmit = async (event: React.FormEvent) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setStatus("loading");
+    setErrorMessage("");
 
+    const form = event.currentTarget;
     const formData = {
-      name: event.target.name.value,
-      email: event.target.email.value,
-      message: event.target.message.value
+      name: (form.elements.namedItem("name") as HTMLInputElement)?.value.trim(),
+      email: (
+        form.elements.namedItem("email") as HTMLInputElement
+      )?.value.trim(),
+      message: (
+        form.elements.namedItem("message") as HTMLTextAreaElement
+      )?.value.trim()
     };
+
+    // Basic validation
+    if (!formData.name || !formData.email || !formData.message) {
+      setStatus("error");
+      setErrorMessage("All fields are required");
+      return;
+    }
 
     try {
       const response = await fetch("/api/contact", {
@@ -24,12 +38,16 @@ const ContactForm: React.FC = () => {
 
       if (response.ok) {
         setStatus("success");
+        form.reset();
       } else {
+        const data = await response.json();
         setStatus("error");
+        setErrorMessage(data.error || "Failed to send message");
       }
     } catch (error) {
       console.error(error);
       setStatus("error");
+      setErrorMessage("An unexpected error occurred");
     }
   };
 
@@ -42,14 +60,30 @@ const ContactForm: React.FC = () => {
         <p className="mb-8 lg:mb-16 font-light text-center text-gray-500 dark:text-gray-400 sm:text-xl">
           Have questions about our products? Whether you're seeking technical
           details, exploring features, or interested in learning more about our
-          solutions, we're here to help. Reach out to our dedicated team for
-          personalized assistance.
+          solutions, we're here to help.
         </p>
         <form
-          action="#"
           className="space-y-8"
           onSubmit={handleSubmit}
+          noValidate
         >
+          <div>
+            <label
+              htmlFor="name"
+              className="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300"
+            >
+              Your name
+            </label>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white transition-colors"
+              placeholder="John Doe"
+              required
+              minLength={2}
+            />
+          </div>
           <div>
             <label
               htmlFor="email"
@@ -60,27 +94,13 @@ const ContactForm: React.FC = () => {
             <input
               type="email"
               id="email"
-              className="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500 dark:shadow-sm-light"
-              placeholder="email@email.com"
+              name="email"
+              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white transition-colors"
+              placeholder="name@example.com"
               required
             />
           </div>
           <div>
-            <label
-              htmlFor="subject"
-              className="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300"
-            >
-              Subject
-            </label>
-            <input
-              type="text"
-              id="subject"
-              className="block p-3 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 shadow-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500 dark:shadow-sm-light"
-              placeholder="Let us know how we can help you"
-              required
-            />
-          </div>
-          <div className="sm:col-span-2">
             <label
               htmlFor="message"
               className="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-400"
@@ -89,21 +109,41 @@ const ContactForm: React.FC = () => {
             </label>
             <textarea
               id="message"
+              name="message"
               rows={6}
-              className="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg shadow-sm border border-gray-300 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-              placeholder="Leave a comment..."
+              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white resize-y transition-colors"
+              placeholder="Leave a message..."
               required
+              minLength={10}
             ></textarea>
           </div>
-          <button
-            type="submit"
-            className="btn btn-primary py-3 px-5 text-sm font-medium text-center text-white rounded-lg bg-primary-700 sm:w-fit hover:bg-primary-800 focus:ring-4 focus:outline-none focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
-            disabled={status === "loading"}
-          >
-            {status === "loading" ? "Submitting..." : "Send message"}
-          </button>
-          {status === "success" && <p>Message sent successfully!</p>}
-          {status === "error" && <p>Failed to send message.</p>}
+          <div className="flex flex-col space-y-4">
+            <button
+              type="submit"
+              className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center w-fit disabled:opacity-50 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 transition-colors"
+              disabled={status === "loading"}
+            >
+              {status === "loading" ? "Sending..." : "Send message"}
+            </button>
+
+            {status === "success" && (
+              <div
+                className="p-4 mb-4 text-sm text-green-800 rounded-lg bg-green-50 dark:bg-gray-800 dark:text-green-400"
+                role="alert"
+              >
+                Message sent successfully!
+              </div>
+            )}
+
+            {status === "error" && (
+              <div
+                className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400"
+                role="alert"
+              >
+                {errorMessage || "Failed to send message"}
+              </div>
+            )}
+          </div>
         </form>
       </div>
     </section>

@@ -1,7 +1,7 @@
 import { Arimo } from "next/font/google";
+import Footer from "./components/layouts/Footer";
+import Header from "./components/layouts/Header";
 import "./globals.css";
-import Footer from "./layouts/Footer";
-import Header from "./layouts/Header";
 
 const arimo = Arimo({
   weight: ["400", "700"],
