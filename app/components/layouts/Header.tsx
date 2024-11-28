@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import React from "react";
 
 const Header = () => {
@@ -6,7 +7,10 @@ const Header = () => {
     <header>
       <nav className="navbar bg-base-100">
         <div className="flex-1">
-          <a className="btn btn-ghost text-xl flex items-center">
+          <Link
+            href="/"
+            className="btn btn-ghost text-xl flex items-center"
+          >
             <Image
               src="/headphones_plus_icon 1.png"
               alt="Headphone Plus"
@@ -15,7 +19,7 @@ const Header = () => {
               className="mr-2"
             />
             Headphone Plus
-          </a>
+          </Link>
           <ul className="menu menu-horizontal p-0 ml-6">
             <li>
               <a href="#about">About Us</a>

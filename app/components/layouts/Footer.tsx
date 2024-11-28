@@ -24,7 +24,12 @@ const Footer = () => {
             Copyright &copy; {new Date().getFullYear()} - All right reserved
           </p>
           <nav>
-            <a href="#admin">Admin View</a>
+            <a
+              href="/admin/login"
+              className="link link-hover"
+            >
+              Admin View
+            </a>
           </nav>
         </aside>
         <nav>

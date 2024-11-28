@@ -1,22 +1,37 @@
+-- Drop existing tables if they exist
+DROP TABLE IF EXISTS contact_message cascade;
+
+DROP TABLE IF EXISTS payment cascade;
+
+DROP TABLE IF EXISTS order_items cascade;
+
+DROP TABLE IF EXISTS "ORDER" cascade;
+
+DROP TABLE IF EXISTS admin cascade;
+
+DROP TABLE IF EXISTS company cascade;
+
+DROP TABLE IF EXISTS headphones cascade;
+
 -- Create the HEADPHONES table
 CREATE TABLE headphones(
     product_id serial PRIMARY KEY,
-    name VARCHAR( 255 )NOT NULL,
+    name VARCHAR(255) NOT NULL,
     price DECIMAL NOT NULL,
     description text,
-    model_name VARCHAR( 255 ),
+    model_name VARCHAR(255),
     image_url text,
     stock_quantity INTEGER NOT NULL,
     battery_life INTEGER,
     weight real,
-    connectivity VARCHAR( 255 ),
-    color VARCHAR( 255 )
+    connectivity VARCHAR(255),
+    color VARCHAR(255)
 );
 
 -- Create the COMPANY table
 CREATE TABLE company(
     company_id serial PRIMARY KEY,
-    company_name VARCHAR( 255 )NOT NULL,
+    company_name VARCHAR(255) NOT NULL,
     company_description text,
     contact_info text
 );
@@ -24,8 +39,11 @@ CREATE TABLE company(
 -- Create the ADMIN table
 CREATE TABLE admin(
     admin_id serial PRIMARY KEY,
-    username VARCHAR( 255 )UNIQUE NOT NULL,
-    password_hash text NOT NULL
+    username VARCHAR(255) UNIQUE NOT NULL,
+    password_hash text NOT NULL,
+    email VARCHAR(255),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
+    last_login TIMESTAMP WITH TIME ZONE
 );
 
 -- Create the ORDER table
@@ -39,25 +57,29 @@ CREATE TABLE "ORDER"(
 -- Create the ORDER_ITEMS table
 CREATE TABLE order_items(
     order_item_id serial PRIMARY KEY,
-    order_id INTEGER REFERENCES "ORDER"( order_id )NOT NULL,
-    product_id INTEGER REFERENCES headphones( product_id )NOT NULL,
+    order_id INTEGER REFERENCES "ORDER"(order_id) NOT NULL,
+    product_id INTEGER REFERENCES headphones(product_id) NOT NULL,
     quantity INTEGER NOT NULL
 );
 
 -- Create the PAYMENT table
 CREATE TABLE payment(
     payment_id serial PRIMARY KEY,
-    order_id INTEGER REFERENCES "ORDER"( order_id )UNIQUE NOT NULL,
-    payment_method VARCHAR( 255 ),
-    transaction_id VARCHAR( 255 ),
+    order_id INTEGER REFERENCES "ORDER"(order_id) UNIQUE NOT NULL,
+    payment_method VARCHAR(255),
+    transaction_id VARCHAR(255),
     payment_date TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp
 );
 
 -- Create the CONTACT_MESSAGE table
 CREATE TABLE contact_message(
     message_id serial PRIMARY KEY,
-    name VARCHAR( 255 ),
-    email VARCHAR( 255 ),
+    name VARCHAR(255),
+    email VARCHAR(255),
     message text NOT NULL,
-    message_date TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp
+    message_date TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
+    status VARCHAR(20) DEFAULT 'UNREAD',
+    admin_response text,
+    responded_at TIMESTAMP WITH TIME ZONE,
+    admin_id INTEGER REFERENCES admin(admin_id)
 );
