@@ -14,9 +14,9 @@ const Header = () => {
             <Image
               src="/headphones_plus_icon 1.png"
               alt="Headphone Plus"
-              width={20}
-              height={20}
-              className="mr-2"
+              width={50}
+              height={50}
+              className="-ml-3"
             />
             Headphone Plus
           </Link>
