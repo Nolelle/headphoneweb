@@ -1,10 +1,10 @@
-import ContactForm from "./components/features/ContactForm";
-import Hero from "./components/features/Hero";
+import ContactForm from "./components/Contact/ContactForm";
+import MainPageHero from "./components/Hero/MainPageHero";
 
 export default function Home() {
   return (
     <div>
-      <Hero />
+      <MainPageHero />
       <div id="contact">
         <ContactForm />
       </div>

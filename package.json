@@ -9,11 +9,13 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@stripe/stripe-js": "^5.5.0",
     "bcrypt": "^5.1.1",
     "next": "15.0.3",
     "pg": "^8.13.1",
     "react": "19.0.0-rc-66855b96-20241106",
-    "react-dom": "19.0.0-rc-66855b96-20241106"
+    "react-dom": "19.0.0-rc-66855b96-20241106",
+    "stripe": "^17.5.0"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",

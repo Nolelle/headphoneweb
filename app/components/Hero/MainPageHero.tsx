@@ -1,7 +1,7 @@
 import Image from "next/image";
 import React from "react";
 
-const Hero: React.FC = () => {
+const MainPageHero: React.FC = () => {
   return (
     <div
       id="hero"
@@ -31,4 +31,4 @@ const Hero: React.FC = () => {
   );
 };
 
-export default Hero;
+export default MainPageHero;
