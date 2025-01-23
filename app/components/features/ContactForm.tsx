@@ -81,9 +81,9 @@ const ContactForm: React.FC = () => {
           Contact Us
         </h2>
         <p className="mb-8 lg:mb-16 font-light text-center text-gray-500 dark:text-gray-400 sm:text-xl">
-          Have questions about our products? Whether you're seeking technical
+          Have questions about our products? Whether you&apos;re seeking technical
           details, exploring features, or interested in learning more about our
-          solutions, we're here to help.
+          solutions, we&apos;re here to help.
         </p>
         <form
           className="space-y-8"
@@ -184,7 +184,7 @@ const ContactForm: React.FC = () => {
               Message Sent Successfully!
             </h3>
             <p className="py-4">
-              Thank you for contacting us! We'll get back to you as soon as
+              Thank you for contacting us! We&apos;ll get back to you as soon as
               possible.
             </p>
             <div className="modal-action">

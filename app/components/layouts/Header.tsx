@@ -18,7 +18,7 @@ const Header = () => {
               height={50}
               className="-ml-3"
             />
-            Headphone Plus
+            Headphones Plus
           </Link>
           <ul className="menu menu-horizontal p-0 ml-6">
             <li>
