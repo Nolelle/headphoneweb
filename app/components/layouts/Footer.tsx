@@ -1,6 +1,5 @@
 import Image from "next/image";
 import React from "react";
-import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
 import { Facebook, Twitter, Youtube } from "lucide-react";
 
