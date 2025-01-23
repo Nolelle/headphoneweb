@@ -1,5 +1,5 @@
-import ContactForm from "./components/Contact/ContactForm";
-import MainPageHero from "./components/Hero/MainPageHero";
+import ContactForm from "../components/Contact/ContactForm";
+import MainPageHero from "../components/Hero/MainPageHero";
 
 export default function Home() {
   return (

@@ -1,6 +1,6 @@
 import { Arimo } from "next/font/google";
-import Footer from "./components/layouts/Footer";
-import Header from "./components/layouts/Header";
+import Footer from "../components/layouts/Footer";
+import Header from "../components/layouts/Header";
 import "./globals.css";
 
 const arimo = Arimo({
