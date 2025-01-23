@@ -41,3 +41,5 @@ psql
 database = headphoneweb all privileges
 user = myuser
 password  = mypassword
+
+psql command: psql -d headphoneweb -U myuser
