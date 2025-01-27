@@ -1,3 +1,4 @@
+"use client";
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -15,10 +16,15 @@ import {
 } from "@/app/components/ui/dropdown-menu";
 import { Button } from "@/app/components/ui/button";
 import { Badge } from "@/app/components/ui/badge";
+import { useCart } from "../Cart/CartContext"; // Import the useCart hook
 
 const Header = () => {
-  const cartItemCount = 8;
-  const cartSubtotal = 999;
+  // Use the cart context instead of hardcoded values
+  const { cartItem } = useCart();
+
+  // Calculate cart values from context
+  const cartItemCount = cartItem ? cartItem.quantity : 0;
+  const cartSubtotal = cartItem ? cartItem.price * cartItem.quantity : 0;
 
   return (
     <header className="bg-[hsl(0_0%_3.9%)] border-b border-border">
@@ -72,26 +78,30 @@ const Header = () => {
           <div className="ml-auto">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
+                <Button
+                  variant="ghost"
+                  size="icon"
                   className="relative text-[hsl(0_0%_98%)] hover:text-[hsl(0_0%_83.1%)] hover:bg-[hsl(0_0%_14.9%)]"
                 >
                   <ShoppingCart className="h-5 w-5" />
-                  <Badge 
-                    variant="secondary" 
-                    className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center rounded-full"
-                  >
-                    {cartItemCount}
-                  </Badge>
+                  {cartItemCount > 0 && (
+                    <Badge
+                      variant="secondary"
+                      className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center rounded-full"
+                    >
+                      {cartItemCount}
+                    </Badge>
+                  )}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-64">
                 <div className="p-4">
                   <div className="flex justify-between mb-4">
-                    <span className="font-semibold">{cartItemCount} Items</span>
+                    <span className="font-semibold">
+                      {cartItemCount} {cartItemCount === 1 ? "Item" : "Items"}
+                    </span>
                     <span className="text-muted-foreground">
-                      ${cartSubtotal}
+                      ${cartSubtotal.toFixed(2)}
                     </span>
                   </div>
                   <Link href="/cart">
