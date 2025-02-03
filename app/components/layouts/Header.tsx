@@ -16,15 +16,16 @@ import {
 } from "@/app/components/ui/dropdown-menu";
 import { Button } from "@/app/components/ui/button";
 import { Badge } from "@/app/components/ui/badge";
-import { useCart } from "../Cart/CartContext"; // Import the useCart hook
+import { useCart } from "../Cart/CartContext";
 
 const Header = () => {
-  // Use the cart context instead of hardcoded values
-  const { cartItem } = useCart();
+  const { items, total } = useCart();
 
-  // Calculate cart values from context
-  const cartItemCount = cartItem ? cartItem.quantity : 0;
-  const cartSubtotal = cartItem ? cartItem.price * cartItem.quantity : 0;
+  // Calculate total number of items in cart
+  const cartItemCount = items.reduce((sum, item) => sum + item.quantity, 0);
+
+  // Calculate cart subtotal
+  const cartSubtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
   return (
     <header className="bg-[hsl(0_0%_3.9%)] border-b border-border">
@@ -46,7 +47,7 @@ const Header = () => {
               </span>
             </Link>
 
-            {/* Main Navigation with light text */}
+            {/* Main Navigation */}
             <NavigationMenu className="hidden md:flex">
               <NavigationMenuList>
                 <NavigationMenuItem>
@@ -74,7 +75,7 @@ const Header = () => {
             </NavigationMenu>
           </div>
 
-          {/* Cart Dropdown (pushed to the right) */}
+          {/* Cart Dropdown */}
           <div className="ml-auto">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -87,26 +88,32 @@ const Header = () => {
                   {cartItemCount > 0 && (
                     <Badge
                       variant="secondary"
-                      className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center rounded-full"
+                      className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center rounded-full bg-[hsl(220_70%_50%)] text-[hsl(0_0%_98%)]"
                     >
                       {cartItemCount}
                     </Badge>
                   )}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-64">
+              <DropdownMenuContent align="end" className="w-64 bg-[hsl(0_0%_14.9%)] border-[hsl(0_0%_14.9%)]">
                 <div className="p-4">
                   <div className="flex justify-between mb-4">
-                    <span className="font-semibold">
+                    <span className="font-semibold text-[hsl(0_0%_98%)]">
                       {cartItemCount} {cartItemCount === 1 ? "Item" : "Items"}
                     </span>
-                    <span className="text-muted-foreground">
+                    <span className="text-[hsl(0_0%_83.1%)]">
                       ${cartSubtotal.toFixed(2)}
                     </span>
                   </div>
-                  <Link href="/cart">
-                    <Button className="w-full">View Cart</Button>
-                  </Link>
+                  {items.length > 0 ? (
+                    <Link href="/cart">
+                      <Button className="w-full bg-[hsl(220_70%_50%)] hover:bg-[hsl(220_70%_45%)] text-[hsl(0_0%_98%)]">
+                        View Cart
+                      </Button>
+                    </Link>
+                  ) : (
+                    <p className="text-center text-[hsl(0_0%_63.9%)]">Your cart is empty</p>
+                  )}
                 </div>
               </DropdownMenuContent>
             </DropdownMenu>

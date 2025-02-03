@@ -1,72 +1,140 @@
-import pool from "@/db/helpers/db";
 import { NextResponse } from "next/server";
+import pool from "@/db/helpers/db";
 
-export async function GET() {
+// Get cart items
+export async function GET(request: Request) {
   try {
-    const headphonesResult = await pool.query(
-      `SELECT product_id, name, price, image_url, stock_quantity 
-       FROM headphones 
-       WHERE stock_quantity > 0`
+    const { searchParams } = new URL(request.url);
+    const sessionId = searchParams.get("sessionId");
+
+    if (!sessionId) {
+      return NextResponse.json(
+        { error: "Session ID is required" },
+        { status: 400 }
+      );
+    }
+
+    // Get or create cart session
+    const sessionResult = await pool.query(
+      `INSERT INTO cart_session (user_identifier)
+       VALUES ($1)
+       ON CONFLICT (user_identifier) DO UPDATE 
+       SET last_modified = CURRENT_TIMESTAMP
+       RETURNING session_id`,
+      [sessionId]
     );
 
-    return NextResponse.json(headphonesResult.rows);
+    const session_id = sessionResult.rows[0].session_id;
+
+    // Get cart items with product details
+    const result = await pool.query(
+      `SELECT 
+        ci.cart_item_id,
+        ci.product_id,
+        h.name,
+        h.price,
+        ci.quantity,
+        h.stock_quantity,
+        h.image_url
+       FROM cart_items ci
+       JOIN headphones h ON ci.product_id = h.product_id
+       WHERE ci.session_id = $1`,
+      [session_id]
+    );
+
+    return NextResponse.json(result.rows);
   } catch (error) {
-    console.error("Error fetching products:", error);
+    console.error("Error fetching cart:", error);
     return NextResponse.json(
-      { error: "Failed to fetch products" },
+      { error: "Failed to fetch cart" },
       { status: 500 }
     );
   }
 }
 
-// For checking stock before checkout
+// Add item to cart
 export async function POST(request: Request) {
   try {
-    const { items } = await request.json();
+    const { sessionId, productId, quantity } = await request.json();
 
-    // Check stock for each item
-    const stockChecks = await Promise.all(
-      items.map(async (item: { id: number; quantity: number }) => {
-        const result = await pool.query(
-          "SELECT stock_quantity FROM headphones WHERE product_id = $1",
-          [item.id]
-        );
-
-        if (result.rows.length === 0) {
-          return {
-            id: item.id,
-            available: false,
-            message: "Product not found"
-          };
-        }
-
-        const { stock_quantity } = result.rows[0];
-        return {
-          id: item.id,
-          available: stock_quantity >= item.quantity,
-          requested: item.quantity,
-          inStock: stock_quantity
-        };
-      })
-    );
-
-    const unavailableItems = stockChecks.filter((item) => !item.available);
-
-    if (unavailableItems.length > 0) {
+    // Validate input
+    if (!sessionId || !productId || !quantity) {
       return NextResponse.json(
-        {
-          error: "Some items are out of stock",
-          unavailableItems
-        },
+        { error: "Missing required fields" },
         { status: 400 }
       );
     }
 
-    return NextResponse.json({ success: true, stockChecks });
+    // Start a transaction
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+
+      // Get or create session
+      const sessionResult = await client.query(
+        `INSERT INTO cart_session (user_identifier)
+         VALUES ($1)
+         ON CONFLICT (user_identifier) DO UPDATE 
+         SET last_modified = CURRENT_TIMESTAMP
+         RETURNING session_id`,
+        [sessionId]
+      );
+
+      const session_id = sessionResult.rows[0].session_id;
+
+      // Check stock
+      const stockResult = await client.query(
+        "SELECT stock_quantity FROM headphones WHERE product_id = $1",
+        [productId]
+      );
+
+      if (stockResult.rows.length === 0) {
+        throw new Error("Product not found");
+      }
+
+      if (stockResult.rows[0].stock_quantity < quantity) {
+        throw new Error("Insufficient stock");
+      }
+
+      // Add or update cart item
+      await client.query(
+        `INSERT INTO cart_items (session_id, product_id, quantity)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (session_id, product_id) 
+         DO UPDATE SET quantity = cart_items.quantity + EXCLUDED.quantity`,
+        [session_id, productId, quantity]
+      );
+
+      // Get updated cart
+      const result = await client.query(
+        `SELECT 
+          ci.cart_item_id,
+          ci.product_id,
+          h.name,
+          h.price,
+          ci.quantity,
+          h.stock_quantity,
+          h.image_url
+         FROM cart_items ci
+         JOIN headphones h ON ci.product_id = h.product_id
+         WHERE ci.session_id = $1`,
+        [session_id]
+      );
+
+      await client.query("COMMIT");
+      return NextResponse.json(result.rows);
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
+    }
   } catch (error) {
-    console.error("Error checking stock:", error);
+    console.error("Error adding to cart:", error);
     return NextResponse.json(
-      { error: "Failed to check stock" },
+      {
+        error: error instanceof Error ? error.message : "Failed to add to cart"
+      },
       { status: 500 }
     );
   }
