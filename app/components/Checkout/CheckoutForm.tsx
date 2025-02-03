@@ -1,4 +1,3 @@
-// components/Checkout/CheckoutForm.tsx
 "use client";
 import React, { useState } from "react";
 import { useStripe, useElements, PaymentElement } from "@stripe/react-stripe-js";
@@ -74,6 +73,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onPaymentSuccess }) => {
       }
 
       // Payment successful - redirect handled by return_url
+      onPaymentSuccess();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Payment failed");
     } finally {
@@ -84,9 +84,9 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onPaymentSuccess }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
       {/* Payment Form Section */}
-      <Card className="bg-[hsl(0_0%_14.9%)] border-[hsl(0_0%_14.9%)]">
+      <Card className="bg-gray-900 border-gray-800">
         <CardHeader>
-          <CardTitle className="text-[hsl(0_0%_98%)] flex items-center gap-2">
+          <CardTitle className="text-gray-50 flex items-center gap-2">
             <Lock className="h-5 w-5" />
             Secure Checkout
           </CardTitle>
@@ -96,7 +96,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onPaymentSuccess }) => {
             {/* Personal Information */}
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name" className="text-[hsl(0_0%_98%)]">
+                <Label htmlFor="name" className="text-gray-200">
                   Full Name
                 </Label>
                 <Input
@@ -105,12 +105,15 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onPaymentSuccess }) => {
                   value={formData.name}
                   onChange={handleChange}
                   required
-                  className="bg-[hsl(0_0%_14.9%)] border-[hsl(0_0%_14.9%)] text-[hsl(0_0%_98%)]"
+                  className="bg-gray-800 border-gray-700 text-gray-100 
+                    placeholder:text-gray-500 focus:border-blue-500 
+                    focus:ring-blue-500 hover:border-gray-600"
+                  placeholder="Enter your full name"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-[hsl(0_0%_98%)]">
+                <Label htmlFor="email" className="text-gray-200">
                   Email
                 </Label>
                 <Input
@@ -120,12 +123,15 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onPaymentSuccess }) => {
                   value={formData.email}
                   onChange={handleChange}
                   required
-                  className="bg-[hsl(0_0%_14.9%)] border-[hsl(0_0%_14.9%)] text-[hsl(0_0%_98%)]"
+                  className="bg-gray-800 border-gray-700 text-gray-100 
+                    placeholder:text-gray-500 focus:border-blue-500 
+                    focus:ring-blue-500 hover:border-gray-600"
+                  placeholder="Enter your email address"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="address" className="text-[hsl(0_0%_98%)]">
+                <Label htmlFor="address" className="text-gray-200">
                   Address
                 </Label>
                 <Input
@@ -134,58 +140,71 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onPaymentSuccess }) => {
                   value={formData.address}
                   onChange={handleChange}
                   required
-                  className="bg-[hsl(0_0%_14.9%)] border-[hsl(0_0%_14.9%)] text-[hsl(0_0%_98%)]"
+                  className="bg-gray-800 border-gray-700 text-gray-100 
+                    placeholder:text-gray-500 focus:border-blue-500 
+                    focus:ring-blue-500 hover:border-gray-600"
+                  placeholder="Enter your shipping address"
                 />
               </div>
             </div>
 
             {/* Stripe Payment Element */}
             <div className="space-y-4">
-              <Label className="text-[hsl(0_0%_98%)]">Card Details</Label>
-              <PaymentElement />
+              <Label className="text-gray-200">Card Details</Label>
+              <div className="bg-gray-800 p-4 rounded-md border border-gray-700">
+                <PaymentElement />
+              </div>
             </div>
 
             {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
+              <Alert variant="destructive" className="bg-red-900/50 border border-red-800">
+                <AlertDescription className="text-red-200">{error}</AlertDescription>
               </Alert>
             )}
 
             <Button
               type="submit"
               disabled={isLoading || !stripe || !elements}
-              className="w-full bg-[hsl(220_70%_50%)] hover:bg-[hsl(220_70%_45%)] text-[hsl(0_0%_98%)]"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-gray-50 
+                disabled:opacity-50 disabled:cursor-not-allowed h-12 font-medium"
             >
-              {isLoading ? "Processing..." : `Pay $${total.toFixed(2)}`}
+              {isLoading ? (
+                <div className="flex items-center justify-center gap-2">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-50 border-t-transparent" />
+                  Processing...
+                </div>
+              ) : (
+                `Pay $${total.toFixed(2)}`
+              )}
             </Button>
           </form>
         </CardContent>
       </Card>
 
       {/* Order Summary Section */}
-      <Card className="bg-[hsl(0_0%_14.9%)] border-[hsl(0_0%_14.9%)]">
+      <Card className="bg-gray-900 border-gray-800">
         <CardHeader>
-          <CardTitle className="text-[hsl(0_0%_98%)]">Order Summary</CardTitle>
+          <CardTitle className="text-gray-50">Order Summary</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {items.map((item) => (
               <div key={item.cart_item_id} className="flex justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="text-[hsl(0_0%_98%)]">{item.name}</span>
-                  <span className="text-[hsl(0_0%_63.9%)]">x{item.quantity}</span>
+                  <span className="text-gray-100">{item.name}</span>
+                  <span className="text-gray-400">x{item.quantity}</span>
                 </div>
-                <span className="text-[hsl(0_0%_98%)]">
+                <span className="text-gray-100">
                   ${(item.price * item.quantity).toFixed(2)}
                 </span>
               </div>
             ))}
             
-            <Separator className="my-4" />
+            <Separator className="bg-gray-800" />
             
             <div className="flex justify-between text-lg font-bold">
-              <span className="text-[hsl(0_0%_98%)]">Total</span>
-              <span className="text-[hsl(220_70%_50%)]">
+              <span className="text-gray-50">Total</span>
+              <span className="text-blue-500">
                 ${total.toFixed(2)}
               </span>
             </div>
