@@ -13,13 +13,13 @@ const MainPageHero: React.FC = () => {
           {/* Image Container */}
           <div className="lg:w-1/2 relative">
             <div className="relative">
-              <div className="absolute -inset-4 bg-gradient-to-r from-[hsl(220_70%_50%)] to-[hsl(160_60%_45%)] opacity-30 blur-xl rounded-full" />
+              <div className="absolute -inset-4 bg-gradient-to-r from-[hsl(220_70%_50%)] to-[hsl(260,100%,77%)] opacity-30 blur-xl rounded-full" />
               <Image
-                src="/headphone.png"
+                src="/h_1_bg.png"
                 alt="Headphones Plus"
                 width={500}
                 height={500}
-                className="relative rounded-xl shadow-2xl"
+                className="relative rounded-xl rotate-12 mx-auto"
                 priority
               />
             </div>
@@ -29,7 +29,7 @@ const MainPageHero: React.FC = () => {
           <div className="lg:w-1/2 space-y-6 text-center lg:text-left">
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-[hsl(0_0%_98%)]">
               Elevate Your{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[hsl(220_70%_50%)] to-[hsl(160_60%_45%)]">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[hsl(220_70%_50%)] to-[hsl(260,100%,77%)]">
                 Listening
               </span>{" "}
               Experience
@@ -44,7 +44,7 @@ const MainPageHero: React.FC = () => {
             <div className="pt-4">
               <Button 
                 size="lg"
-                className="bg-gradient-to-r from-[hsl(220_70%_50%)] to-[hsl(160_60%_45%)] text-[hsl(0_0%_98%)] hover:opacity-90 transition-opacity"
+                className="bg-gradient-to-r from-[hsl(220_70%_50%)] to-[hsl(260,100%,77%)] text-[hsl(0_0%_98%)] hover:opacity-90 transition-opacity"
               >
                 Explore Our Headphones
               </Button>

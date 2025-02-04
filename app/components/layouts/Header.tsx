@@ -4,27 +4,26 @@ import Link from "next/link";
 import { ShoppingCart } from "lucide-react";
 import {
   NavigationMenu,
-  NavigationMenuContent,
   NavigationMenuItem,
   NavigationMenuLink,
   NavigationMenuList,
-  NavigationMenuTrigger,
-} from "@/components/ui/navigation-menu";
+} from "../ui/navigation-menu";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+} from "../ui/dropdown-menu";
+import { Button } from "../ui/button";
+import { Badge } from "../ui/badge";
+// import { Separator } from "@radix-ui/react-dropdown-menu";
 
 const Header = () => {
   const cartItemCount = 8;
-  const cartSubtotal = 999;
+  const cartSubtotal = 999.99;
 
   return (
-    <header className="bg-[hsl(0_0%_3.9%)] border-b border-border">
-      <div className="container mx-auto px-4">
+    <header className="bg-[hsl(0_0%_3.9%)] border-b border-border fixed w-full z-50">
+      <div className="container px-4">
         <nav className="flex h-16 items-center">
           {/* Left section with logo and navigation */}
           <div className="flex items-center space-x-4">
@@ -33,12 +32,12 @@ const Header = () => {
               <Image
                 src="/headphones_plus_icon 1.png"
                 alt="Headphone Plus"
-                width={20}
-                height={20}
-                className="w-5 h-5"
+                width={50}
+                height={50}
+                className="-ml-3"
               />
               <span className="font-semibold text-lg text-[hsl(0_0%_98%)]">
-                Headphone Plus
+                Headphones Plus
               </span>
             </Link>
 
@@ -52,6 +51,7 @@ const Header = () => {
                     </NavigationMenuLink>
                   </Link>
                 </NavigationMenuItem>
+                {/* <Separator orientation="vertical"/> */}
                 <NavigationMenuItem>
                   <Link href="#headphone" legacyBehavior passHref>
                     <NavigationMenuLink className="px-3 py-2 text-[hsl(0_0%_98%)] hover:text-[hsl(0_0%_83.1%)]">
@@ -90,7 +90,7 @@ const Header = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-64">
                 <div className="p-4">
-                  <div className="flex justify-between mb-4">
+                  <div className="flex justify-between mb-4 mr-0">
                     <span className="font-semibold">{cartItemCount} Items</span>
                     <span className="text-muted-foreground">
                       ${cartSubtotal}
