@@ -10,7 +10,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/app/components/ui/tooltip"
-
+import Image from 'next/image';
 
 interface Product {
   id: number;
@@ -41,11 +41,11 @@ const ProductInfo: React.FC = () => {
       <div className='flex text-white gap-32'>
         <Carousel className='mx-10 w-full max-w-[550px]'>
           <CarouselContent className='flex'>
-           <CarouselItem className=''><img src="/h_1.png" width={500} alt="icon 1"/></CarouselItem>
-           <CarouselItem className=''><img src="/h_2.png" width={500} alt="icon 2"/></CarouselItem> 
-           <CarouselItem className=''><img src="/h_3.png" width={500} alt="icon 3"/></CarouselItem>
-           <CarouselItem className=''><img src="/h_4.png" width={500} alt="icon 4"/></CarouselItem>
-           <CarouselItem className=''><img src="/h_5.png" width={500} alt="icon 5"/></CarouselItem>
+           <CarouselItem className=''><Image src="/h_1.png" width={500} height={500} alt="icon 1"/></CarouselItem>
+           <CarouselItem className=''><Image src="/h_2.png" width={500}height={500} alt="icon 2"/></CarouselItem> 
+           <CarouselItem className=''><Image src="/h_3.png" width={500}height={500} alt="icon 3"/></CarouselItem>
+           <CarouselItem className=''><Image src="/h_4.png" width={500}height={500} alt="icon 4"/></CarouselItem>
+           <CarouselItem className=''><Image src="/h_5.png" width={500}height={500} alt="icon 5"/></CarouselItem>
           </CarouselContent>
           <CarouselPrevious className='bg-black hover:bg-gradient-to-r from-[hsl(220_70%_50%)] to-[hsl(260,100%,77%)]'/>
           <CarouselNext className='bg-black hover:bg-gradient-to-r from-[hsl(220_70%_50%)] to-[hsl(260,100%,77%)] mr-10'/>
@@ -83,7 +83,7 @@ const ProductInfo: React.FC = () => {
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <a href="" ><img src="up_icon.png" width={30} alt="up"/></a>
+              <a href="" ><Image src="/up_icon.png" width={30} height={30} alt="up"/></a>
             </TooltipTrigger>
             <TooltipContent>
               <p>Go to the top</p>
