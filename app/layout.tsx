@@ -13,8 +13,8 @@ const arimo = Arimo({
 });
 
 export const metadata: Metadata = {
-  title: "Headphone Plus",
-  description: "Landing Page for Headphone Plus",
+  title: "Bone+",
+  description: "Landing Page for Bone+",
 };
 
 export default function RootLayout({

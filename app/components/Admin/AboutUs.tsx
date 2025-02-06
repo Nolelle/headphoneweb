@@ -8,7 +8,7 @@ const AboutUs = () => {
           About Us
         </h2>
         <p className='text-2xl text-white'>
-          Headphones Plus provides a personalised audio experience to it&apos;s users.
+          Bone+ provides a personalised audio experience to it&apos;s users.
           
         </p>
         <p className='text-white text-3xl font-bold'>  
