@@ -1,3 +1,4 @@
+
 "use client"
 import React from "react";
 import Image from "next/image";
@@ -124,18 +125,23 @@ const Cart = () => {
                         )}
                       </Button>
                     </div>
+
                   </div>
                 </CardContent>
               </Card>
             ))}
 
+
             {/* Order Summary */}
             <Card className="bg-[hsl(0_0%_14.9%)] border-[hsl(0_0%_14.9%)]">
+
               <CardContent className="p-6">
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <span className="text-[hsl(0_0%_63.9%)]">Subtotal</span>
+
                     <span className="text-[hsl(0_0%_98%)]">${total.toFixed(2)}</span>
+
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-[hsl(0_0%_63.9%)]">Shipping</span>

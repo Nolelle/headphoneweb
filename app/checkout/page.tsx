@@ -1,3 +1,4 @@
+
 import { Metadata } from "next";
 import Checkout from "../components/Checkout/Checkout";
 

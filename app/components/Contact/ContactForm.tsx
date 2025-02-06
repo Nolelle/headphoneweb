@@ -14,6 +14,7 @@ import {
 import { Label } from "../ui/label";
 import { CheckCircle2, ChevronUp } from "lucide-react";
 
+
 const ContactForm: React.FC = () => {
   const [status, setStatus] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string>("");
@@ -176,6 +177,7 @@ const ContactForm: React.FC = () => {
                   </Button>
                 )}
               </div>
+
             </section>
           );
         };

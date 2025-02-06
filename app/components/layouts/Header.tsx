@@ -114,6 +114,7 @@ const Header = () => {
                   ) : (
                     <p className="text-center text-[hsl(0_0%_63.9%)]">Your cart is empty</p>
                   )}
+
                 </div>
               </DropdownMenuContent>
             </DropdownMenu>

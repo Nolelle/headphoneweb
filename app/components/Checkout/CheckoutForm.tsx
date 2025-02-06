@@ -34,10 +34,12 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onPaymentSuccess }) => {
       ...prev,
       [e.target.name]: e.target.value
     }));
+
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
 
     if (!stripe || !elements) {
       return;
@@ -53,6 +55,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onPaymentSuccess }) => {
       }
 
       const { error: confirmError } = await stripe.confirmPayment({
+
         elements,
         confirmParams: {
           return_url: `${window.location.origin}/payment-success`,
@@ -78,6 +81,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onPaymentSuccess }) => {
       setError(err instanceof Error ? err.message : "Payment failed");
     } finally {
       setIsLoading(false);
+
     }
   };
 
@@ -212,6 +216,8 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onPaymentSuccess }) => {
         </CardContent>
       </Card>
     </div>
+
+    
   );
 };
 
