@@ -1,6 +1,6 @@
 'use client'
 import React, { useState } from 'react';
-import {Separator} from "@/components/ui/separator";
+import { Separator } from '@radix-ui/react-dropdown-menu';
 import { Carousel } from '@/app/components/ui/carousel';
 import { CarouselItem, CarouselContent,CarouselNext, CarouselPrevious } from '@/app/components/ui/carousel';
 import { Accordion, AccordionTrigger, AccordionItem, AccordionContent } from '../ui/accordion';
