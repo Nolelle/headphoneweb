@@ -13,12 +13,7 @@ import {
 } from "../ui/dialog";
 import { Label } from "../ui/label";
 import { CheckCircle2, ChevronUp } from "lucide-react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/app/components/ui/tooltip"
+
 
 const ContactForm: React.FC = () => {
   const [status, setStatus] = useState<string | null>(null);
@@ -87,9 +82,9 @@ const ContactForm: React.FC = () => {
           Contact Us
         </h2>
         <p className="mb-8 lg:mb-16 text-center text-[hsl(0_0%_63.9%)] text-lg">
-          Have questions about our products? Whether you&apos;re seeking technical
+          Have questions about our products? Whether you're seeking technical
           details, exploring features, or interested in learning more about our
-          solutions, we&apos;re here to help.
+          solutions, we're here to help.
         </p>
 
         <form className="space-y-8" onSubmit={handleSubmit} noValidate>
@@ -164,7 +159,7 @@ const ContactForm: React.FC = () => {
                 Message Sent Successfully!
               </DialogTitle>
               <DialogDescription className="text-[hsl(0_0%_63.9%)]">
-                Thank you for contacting us! We&apos;ll get back to you as soon as
+                Thank you for contacting us! We'll get back to you as soon as
                 possible.
               </DialogDescription>
             </DialogHeader>
@@ -182,18 +177,7 @@ const ContactForm: React.FC = () => {
                   </Button>
                 )}
               </div>
-              <div className='-mt-24 ml-6'>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <a href="" ><img src="up_icon.png" width={30} alt="up"/></a>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Go to the top</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
+
             </section>
           );
         };

@@ -1,0 +1,13 @@
+Name: Emily Richardson
+Email: emily.r.test@example.com
+Address: 892 Maple Grove Lane
+City: Burlington
+State: Vermont
+ZIP: 05401
+Phone: (802) 555-0123
+For the payment card test data:
+
+Card number: 4242 4242 4242 4242
+Expiry: Any future date (like 12/25)
+CVC: Any 3 digits (like 123)
+

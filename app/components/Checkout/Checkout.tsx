@@ -1,222 +1,127 @@
 "use client";
-import React, { useState } from 'react';
-import { Input } from "../ui/input";
-import { Button } from "../ui/button";
-import { Label } from "../ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "../ui/card";
-import { Separator } from "../ui/separator";
+import React, { useState, useEffect } from "react";
+import { Elements } from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
+import CheckoutForm from "./CheckoutForm";
+import { useCart } from "../Cart/CartContext";
+import { Card } from "../ui/card";
+import { useRouter } from "next/navigation";
 
-const Checkout = () => {
-    // Sample cart items - in a real app, these would likely come from a cart context or store
-    const cartItems = [
-        { id: 1, name: "Product 1", price: 100, quantity: 2 },
-        { id: 2, name: "Product 2", price: 50, quantity: 1 },
-    ];
+// Initialize Stripe
+const stripePromise = loadStripe(
+  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
+);
 
-    // Calculate total using reduce
-    const total = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
+export default function Checkout() {
+  const { items, total } = useCart();
+  const router = useRouter();
+  const [clientSecret, setClientSecret] = useState<string>("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-    // Form state management
-    const [formData, setFormData] = useState({
-        name: '',
-        email: '',
-        address: '',
-        cardNumber: '',
-        expiryDate: '',
-        cvv: '',
-    });
+  useEffect(() => {
+    // Redirect if cart is empty
+    if (items.length === 0) {
+      router.push("/cart");
+      return;
+    }
 
-    // Handle form field changes
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setFormData({ ...formData, [name]: value });
-    };
+    const createPaymentIntent = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+    
+        const response = await fetch("/api/stripe/payment-intent", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            items: items.map(item => ({
+              product_id: item.product_id,
+              quantity: item.quantity,
+              price: item.price,
+              name: item.name
+            }))
+          })
+        });
+    
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Failed to create payment intent");
+        }
+    
+        const data = await response.json();
+        
+        if (!data.clientSecret) {
+          throw new Error("No client secret received");
+        }
+    
+        setClientSecret(data.clientSecret);
+      } catch (err) {
+        console.error("Payment Intent creation failed:", err);
+        setError(err instanceof Error ? err.message : "An error occurred");
+      } finally {
+        setIsLoading(false);
+      }
+    }; 
 
-    // Handle form submission
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        console.log('Processing payment...', { formData, cartItems, total });
-        // Stripe integration would go here
-    };
+    createPaymentIntent();
+  }, [items, router, total]);
 
+  if (isLoading) {
     return (
-        <div className="min-h-screen bg-[hsl(0_0%_3.9%)] text-[hsl(0_0%_98%)]">
-            <div className="container mx-auto p-6">
-                <h1 className="text-3xl font-bold mb-8 text-center md:text-left">Checkout</h1>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    {/* Checkout Form Section */}
-                    <Card className="bg-[hsl(0_0%_14.9%)] border-[hsl(0_0%_14.9%)]">
-                        <CardHeader>
-                            <CardTitle>Shipping & Payment Details</CardTitle>
-                            <CardDescription className="text-[hsl(0_0%_63.9%)]">
-                                Enter your information to complete the purchase
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <form onSubmit={handleSubmit} className="space-y-6">
-                                {/* Personal Information */}
-                                <div className="space-y-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="name">Full Name</Label>
-                                        <Input
-                                            id="name"
-                                            name="name"
-                                            value={formData.name}
-                                            onChange={handleChange}
-                                            placeholder="John Doe"
-                                            className="bg-[hsl(0_0%_3.9%)] border-[hsl(0_0%_14.9%)] text-[hsl(0_0%_98%)] placeholder:text-[hsl(0_0%_63.9%)]"
-                                            required
-                                        />
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label htmlFor="email">Email</Label>
-                                        <Input
-                                            id="email"
-                                            name="email"
-                                            type="email"
-                                            value={formData.email}
-                                            onChange={handleChange}
-                                            placeholder="john@example.com"
-                                            className="bg-[hsl(0_0%_3.9%)] border-[hsl(0_0%_14.9%)] text-[hsl(0_0%_98%)] placeholder:text-[hsl(0_0%_63.9%)]"
-                                            required
-                                        />
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label htmlFor="address">Shipping Address</Label>
-                                        <Input
-                                            id="address"
-                                            name="address"
-                                            value={formData.address}
-                                            onChange={handleChange}
-                                            placeholder="123 Main St, City, Country"
-                                            className="bg-[hsl(0_0%_3.9%)] border-[hsl(0_0%_14.9%)] text-[hsl(0_0%_98%)] placeholder:text-[hsl(0_0%_63.9%)]"
-                                            required
-                                        />
-                                    </div>
-                                </div>
-
-                                {/* Payment Information */}
-                                <div className="space-y-4">
-                                    <Separator className="my-4" />
-                                    <h3 className="text-lg font-semibold">Payment Information</h3>
-
-                                    <div className="space-y-2">
-                                        <Label htmlFor="cardNumber">Card Number</Label>
-                                        <Input
-                                            id="cardNumber"
-                                            name="cardNumber"
-                                            value={formData.cardNumber}
-                                            onChange={handleChange}
-                                            placeholder="1234 5678 9012 3456"
-                                            className="bg-[hsl(0_0%_3.9%)] border-[hsl(0_0%_14.9%)] text-[hsl(0_0%_98%)] placeholder:text-[hsl(0_0%_63.9%)]"
-                                            required
-                                        />
-                                    </div>
-
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <Label htmlFor="expiryDate">Expiry Date</Label>
-                                            <Input
-                                                id="expiryDate"
-                                                name="expiryDate"
-                                                value={formData.expiryDate}
-                                                onChange={handleChange}
-                                                placeholder="MM/YY"
-                                                className="bg-[hsl(0_0%_3.9%)] border-[hsl(0_0%_14.9%)] text-[hsl(0_0%_98%)] placeholder:text-[hsl(0_0%_63.9%)]"
-                                                required
-                                            />
-                                        </div>
-
-                                        <div className="space-y-2">
-                                            <Label htmlFor="cvv">CVV</Label>
-                                            <Input
-                                                id="cvv"
-                                                name="cvv"
-                                                value={formData.cvv}
-                                                onChange={handleChange}
-                                                placeholder="123"
-                                                className="bg-[hsl(0_0%_3.9%)] border-[hsl(0_0%_14.9%)] text-[hsl(0_0%_98%)] placeholder:text-[hsl(0_0%_63.9%)]"
-                                                required
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <Button 
-                                    type="submit" 
-                                    className="w-full bg-[hsl(220_70%_50%)] hover:bg-[hsl(220_70%_45%)] text-[hsl(0_0%_98%)]"
-                                    size="lg"
-                                >
-                                    Pay ${total}
-                                </Button>
-                            </form>
-                        </CardContent>
-                    </Card>
-
-                    {/* Order Summary Section */}
-                    <div className="space-y-6">
-                        <Card className="bg-[hsl(0_0%_14.9%)] border-[hsl(0_0%_14.9%)]">
-                            <CardHeader>
-                                <CardTitle>Order Summary</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                {/* Cart Items */}
-                                {cartItems.map((item) => (
-                                    <div 
-                                        key={item.id} 
-                                        className="flex justify-between items-center p-4 bg-[hsl(0_0%_3.9%)] rounded-lg"
-                                    >
-                                        <div>
-                                            <h3 className="font-semibold text-[hsl(0_0%_98%)]">
-                                                {item.name}
-                                            </h3>
-                                            <p className="text-sm text-[hsl(0_0%_63.9%)]">
-                                                Quantity: {item.quantity}
-                                            </p>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="font-semibold text-[hsl(220_70%_50%)]">
-                                                ${item.price * item.quantity}
-                                            </p>
-                                        </div>
-                                    </div>
-                                ))}
-
-                                {/* Order Totals */}
-                                <div className="space-y-3 pt-4">
-                                    <Separator />
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-[hsl(0_0%_63.9%)]">Subtotal</span>
-                                        <span>${total}</span>
-                                    </div>
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-[hsl(0_0%_63.9%)]">Shipping</span>
-                                        <span>Free</span>
-                                    </div>
-                                    <Separator />
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-lg font-bold">Total</span>
-                                        <span className="text-lg font-bold text-[hsl(220_70%_50%)]">
-                                            ${total}
-                                        </span>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </div>
-                </div>
-            </div>
+      <div className="min-h-screen flex items-center justify-center bg-[hsl(0_0%_3.9%)]">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[hsl(0_0%_98%)]"></div>
+          <p className="text-[hsl(0_0%_98%)]">Preparing checkout...</p>
         </div>
+      </div>
     );
-};
+  }
 
-export default Checkout;
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[hsl(0_0%_3.9%)]">
+        <Card className="p-6 bg-[hsl(0_0%_14.9%)] border-[hsl(0_0%_14.9%)]">
+          <p className="text-[hsl(0_62.8%_30.6%)]">Error: {error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 px-4 py-2 bg-[hsl(220_70%_50%)] text-[hsl(0_0%_98%)] rounded-md"
+          >
+            Try Again
+          </button>
+        </Card>
+      </div>
+    );
+  }
+
+  const appearance = {
+    theme: "night",
+    variables: {
+      colorPrimary: "#3b82f6",
+      colorBackground: "#1f2937",
+      colorText: "#f9fafb",
+      colorDanger: "#ef4444"
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-[hsl(0_0%_3.9%)]">
+      <div className="container mx-auto px-4 py-8">
+        {clientSecret && (
+          <Elements
+            stripe={stripePromise}
+            options={{
+              clientSecret,
+              appearance
+            }}
+          >
+            <CheckoutForm />
+          </Elements>
+        )}
+      </div>
+    </div>
+  );
+}
+

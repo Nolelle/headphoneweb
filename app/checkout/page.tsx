@@ -1,12 +1,12 @@
-import React from 'react';
-import Checkout from './../components/Checkout/Checkout';
+
+import { Metadata } from "next";
+import Checkout from "../components/Checkout/Checkout";
+
+export const metadata: Metadata = {
+  title: "Checkout - Headphone Plus",
+  description: "Complete your purchase"
+};
 
 export default function CheckoutPage() {
-    return (
-        <div className="min-h-screen flex flex-col">
-            <main className="flex-grow container mx-auto p-6">
-                <Checkout />
-            </main>
-        </div>
-    );
+  return <Checkout />;
 }
