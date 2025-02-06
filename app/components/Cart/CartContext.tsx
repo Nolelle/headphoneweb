@@ -87,7 +87,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         const newItem: CartItem = {
           cart_item_id: items.length + 1,
           product_id: productId,
-          name: "New Test Product",
+          name: "Bone+ Headphones",
           price: 199.99,
           quantity: quantity,
           stock_quantity: 100,
