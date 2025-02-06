@@ -3,7 +3,7 @@ import { Metadata } from "next";
 import Checkout from "../components/Checkout/Checkout";
 
 export const metadata: Metadata = {
-  title: "Checkout - Headphone Plus",
+  title: "Checkout - Bone+",
   description: "Complete your purchase"
 };
 

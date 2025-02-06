@@ -12,13 +12,13 @@ const Footer = () => {
           <div className="space-y-4">
             <Image
               src="/headphones_plus_icon 1.png"
-              alt="Headphone Plus"
+              alt="Bone+"
               width={50}
               height={50}
               className="mb-4"
             />
             <div className="space-y-2">
-              <p className="font-medium">Headphone Plus LTD.</p>
+              <p className="font-medium">Bone+ LTD.</p>
               <p className="text-sm text-[hsl(0_0%_63.9%)]">
                 The best headphones since 2024
               </p>
