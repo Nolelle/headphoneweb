@@ -28,7 +28,7 @@ const Header = () => {
   const cartSubtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
   return (
-    <header className="bg-[hsl(0_0%_3.9%)] border-b border-border">
+    <header className="bg-[hsl(0_0%_3.9%)] border-b border-border fixed w-full z-50">
       <div className="container mx-auto px-4">
         <nav className="flex h-16 items-center">
           {/* Left section with logo and navigation */}
@@ -37,13 +37,13 @@ const Header = () => {
             <Link href="/" className="flex items-center space-x-2">
               <Image
                 src="/headphones_plus_icon 1.png"
-                alt="Headphone Plus"
-                width={20}
-                height={20}
-                className="w-5 h-5"
+                alt="Bone+"
+                width={50}
+                height={50}
+                className="-ml-3"
               />
               <span className="font-semibold text-lg text-[hsl(0_0%_98%)]">
-                Headphone Plus
+                Bone+
               </span>
             </Link>
 

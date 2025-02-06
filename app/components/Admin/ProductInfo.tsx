@@ -138,7 +138,7 @@ const ProductInfo: React.FC = () => {
               <Separator className='my-2'/>
               <li className='text-2xl font-sans font-bold'>Rechargable: Yes</li>
               <Separator className='my-2'/>
-              <li className='text-2xl font-sans font-bold'>Android Application: Headphones Plus</li>
+              <li className='text-2xl font-sans font-bold'>Android Application: Bone+</li>
             </ul>
           </AccordionContent>
         </AccordionItem>
