@@ -4,6 +4,7 @@ import { Separator } from '@radix-ui/react-dropdown-menu';
 import { Carousel } from '@/app/components/ui/carousel';
 import { CarouselItem, CarouselContent, CarouselNext, CarouselPrevious } from '@/app/components/ui/carousel';
 import { Accordion, AccordionTrigger, AccordionItem, AccordionContent } from '../ui/accordion';
+import { Button } from '../ui/button';
 import {
   Tooltip,
   TooltipContent,
@@ -11,11 +12,17 @@ import {
   TooltipTrigger,
 } from "@/app/components/ui/tooltip"
 import Image from 'next/image';
+import { useCart } from '../Cart/CartContext';
+// Import toast from sonner for notifications
+import { toast } from 'sonner';
 
+// Define the Product interface for type safety
 interface Product {
-  id: number;
+  product_id: number;
   name: string;
   price: number;
+  stock_quantity: number;
+  image_url: string;
 }
 
 const ProductInfo: React.FC = () => {
@@ -26,7 +33,7 @@ const ProductInfo: React.FC = () => {
   const [isAddingToCart, setIsAddingToCart] = useState(false);
 
   // Product details - in a real app, this would likely come from a database or API
-  const product = {
+  const product: Product = {
     product_id: 1,
     name: 'Bone+ Headphone',
     price: 999.99,
@@ -34,7 +41,7 @@ const ProductInfo: React.FC = () => {
     image_url: '/h_1.png'
   };
 
-  // Handler for adding item to cart
+  // Handler for adding item to cart with enhanced error handling and feedback
   const handleAddToCart = async () => {
     try {
       setIsAddingToCart(true);
@@ -42,11 +49,17 @@ const ProductInfo: React.FC = () => {
       // Add item to cart - quantity hardcoded to 1 for now
       await addItem(product.product_id, 1);
       
-      // Show success message
-      toast.success('Added to cart successfully!');
+      // Show success message with product details
+      toast.success('Added to cart', {
+        description: `${product.name} has been added to your cart`,
+        duration: 3000,
+      });
     } catch (error) {
-      // Show error message if something goes wrong
-      toast.error(error instanceof Error ? error.message : 'Failed to add to cart');
+      // Show detailed error message
+      toast.error('Failed to add to cart', {
+        description: error instanceof Error ? error.message : 'An error occurred while adding the item to cart',
+        duration: 4000,
+      });
     } finally {
       // Reset loading state whether successful or not
       setIsAddingToCart(false);
@@ -59,14 +72,14 @@ const ProductInfo: React.FC = () => {
         Product Information
       </h2>
       <div className='flex text-white gap-32'>
-        {/* Product Image Carousel */}
+        {/* Product Image Carousel with Next.js Image optimization */}
         <Carousel className='mx-10 w-full max-w-[550px]'>
           <CarouselContent className='flex'>
-           <CarouselItem className=''><Image src="/h_1.png" width={500} height={500} alt="icon 1"/></CarouselItem>
-           <CarouselItem className=''><Image src="/h_2.png" width={500}height={500} alt="icon 2"/></CarouselItem> 
-           <CarouselItem className=''><Image src="/h_3.png" width={500}height={500} alt="icon 3"/></CarouselItem>
-           <CarouselItem className=''><Image src="/h_4.png" width={500}height={500} alt="icon 4"/></CarouselItem>
-           <CarouselItem className=''><Image src="/h_5.png" width={500}height={500} alt="icon 5"/></CarouselItem>
+           <CarouselItem><Image src="/h_1.png" width={500} height={500} alt="icon 1" priority/></CarouselItem>
+           <CarouselItem><Image src="/h_2.png" width={500} height={500} alt="icon 2"/></CarouselItem> 
+           <CarouselItem><Image src="/h_3.png" width={500} height={500} alt="icon 3"/></CarouselItem>
+           <CarouselItem><Image src="/h_4.png" width={500} height={500} alt="icon 4"/></CarouselItem>
+           <CarouselItem><Image src="/h_5.png" width={500} height={500} alt="icon 5"/></CarouselItem>
           </CarouselContent>
           <CarouselPrevious className='bg-black hover:bg-gradient-to-r from-[hsl(220_70%_50%)] to-[hsl(260,100%,77%)]'/>
           <CarouselNext className='bg-black hover:bg-gradient-to-r from-[hsl(220_70%_50%)] to-[hsl(260,100%,77%)] mr-10'/>
@@ -97,7 +110,7 @@ const ProductInfo: React.FC = () => {
           <br />
           <li className='list-none text-2xl'>${product.price.toFixed(2)}</li>
           <br />
-          {/* Add to Cart Button */}
+          {/* Add to Cart Button with loading state */}
           <Button 
             onClick={handleAddToCart}
             disabled={isAddingToCart}
