@@ -17,6 +17,7 @@ import { useCart } from '../Cart/CartContext';
 import { toast } from 'sonner';
 
 // Define the Product interface for type safety
+
 interface Product {
   product_id: number;
   name: string;
@@ -75,11 +76,13 @@ const ProductInfo: React.FC = () => {
         {/* Product Image Carousel with Next.js Image optimization */}
         <Carousel className='mx-10 w-full max-w-[550px]'>
           <CarouselContent className='flex'>
-           <CarouselItem><Image src="/h_1.png" width={500} height={500} alt="icon 1" priority/></CarouselItem>
-           <CarouselItem><Image src="/h_2.png" width={500} height={500} alt="icon 2"/></CarouselItem> 
-           <CarouselItem><Image src="/h_3.png" width={500} height={500} alt="icon 3"/></CarouselItem>
-           <CarouselItem><Image src="/h_4.png" width={500} height={500} alt="icon 4"/></CarouselItem>
-           <CarouselItem><Image src="/h_5.png" width={500} height={500} alt="icon 5"/></CarouselItem>
+
+           <CarouselItem className=''><Image src="/h_1.png" width={500} height={500} alt="icon 1"/></CarouselItem>
+           <CarouselItem className=''><Image src="/h_2.png" width={500}height={500} alt="icon 2"/></CarouselItem> 
+           <CarouselItem className=''><Image src="/h_3.png" width={500}height={500} alt="icon 3"/></CarouselItem>
+           <CarouselItem className=''><Image src="/h_4.png" width={500}height={500} alt="icon 4"/></CarouselItem>
+           <CarouselItem className=''><Image src="/h_5.png" width={500}height={500} alt="icon 5"/></CarouselItem>
+
           </CarouselContent>
           <CarouselPrevious className='bg-black hover:bg-gradient-to-r from-[hsl(220_70%_50%)] to-[hsl(260,100%,77%)]'/>
           <CarouselNext className='bg-black hover:bg-gradient-to-r from-[hsl(220_70%_50%)] to-[hsl(260,100%,77%)] mr-10'/>
