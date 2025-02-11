@@ -1,13 +1,15 @@
 // app/admin/dashboard/page.tsx
+"use client";
+
 import AdminDashboard from "@/app/components/Admin/AdminDashboard";
 
 export default function AdminDashboardPage() {
   return (
-    <div className="min-h-screen bg-gray-100">
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
+    <div className="min-h-screen bg-[hsl(0_0%_3.9%)]">
+      {/* Add pt-20 to account for the fixed header height */}
+      <main className="container mx-auto p-6 pt-20">
         <AdminDashboard />
-      </div>
+      </main>
     </div>
   );
 }

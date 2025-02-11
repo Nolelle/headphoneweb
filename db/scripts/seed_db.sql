@@ -19,10 +19,15 @@ INSERT INTO company (company_name, company_description, contact_info) VALUES
      '{"address": "123 Audio Lane, Sound City, SC 12345", "phone": "+1-555-123-4567", "email": "contact@headphoneplus.com"}'
     );
 
--- Insert admin users with bcrypt hashed passwords (password is 'admin123' and 'support123')
+-- Insert admin users with bcrypt hashed passwords
+-- Password for admin user is 'admin123'
 INSERT INTO admin (username, password_hash, email, created_at, last_login) VALUES
-    ('admin', '$2a$10$xVQZxHxRgB0t1lAqxqPJDeKruHf3JWKWYbufvnvw3khxwGWIkHMFi', 'admin@headphoneplus.com', current_timestamp, current_timestamp),
-    ('support', '$2a$10$TkYmZ9ZLRpz7HpB1ux.3h.9Rg0YmxeQCYGV.WYfKGHGZqxK1Lq2KC', 'support@headphoneplus.com', current_timestamp - interval '7 days', current_timestamp - interval '1 day');
+    ('admin', 
+     '$2b$10$HAfCblA9Rc8IA.FkjO7So.rAE817fNnEKD2ihqRo.PYWBhVyePa0S',
+     'admin@headphoneplus.com',
+     current_timestamp,
+     NULL
+    );
 
 -- Insert sample headphones products
 INSERT INTO headphones (name, price, description, model_name, image_url, stock_quantity, battery_life, weight, connectivity, color) VALUES
@@ -34,17 +39,13 @@ INSERT INTO headphones (name, price, description, model_name, image_url, stock_q
 -- Insert sample cart sessions
 INSERT INTO cart_session (user_identifier, metadata) VALUES
     ('guest_123', '{"device": "mobile", "browser": "chrome", "platform": "ios"}'),
-    ('guest_456', '{"device": "desktop", "browser": "firefox", "platform": "windows"}'),
-    ('guest_789', '{"device": "tablet", "browser": "safari", "platform": "ipados"}');
+    ('guest_456', '{"device": "desktop", "browser": "firefox", "platform": "windows"}');
 
 -- Insert sample cart items
 INSERT INTO cart_items (session_id, product_id, quantity) VALUES
-    (1, 1, 1),  -- Guest 123: One QuietComfort 45
-    (1, 2, 2),  -- Guest 123: Two SoundSport Wireless
-    (2, 3, 1),  -- Guest 456: One Studio Pro
-    (3, 1, 1),  -- Guest 789: One QuietComfort 45
-    (3, 3, 1),  -- Guest 789: One Studio Pro
-    (3, 2, 1);  -- Guest 789: One SoundSport Wireless
+    (1, 1, 1),
+    (1, 2, 2),
+    (2, 3, 1);
 
 -- Insert sample orders
 INSERT INTO "ORDER" (
@@ -70,25 +71,11 @@ INSERT INTO "ORDER" (
         '{"street": "123 Main St", "city": "Boston", "state": "MA", "zip": "02108"}',
         '{"street": "123 Main St", "city": "Boston", "state": "MA", "zip": "02108"}',
         '{"source": "web", "promo_code": "SUMMER2024"}'
-    ),
-    (
-        2,
-        '{"name": "Jane Smith", "phone": "+1-555-333-4444"}',
-        679.98,
-        'pending',
-        'pi_0987654321',
-        'cus_0987654321',
-        'jane.smith@example.com',
-        '{"street": "456 Oak Rd", "city": "Seattle", "state": "WA", "zip": "98101"}',
-        '{"street": "456 Oak Rd", "city": "Seattle", "state": "WA", "zip": "98101"}',
-        '{"source": "mobile", "gift_wrap": true}'
     );
 
 -- Insert order items
 INSERT INTO order_items (order_id, product_id, quantity, price_at_time) VALUES
-    (1, 1, 1, 299.99),  -- One QuietComfort 45
-    (2, 2, 2, 129.99),  -- Two SoundSport Wireless
-    (2, 3, 1, 349.99);  -- One Studio Pro
+    (1, 1, 1, 299.99);
 
 -- Insert payments
 INSERT INTO payment (
@@ -112,20 +99,30 @@ INSERT INTO payment (
         299.99,
         'USD',
         '{"risk_score": "low"}'
-    ),
-    (
-        2,
-        'credit_card',
-        'txn_0987654321',
-        'py_0987654321',
-        'processing',
-        '{"type": "card", "card": {"brand": "mastercard", "last4": "5555"}}',
-        679.98,
-        'USD',
-        '{"risk_score": "medium"}'
     );
 
--- Insert contact messages
-INSERT INTO contact_message (name, email, message, status, admin_response, responded_at, admin_id) VALUES
-    ('John Doe', 'john.doe@example.com', 'Question about QuietComfort 45 battery life', 'READ', 'The battery life is 24 hours with ANC on.', current_timestamp - interval '1 day', 1),
-    ('Jane Smith', 'jane.smith@example.com', 'International shipping inquiry', 'UNREAD', NULL, NULL, NULL);
+-- Insert contact messages with updated schema
+INSERT INTO contact_message (
+    name, 
+    email, 
+    message, 
+    status, 
+    message_date,
+    updated_at
+) VALUES
+    (
+        'John Doe',
+        'john.doe@example.com',
+        'Question about QuietComfort 45 battery life',
+        'UNREAD',
+        current_timestamp,
+        current_timestamp
+    ),
+    (
+        'Jane Smith',
+        'jane.smith@example.com',
+        'International shipping inquiry',
+        'UNREAD',
+        current_timestamp,
+        current_timestamp
+    );
