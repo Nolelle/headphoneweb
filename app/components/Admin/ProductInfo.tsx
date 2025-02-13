@@ -37,7 +37,7 @@ const ProductInfo: React.FC = () => {
   const product: Product = {
     product_id: 1,
     name: 'Bone+ Headphone',
-    price: 999.99,
+    price: 199.99,
     stock_quantity: 10,
     image_url: '/h_1.png'
   };
@@ -68,7 +68,7 @@ const ProductInfo: React.FC = () => {
   };
 
   return (
-    <div className='bg-[hsl(0_0%_3.9%)] px-4 sm:px-6 lg:px-8 pt-20'>
+    <div className='bg-[hsl(0_0%_3.9%)] px-4 sm:px-6 lg:px-8 py-8 lg:pt-20'>
       <h2 className="mb-4 text-4xl tracking-tight font-extrabold text-white">
         Product Information
       </h2>
@@ -124,21 +124,21 @@ const ProductInfo: React.FC = () => {
           </Button>
         </ul>
       </div>
-     
-      {/* Specifications Accordion */}
+
       <div className='-mt-10'>
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
               <a href="" ><Image src="/up_icon.png" width={30} height={30} alt="up"/></a>
             </TooltipTrigger>
-            <TooltipContent>
+            <TooltipContent  side="top" align="start">
               <p>Go to the top</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
       </div>
-      
+     
+      {/* Specifications Accordion */}      
       <Accordion type="single" collapsible className="">
         <AccordionItem value="item-1">
           <AccordionTrigger className='text-3xl tracking-tight font-extrabold text-white'>

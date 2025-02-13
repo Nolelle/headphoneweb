@@ -12,7 +12,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../ui/dialog";
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@radix-ui/react-tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/app/components/ui/tooltip"
 import { Label } from "../ui/label";
 import { CheckCircle2, ChevronUp } from "lucide-react";
 
@@ -79,7 +84,7 @@ const ContactForm: React.FC = () => {
 
   return (
     <section className="bg-[hsl(0_0%_3.9%)] text-[hsl(0_0%_98%)]">
-      <div className="py-8 lg:py-16 px-4 mx-auto max-w-screen-md">
+      <div className="py-8 lg:py-20 px-4 mx-auto max-w-screen-md">
         <h2 className="mb-4 text-4xl font-extrabold text-center text-[hsl(0_0%_98%)]">
           Contact Us
         </h2>
@@ -185,7 +190,7 @@ const ContactForm: React.FC = () => {
                     <TooltipTrigger asChild>
                       <a href="" ><Image src="/up_icon.png" width={30} height={30} alt="up"/></a>
                     </TooltipTrigger>
-                    <TooltipContent>
+                    <TooltipContent  side="top" align="start">
                       <p>Go to the top</p>
                     </TooltipContent>
                   </Tooltip>

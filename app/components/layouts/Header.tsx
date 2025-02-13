@@ -51,21 +51,21 @@ const Header = () => {
             <NavigationMenu className="hidden md:flex">
               <NavigationMenuList>
                 <NavigationMenuItem>
-                  <Link href="#about" legacyBehavior passHref>
+                  <Link href="/#about" legacyBehavior passHref>
                     <NavigationMenuLink className="px-3 py-2 text-[hsl(0_0%_98%)] hover:text-[hsl(0_0%_83.1%)]">
                       About Us
                     </NavigationMenuLink>
                   </Link>
                 </NavigationMenuItem>
                 <NavigationMenuItem>
-                  <Link href="#headphone" legacyBehavior passHref>
+                  <Link href="/#headphone" legacyBehavior passHref>
                     <NavigationMenuLink className="px-3 py-2 text-[hsl(0_0%_98%)] hover:text-[hsl(0_0%_83.1%)]">
                       Headphones
                     </NavigationMenuLink>
                   </Link>
                 </NavigationMenuItem>
                 <NavigationMenuItem>
-                  <Link href="#contact" legacyBehavior passHref>
+                  <Link href="/#contact" legacyBehavior passHref>
                     <NavigationMenuLink className="px-3 py-2 text-[hsl(0_0%_98%)] hover:text-[hsl(0_0%_83.1%)]">
                       Contact Us
                     </NavigationMenuLink>
