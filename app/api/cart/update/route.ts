@@ -1,12 +1,23 @@
+// app/api/cart/route.ts
 import { NextResponse } from "next/server";
 import pool from "@/db/helpers/db";
 
-export async function PUT(request: Request) {
+export async function POST(request: Request) {
   try {
-    const { sessionId, cartItemId, quantity } = await request.json();
+    const { sessionId, productId, quantity } = await request.json();
+    console.log("Cart API received request:", {
+      sessionId,
+      productId,
+      quantity
+    });
 
     // Validate input
-    if (!sessionId || !cartItemId || !quantity) {
+    if (!sessionId || !productId || !quantity) {
+      console.error("Missing required fields:", {
+        sessionId,
+        productId,
+        quantity
+      });
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
@@ -17,32 +28,44 @@ export async function PUT(request: Request) {
     const client = await pool.connect();
     try {
       await client.query("BEGIN");
+      console.log("Transaction started");
 
-      // Verify session ownership of cart item
-      const ownershipCheck = await client.query(
-        `SELECT ci.product_id, h.stock_quantity 
-         FROM cart_items ci
-         JOIN cart_session cs ON ci.session_id = cs.session_id
-         JOIN headphones h ON ci.product_id = h.product_id
-         WHERE cs.user_identifier = $1 AND ci.cart_item_id = $2`,
-        [sessionId, cartItemId]
+      // Get or create session
+      const sessionResult = await client.query(
+        `INSERT INTO cart_session (user_identifier)
+         VALUES ($1)
+         ON CONFLICT (user_identifier) DO UPDATE 
+         SET last_modified = CURRENT_TIMESTAMP
+         RETURNING session_id`,
+        [sessionId]
       );
+      console.log("Session result:", sessionResult.rows[0]);
 
-      if (ownershipCheck.rows.length === 0) {
-        throw new Error("Cart item not found or doesn't belong to session");
+      const session_id = sessionResult.rows[0].session_id;
+
+      // Check stock
+      const stockResult = await client.query(
+        "SELECT stock_quantity FROM headphones WHERE product_id = $1",
+        [productId]
+      );
+      console.log("Stock check result:", stockResult.rows[0]);
+
+      if (stockResult.rows.length === 0) {
+        throw new Error("Product not found");
       }
 
-      // Check stock availability
-      if (ownershipCheck.rows[0].stock_quantity < quantity) {
+      if (stockResult.rows[0].stock_quantity < quantity) {
         throw new Error("Insufficient stock");
       }
 
-      // Update quantity
+      // Add or update cart item
+      console.log("Adding/updating cart item");
       await client.query(
-        `UPDATE cart_items 
-         SET quantity = $1 
-         WHERE cart_item_id = $2`,
-        [quantity, cartItemId]
+        `INSERT INTO cart_items (session_id, product_id, quantity)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (session_id, product_id) 
+         DO UPDATE SET quantity = cart_items.quantity + EXCLUDED.quantity`,
+        [session_id, productId, quantity]
       );
 
       // Get updated cart
@@ -56,14 +79,14 @@ export async function PUT(request: Request) {
           h.stock_quantity,
           h.image_url
          FROM cart_items ci
-         JOIN cart_session cs ON ci.session_id = cs.session_id
          JOIN headphones h ON ci.product_id = h.product_id
-         WHERE cs.user_identifier = $1`,
-        [sessionId]
+         WHERE ci.session_id = $1`,
+        [session_id]
       );
+      console.log("Updated cart items:", result.rows);
 
       await client.query("COMMIT");
-      return NextResponse.json(result.rows);
+      return NextResponse.json({ items: result.rows });
     } catch (err) {
       await client.query("ROLLBACK");
       throw err;
@@ -71,10 +94,10 @@ export async function PUT(request: Request) {
       client.release();
     }
   } catch (error) {
-    console.error("Error updating cart:", error);
+    console.error("Error adding to cart:", error);
     return NextResponse.json(
       {
-        error: error instanceof Error ? error.message : "Failed to update cart"
+        error: error instanceof Error ? error.message : "Failed to add to cart"
       },
       { status: 500 }
     );

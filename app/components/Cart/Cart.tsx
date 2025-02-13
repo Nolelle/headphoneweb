@@ -1,4 +1,3 @@
-
 "use client"
 import React from "react";
 import Image from "next/image";
@@ -11,6 +10,7 @@ import { Separator } from "../ui/separator";
 import { Badge } from "../ui/badge";
 import { AspectRatio } from "../ui/aspect-ratio";
 import { Alert, AlertDescription } from "../ui/alert";
+import { toast } from "sonner";
 
 const Cart = () => {
   const { 
@@ -21,6 +21,40 @@ const Cart = () => {
     loadingItems,
     error 
   } = useCart();
+
+  const handleQuantityUpdate = async (cartItemId: number, newQuantity: number) => {
+    try {
+      if (newQuantity < 1) {
+        return;
+      }
+      
+      // Find the item to check stock
+      const item = items.find(i => i.cart_item_id === cartItemId);
+      if (!item) {
+        toast.error("Item not found");
+        return;
+      }
+
+      // Check stock limit
+      if (newQuantity > item.stock_quantity) {
+        toast.error(`Only ${item.stock_quantity} items available`);
+        return;
+      }
+
+      await updateQuantity(cartItemId, newQuantity);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to update quantity");
+    }
+  };
+
+  const handleRemoveItem = async (cartItemId: number) => {
+    try {
+      await removeItem(cartItemId);
+      toast.success("Item removed from cart");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to remove item");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[hsl(0_0%_3.9%)] mt-10">
@@ -77,7 +111,7 @@ const Cart = () => {
                         <Button
                           variant="outline"
                           size="icon"
-                          onClick={() => updateQuantity(item.cart_item_id, item.quantity - 1)}
+                          onClick={() => handleQuantityUpdate(item.cart_item_id, item.quantity - 1)}
                           disabled={item.quantity <= 1 || loadingItems[item.cart_item_id]}
                           className="h-8 w-8 bg-transparent border-[hsl(0_0%_14.9%)] hover:bg-[hsl(0_0%_14.9%)] hover:text-[hsl(0_0%_98%)]"
                         >
@@ -98,7 +132,7 @@ const Cart = () => {
                         <Button
                           variant="outline"
                           size="icon"
-                          onClick={() => updateQuantity(item.cart_item_id, item.quantity + 1)}
+                          onClick={() => handleQuantityUpdate(item.cart_item_id, item.quantity + 1)}
                           disabled={item.quantity >= item.stock_quantity || loadingItems[item.cart_item_id]}
                           className="h-8 w-8 bg-transparent border-[hsl(0_0%_14.9%)] hover:bg-[hsl(0_0%_14.9%)] hover:text-[hsl(0_0%_98%)]"
                         >
@@ -114,7 +148,7 @@ const Cart = () => {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => removeItem(item.cart_item_id)}
+                        onClick={() => handleRemoveItem(item.cart_item_id)}
                         disabled={loadingItems[item.cart_item_id]}
                         className="text-[hsl(0_62.8%_30.6%)] hover:text-[hsl(0_62.8%_40.6%)] hover:bg-transparent"
                       >
@@ -125,23 +159,18 @@ const Cart = () => {
                         )}
                       </Button>
                     </div>
-
                   </div>
                 </CardContent>
               </Card>
             ))}
 
-
             {/* Order Summary */}
             <Card className="bg-[hsl(0_0%_14.9%)] border-[hsl(0_0%_14.9%)]">
-
               <CardContent className="p-6">
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <span className="text-[hsl(0_0%_63.9%)]">Subtotal</span>
-
                     <span className="text-[hsl(0_0%_98%)]">${total.toFixed(2)}</span>
-
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-[hsl(0_0%_63.9%)]">Shipping</span>
