@@ -23,7 +23,7 @@ const Cart = () => {
   } = useCart();
 
   return (
-    <div className="min-h-screen bg-[hsl(0_0%_3.9%)]">
+    <div className="min-h-screen bg-[hsl(0_0%_3.9%)] mt-10">
       <div className="container mx-auto px-4 py-16">
         {/* Cart Header */}
         <div className="flex items-center justify-center gap-2 mb-12">

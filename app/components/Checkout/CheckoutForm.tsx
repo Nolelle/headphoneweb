@@ -86,7 +86,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onPaymentSuccess }) => {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-10">
       {/* Payment Form Section */}
       <Card className="bg-gray-900 border-gray-800">
         <CardHeader>
