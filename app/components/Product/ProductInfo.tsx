@@ -1,5 +1,5 @@
 'use client'
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Separator } from '@radix-ui/react-dropdown-menu';
 import { Carousel } from '@/app/components/ui/carousel';
 import { CarouselItem, CarouselContent, CarouselNext, CarouselPrevious } from '@/app/components/ui/carousel';
@@ -14,6 +14,7 @@ import {
 import Image from 'next/image';
 import { useCart } from '../Cart/CartContext';
 import { toast } from 'sonner';
+import { ChevronUp } from 'lucide-react';
 
 interface Product {
   product_id: number;
@@ -24,13 +25,18 @@ interface Product {
 }
 
 const ProductInfo: React.FC = () => {
-  // Get cart context
-  const { addItem, items } = useCart();
-  
-  // State for loading and error handling
   const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const { addItem } = useCart();
 
-  // Product details
+  const [showScrollToTop, setShowScrollToTop] = useState(false);
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollToTop(window.pageYOffset > 300);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   const product: Product = {
     product_id: 1,
     name: 'Bone+ Headphone',
@@ -39,39 +45,27 @@ const ProductInfo: React.FC = () => {
     image_url: '/h_1.png'
   };
 
-  // Check if product is already in cart
-  const cartItem = items.find(item => item.product_id === product.product_id);
-  const currentQuantity = cartItem?.quantity || 0;
-
   const handleAddToCart = async () => {
     if (isAddingToCart) return;
-
     try {
       setIsAddingToCart(true);
-      
-      // Check if adding one more would exceed stock
-      if (currentQuantity + 1 > product.stock_quantity) {
-        toast.error('Cannot add more of this item', {
-          description: `Only ${product.stock_quantity} units available`,
-        });
-        return;
-      }
-
-      // Add item to cart
       await addItem(product.product_id, 1);
-      
-      // Show success message
       toast.success('Added to cart', {
         description: `${product.name} has been added to your cart`,
+        duration: 3000,
       });
     } catch (error) {
-      console.error('Add to cart error:', error);
       toast.error('Failed to add to cart', {
-        description: error instanceof Error ? error.message : 'An error occurred',
+        description: error instanceof Error ? error.message : 'An error occurred while adding the item to cart',
+        duration: 4000,
       });
     } finally {
       setIsAddingToCart(false);
     }
+  };
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
@@ -80,20 +74,18 @@ const ProductInfo: React.FC = () => {
         Product Information
       </h2>
       <div className='flex text-white gap-32'>
-        {/* Product Image Carousel */}
         <Carousel className='mx-10 w-full max-w-[550px]'>
-          <CarouselContent>
-            <CarouselItem><Image src="/h_1.png" width={500} height={500} alt="icon 1"/></CarouselItem>
-            <CarouselItem><Image src="/h_2.png" width={500} height={500} alt="icon 2"/></CarouselItem>
-            <CarouselItem><Image src="/h_3.png" width={500} height={500} alt="icon 3"/></CarouselItem>
-            <CarouselItem><Image src="/h_4.png" width={500} height={500} alt="icon 4"/></CarouselItem>
-            <CarouselItem><Image src="/h_5.png" width={500} height={500} alt="icon 5"/></CarouselItem>
+          <CarouselContent className='flex'>
+            <CarouselItem><Image src="/h_1.png" width={500} height={500} alt="Bone+ Headphones Front View"/></CarouselItem>
+            <CarouselItem><Image src="/h_2.png" width={500} height={500} alt="Bone+ Headphones Side View"/></CarouselItem> 
+            <CarouselItem><Image src="/h_3.png" width={500} height={500} alt="Bone+ Headphones Detail View"/></CarouselItem>
+            <CarouselItem><Image src="/h_4.png" width={500} height={500} alt="Bone+ Headphones Wear View"/></CarouselItem>
+            <CarouselItem><Image src="/h_5.png" width={500} height={500} alt="Bone+ Headphones Lifestyle View"/></CarouselItem>
           </CarouselContent>
           <CarouselPrevious className='bg-black hover:bg-gradient-to-r from-[hsl(220_70%_50%)] to-[hsl(260,100%,77%)]'/>
           <CarouselNext className='bg-black hover:bg-gradient-to-r from-[hsl(220_70%_50%)] to-[hsl(260,100%,77%)] mr-10'/>
         </Carousel>
-
-        {/* Product Features */}
+          
         <ul className='list-disc text-white'>
           <li className='text-3xl tracking-tight font-extrabold text-white mb-3 -ml-6 list-none'>Features</li>
           <li className='text-2xl font-sans font-bold'>Super Lightweight</li>
@@ -112,23 +104,16 @@ const ProductInfo: React.FC = () => {
           <br />
           <li className='list-none text-2xl'>${product.price.toFixed(2)}</li>
           <br />
-          
-          {/* Add to Cart Button */}
           <Button 
             onClick={handleAddToCart}
-            disabled={isAddingToCart || currentQuantity >= product.stock_quantity}
-            className="w-52 bg-gradient-to-r from-[hsl(220_70%_50%)] to-[hsl(260,100%,77%)] text-[hsl(0_0%_98%)] 
-                     hover:opacity-80 transition-opacity rounded-xl p-3 relative"
+            disabled={isAddingToCart}
+            className="w-52 bg-gradient-to-r from-[hsl(220_70%_50%)] to-[hsl(260,100%,77%)] text-[hsl(0_0%_98%)] hover:opacity-80 transition-opacity rounded-xl p-3"
           >
             {isAddingToCart ? (
-              <>
-                <span className="opacity-0">Add to Cart</span>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-[hsl(0_0%_98%)] border-t-transparent" />
-                </div>
-              </>
-            ) : currentQuantity >= product.stock_quantity ? (
-              'Out of Stock'
+              <div className="flex items-center gap-2">
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-[hsl(0_0%_98%)] border-t-transparent" />
+                Adding...
+              </div>
             ) : (
               'Add to Cart'
             )}
@@ -136,22 +121,27 @@ const ProductInfo: React.FC = () => {
         </ul>
       </div>
 
-      {/* Scroll to Top */}
-      <div className='-mt-10'>
+      {showScrollToTop && (
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <a href="" ><Image src="/up_icon.png" width={30} height={30} alt="up"/></a>
+              <Button
+                variant="secondary"
+                size="icon"
+                className="fixed bottom-4 right-4 z-50 rounded-full bg-[hsl(0_0%_14.9%)] text-[hsl(0_0%_98%)] hover:bg-[hsl(0_0%_83.1%)] hover:text-[hsl(0_0%_3.9%)]"
+                onClick={scrollToTop}
+              >
+                <ChevronUp className="h-4 w-4" />
+              </Button>
             </TooltipTrigger>
-            <TooltipContent side="top" align="start">
-              <p>Go to the top</p>
+            <TooltipContent side="top" align="center">
+              <p>Scroll to top</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
-      </div>
-
-      {/* Specifications */}
-      <Accordion type="single" collapsible>
+      )}
+      
+      <Accordion type="single" collapsible className="">
         <AccordionItem value="item-1">
           <AccordionTrigger className='text-3xl tracking-tight font-extrabold text-white'>
             Specifications

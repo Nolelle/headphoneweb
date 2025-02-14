@@ -1,11 +1,11 @@
--- Clean existing data
+-- Clean existing data (if any)
 TRUNCATE TABLE contact_message, payment, order_items, "ORDER", cart_items, cart_session, admin, headphones CASCADE;
 
 -- Reset sequences
 ALTER SEQUENCE headphones_product_id_seq RESTART WITH 1;
 ALTER SEQUENCE admin_admin_id_seq RESTART WITH 1;
 ALTER SEQUENCE cart_session_session_id_seq RESTART WITH 1;
-ALTER SEQUENCE cart_items_cart_item_id_seq RESTART WITH 1;
+ALTER SEQUENCE cart_items_cart_item_id_seq RESTART WITH 1::bigint;
 ALTER SEQUENCE "ORDER_order_id_seq" RESTART WITH 1;
 ALTER SEQUENCE order_items_order_item_id_seq RESTART WITH 1;
 ALTER SEQUENCE payment_payment_id_seq RESTART WITH 1;
@@ -23,12 +23,13 @@ INSERT INTO headphones (name, price, description, image_url, stock_quantity) VAL
      '/h_1.png',
      50);
 
--- Insert sample contact messages
-INSERT INTO contact_message (name, email, message, status) VALUES
-    ('John Smith', 'john.smith@example.com', 'I would like to know more about the battery life of your headphones.', 'UNREAD'),
-    ('Sarah Johnson', 'sarah.j@example.com', 'Do you ship internationally?', 'UNREAD');
+-- Insert sample contact messages with the new message_date column
+INSERT INTO contact_message (name, email, message, message_date, status) VALUES
+    ('John Smith', 'john.smith@example.com', 'I would like to know more about the battery life of your headphones.', CURRENT_TIMESTAMP, 'UNREAD'),
+    ('Sarah Johnson', 'sarah.j@example.com', 'Do you ship internationally?', CURRENT_TIMESTAMP, 'UNREAD');
 
 -- Sample data below this line is optional and can be used for testing
+
 -- Insert a sample cart session
 INSERT INTO cart_session (user_identifier) VALUES
     ('test-session-123');

@@ -47,7 +47,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     options: RequestInit
   ): Promise<CartResponse> => {
     try {
-      logDebug(`API Request to ${url}`, options);
       const response = await fetch(url, {
         ...options,
         headers: {
@@ -55,20 +54,68 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           ...options.headers,
         },
       });
-
-      const data = await response.json();
-      logDebug('API Response', data);
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Operation failed');
+  
+      // Add error logging to help debug
+      const responseText = await response.text();
+      
+      let data;
+      try {
+        // Only try to parse if we have content
+        data = responseText ? JSON.parse(responseText) : null;
+      } catch (parseError) {
+        console.error('JSON Parse Error:', {
+          responseText,
+          status: response.status,
+          url: response.url
+        });
+        throw new Error('Invalid response from server');
       }
-
+  
+      if (!response.ok) {
+        throw new Error(data?.error || `Server error: ${response.status}`);
+      }
+  
+      if (!data) {
+        throw new Error('Empty response from server');
+      }
+  
       return data;
     } catch (err) {
-      logDebug('API Error', err);
+      console.error('API Error:', {
+        url,
+        error: err,
+        method: options.method
+      });
       throw new Error(err instanceof Error ? err.message : 'Operation failed');
     }
   };
+  // const fetchWithErrorHandling = async (
+  //   url: string, 
+  //   options: RequestInit
+  // ): Promise<CartResponse> => {
+  //   try {
+  //     logDebug(`API Request to ${url}`, options);
+  //     const response = await fetch(url, {
+  //       ...options,
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //         ...options.headers,
+  //       },
+  //     });
+
+  //     const data = await response.json();
+  //     logDebug('API Response', data);
+
+  //     if (!response.ok) {
+  //       throw new Error(data.error || 'Operation failed');
+  //     }
+
+  //     return data;
+  //   } catch (err) {
+  //     logDebug('API Error', err);
+  //     throw new Error(err instanceof Error ? err.message : 'Operation failed');
+  //   }
+  // };
 
   // Initialize cart and load existing items
   useEffect(() => {
@@ -111,57 +158,25 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   // Add item to cart
   const addItem = async (productId: number, quantity: number) => {
     if (!sessionId) {
-      setError('Cart not initialized');
-      return;
+      throw new Error('Cart not initialized');
     }
-
-    logDebug('Adding item', { productId, quantity });
-    
+  
     try {
       setItemLoading(productId, true);
       setError(null);
-
-      // Create optimistic update
-      const optimisticItem: CartItem = {
-        cart_item_id: Date.now(), // Temporary ID
-        product_id: productId,
-        name: "Bone+ Headphones",
-        price: 199.99,
-        quantity: quantity,
-        stock_quantity: 100,
-        image_url: "/h_1.png"
-      };
-
-      // Update local state immediately
-      setItems(prev => {
-        const existingItem = prev.find(item => item.product_id === productId);
-        if (existingItem) {
-          return prev.map(item =>
-            item.product_id === productId
-              ? { ...item, quantity: item.quantity + quantity }
-              : item
-          );
-        }
-        return [...prev, optimisticItem];
-      });
-
-      // Sync with backend
+  
+      // We'll remove the optimistic update since we need the real DB IDs
       const data = await fetchWithErrorHandling('/api/cart', {
         method: 'POST',
         body: JSON.stringify({ sessionId, productId, quantity })
       });
-
+  
       if (data.items) {
         setItems(data.items);
       }
-      
-      logDebug('Item added successfully', data.items);
     } catch (err) {
-      logDebug('Add item error', err);
-      // Revert optimistic update on error
-      setItems(prev => prev.filter(item => item.cart_item_id !== Date.now()));
       setError(err instanceof Error ? err.message : 'Failed to add item');
-      throw err; // Re-throw for component handling
+      throw err;
     } finally {
       setItemLoading(productId, false);
     }
@@ -208,57 +223,45 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Update item quantity
+  
   const updateQuantity = async (cartItemId: number, quantity: number) => {
+    console.log('Starting quantity update:', { cartItemId, quantity });
+    
     if (!sessionId) {
-      setError('Cart not initialized');
-      return;
+      throw new Error('Cart not initialized');
     }
-
-    if (quantity < 1) {
-      setError('Quantity must be at least 1');
-      return;
-    }
-
-    logDebug('Updating quantity', { cartItemId, quantity });
+  
+    const previousItems = [...items];
     
     try {
       setItemLoading(cartItemId, true);
       setError(null);
-
-      // Store current state for potential rollback
-      const previousItems = [...items];
-      
-      // Optimistic update
-      setItems(items.map(item =>
-        item.cart_item_id === cartItemId
-          ? { ...item, quantity }
-          : item
-      ));
-
-      // Sync with backend
+  
+      console.log('Making API request with:', {
+        sessionId,
+        cartItemId,
+        quantity
+      });
+  
       const data = await fetchWithErrorHandling('/api/cart/update', {
         method: 'PUT',
         body: JSON.stringify({ sessionId, cartItemId, quantity })
       });
-
+  
+      console.log('Received API response:', data);
+  
       if (data.items) {
         setItems(data.items);
       }
-      
-      logDebug('Quantity updated successfully', data.items);
     } catch (err) {
-      logDebug('Update quantity error', err);
-      // Rollback on error
+      console.error('Update failed:', err);
       setItems(previousItems);
-      setError(err instanceof Error ? err.message : 'Failed to update quantity');
       throw err;
     } finally {
       setItemLoading(cartItemId, false);
     }
   };
 
-  // Clear entire cart
   const clearCart = async () => {
     if (!sessionId) {
       setError('Cart not initialized');

@@ -40,7 +40,7 @@ CREATE TABLE cart_session (
 
 -- Create the CART_ITEMS table - Matches your cart functionality
 CREATE TABLE cart_items (
-    cart_item_id SERIAL PRIMARY KEY,
+    cart_item_id BIGSERIAL PRIMARY KEY,  -- Changed from serial to bigserial
     session_id INTEGER REFERENCES cart_session(session_id) ON DELETE CASCADE,
     product_id INTEGER REFERENCES headphones(product_id) ON DELETE CASCADE,
     quantity INTEGER NOT NULL CHECK (quantity > 0),
@@ -83,12 +83,13 @@ CREATE TABLE payment (
     CONSTRAINT valid_payment_status CHECK (payment_status IN ('pending', 'processing', 'succeeded', 'failed', 'refunded'))
 );
 
--- Create the CONTACT_MESSAGE table - Matches your contact form
+-- Create the CONTACT_MESSAGE table - Updated to include message_date column
 CREATE TABLE contact_message (
     message_id SERIAL PRIMARY KEY,
     name VARCHAR(255),
     email VARCHAR(255) NOT NULL,
     message TEXT NOT NULL,
+    message_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,  -- New column for message-specific date
     status VARCHAR(20) DEFAULT 'UNREAD',
     admin_response TEXT,
     responded_at TIMESTAMP WITH TIME ZONE,
@@ -103,14 +104,14 @@ CREATE INDEX idx_order_payment_intent ON "ORDER"(payment_intent_id);
 CREATE INDEX idx_payment_stripe_id ON payment(stripe_payment_id);
 CREATE INDEX idx_contact_message_status ON contact_message(status);
 
--- Create update timestamp triggers
+-- Create update timestamp trigger function
 CREATE OR REPLACE FUNCTION update_timestamp()
 RETURNS TRIGGER AS $$
 BEGIN
     NEW.updated_at = CURRENT_TIMESTAMP;
     RETURN NEW;
 END;
-$$ language 'plpgsql';
+$$ LANGUAGE plpgsql;
 
 -- Apply update timestamp triggers
 CREATE TRIGGER update_headphones_timestamp

@@ -23,35 +23,39 @@ const Cart = () => {
   } = useCart();
 
   const handleQuantityUpdate = async (cartItemId: number, newQuantity: number) => {
+    // Define validation checks first
+    if (newQuantity < 1) {
+      toast.error("Quantity must be at least 1");
+      return;
+    }
+    
+    const item = items.find(i => i.cart_item_id === cartItemId);
+    if (!item) {
+      toast.error("Item not found");
+      return;
+    }
+  
+    if (newQuantity > item.stock_quantity) {
+      toast.error(`Only ${item.stock_quantity} items available`);
+      return;
+    }
+  
     try {
-      if (newQuantity < 1) {
-        return;
-      }
-      
-      // Find the item to check stock
-      const item = items.find(i => i.cart_item_id === cartItemId);
-      if (!item) {
-        toast.error("Item not found");
-        return;
-      }
-
-      // Check stock limit
-      if (newQuantity > item.stock_quantity) {
-        toast.error(`Only ${item.stock_quantity} items available`);
-        return;
-      }
-
+      // Wrap the updateQuantity call in a try-catch
       await updateQuantity(cartItemId, newQuantity);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to update quantity");
+      // No success toast needed since the UI updates visually
+    } catch (error) {
+      // Handle any errors thrown by the context
+      toast.error(error instanceof Error ? error.message : "Failed to update quantity");
     }
   };
 
   const handleRemoveItem = async (cartItemId: number) => {
     try {
       await removeItem(cartItemId);
-      toast.success("Item removed from cart");
+      // Remove the success toast since the item disappears from the UI
     } catch (err) {
+      // Keep error toast for unexpected failures
       toast.error(err instanceof Error ? err.message : "Failed to remove item");
     }
   };

@@ -1,71 +1,59 @@
-// app/api/cart/route.ts
 import { NextResponse } from "next/server";
 import pool from "@/db/helpers/db";
 
-export async function POST(request: Request) {
+export async function PUT(request: Request) {
   try {
-    const { sessionId, productId, quantity } = await request.json();
-    console.log("Cart API received request:", {
+    const { sessionId, cartItemId, quantity } = await request.json();
+    console.log("Cart update API received request:", {
       sessionId,
-      productId,
+      cartItemId,
       quantity
     });
 
-    // Validate input
-    if (!sessionId || !productId || !quantity) {
-      console.error("Missing required fields:", {
-        sessionId,
-        productId,
-        quantity
-      });
+    // Validate input and convert cartItemId to a number if it's a string
+    if (!sessionId || !cartItemId || !quantity) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
       );
     }
 
-    // Start a transaction
+    // Ensure cartItemId is a valid number
+    const parsedCartItemId = parseInt(cartItemId.toString(), 10);
+    if (isNaN(parsedCartItemId)) {
+      return NextResponse.json(
+        { error: "Invalid cart item ID" },
+        { status: 400 }
+      );
+    }
+
     const client = await pool.connect();
     try {
       await client.query("BEGIN");
-      console.log("Transaction started");
 
-      // Get or create session
-      const sessionResult = await client.query(
-        `INSERT INTO cart_session (user_identifier)
-         VALUES ($1)
-         ON CONFLICT (user_identifier) DO UPDATE 
-         SET last_modified = CURRENT_TIMESTAMP
-         RETURNING session_id`,
-        [sessionId]
+      // Verify cart item exists and belongs to session
+      const verifyResult = await client.query(
+        `SELECT ci.cart_item_id 
+         FROM cart_items ci
+         JOIN cart_session cs ON ci.session_id = cs.session_id
+         WHERE cs.user_identifier = $1 
+         AND ci.cart_item_id = $2`,
+        [sessionId, parsedCartItemId]
       );
-      console.log("Session result:", sessionResult.rows[0]);
 
-      const session_id = sessionResult.rows[0].session_id;
-
-      // Check stock
-      const stockResult = await client.query(
-        "SELECT stock_quantity FROM headphones WHERE product_id = $1",
-        [productId]
-      );
-      console.log("Stock check result:", stockResult.rows[0]);
-
-      if (stockResult.rows.length === 0) {
-        throw new Error("Product not found");
+      if (verifyResult.rows.length === 0) {
+        throw new Error("Cart item not found or doesn't belong to session");
       }
 
-      if (stockResult.rows[0].stock_quantity < quantity) {
-        throw new Error("Insufficient stock");
-      }
-
-      // Add or update cart item
-      console.log("Adding/updating cart item");
+      // Update quantity
       await client.query(
-        `INSERT INTO cart_items (session_id, product_id, quantity)
-         VALUES ($1, $2, $3)
-         ON CONFLICT (session_id, product_id) 
-         DO UPDATE SET quantity = cart_items.quantity + EXCLUDED.quantity`,
-        [session_id, productId, quantity]
+        `UPDATE cart_items ci
+         SET quantity = $1
+         FROM cart_session cs
+         WHERE ci.session_id = cs.session_id
+         AND cs.user_identifier = $2
+         AND ci.cart_item_id = $3`,
+        [quantity, sessionId, parsedCartItemId]
       );
 
       // Get updated cart
@@ -79,11 +67,11 @@ export async function POST(request: Request) {
           h.stock_quantity,
           h.image_url
          FROM cart_items ci
+         JOIN cart_session cs ON ci.session_id = cs.session_id
          JOIN headphones h ON ci.product_id = h.product_id
-         WHERE ci.session_id = $1`,
-        [session_id]
+         WHERE cs.user_identifier = $1`,
+        [sessionId]
       );
-      console.log("Updated cart items:", result.rows);
 
       await client.query("COMMIT");
       return NextResponse.json({ items: result.rows });
@@ -94,10 +82,10 @@ export async function POST(request: Request) {
       client.release();
     }
   } catch (error) {
-    console.error("Error adding to cart:", error);
+    console.error("Error updating cart:", error);
     return NextResponse.json(
       {
-        error: error instanceof Error ? error.message : "Failed to add to cart"
+        error: error instanceof Error ? error.message : "Failed to update cart"
       },
       { status: 500 }
     );
