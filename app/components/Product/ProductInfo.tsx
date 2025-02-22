@@ -16,6 +16,7 @@ import { useCart } from '../Cart/CartContext';
 import { toast } from 'sonner';
 import { ChevronUp } from 'lucide-react';
 
+// Interface defining the structure of a product
 interface Product {
   product_id: number;
   name: string;
@@ -25,9 +26,11 @@ interface Product {
 }
 
 const ProductInfo: React.FC = () => {
+  // State management for adding to cart and scroll to top
   const [isAddingToCart, setIsAddingToCart] = useState(false);
-  const { addItem } = useCart();
+  const { addItem, items } = useCart(); // Include 'items' to track current cart state
 
+  // Scroll to top functionality
   const [showScrollToTop, setShowScrollToTop] = useState(false);
   useEffect(() => {
     const handleScroll = () => {
@@ -37,6 +40,7 @@ const ProductInfo: React.FC = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Product details hardcoded for now
   const product: Product = {
     product_id: 1,
     name: 'Bone+ Headphone',
@@ -45,25 +49,56 @@ const ProductInfo: React.FC = () => {
     image_url: '/h_1.png'
   };
 
+  // Handler for adding item to cart with robust error handling
   const handleAddToCart = async () => {
     if (isAddingToCart) return;
+    
     try {
       setIsAddingToCart(true);
+      
+      const stockResponse = await fetch('/api/products/check-stock', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ 
+          id: product.product_id, 
+          quantity: 1 
+        })
+      });
+  
+      // More robust response handling
+      const responseText = await stockResponse.text();
+      console.log('Stock check raw response:', responseText);
+  
+      let stockData;
+      try {
+        stockData = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('Response parsing error:', {
+          responseText,
+          parseError
+        });
+        throw new Error('Invalid server response');
+      }
+  
+      if (!stockResponse.ok) {
+        throw new Error(stockData.error || 'Stock check failed');
+      }
+  
+      // Proceed with cart addition
       await addItem(product.product_id, 1);
-      toast.success('Added to cart', {
-        description: `${product.name} has been added to your cart`,
-        duration: 3000,
-      });
+      
+      toast.success('Added to cart');
     } catch (error) {
-      toast.error('Failed to add to cart', {
-        description: error instanceof Error ? error.message : 'An error occurred while adding the item to cart',
-        duration: 4000,
-      });
+      console.error('Add to cart error:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to add to cart');
     } finally {
       setIsAddingToCart(false);
     }
   };
 
+  // Scroll to top functionality
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };

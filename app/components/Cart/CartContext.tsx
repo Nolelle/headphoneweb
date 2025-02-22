@@ -89,6 +89,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       throw new Error(err instanceof Error ? err.message : 'Operation failed');
     }
   };
+
   // const fetchWithErrorHandling = async (
   //   url: string, 
   //   options: RequestInit
@@ -135,10 +136,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
         // Fetch existing cart items
         const response = await fetch(`/api/cart?sessionId=${currentSessionId}`);
-        const cartItems = await response.json();
+        const data = await response.json();
         
-        logDebug('Loaded initial cart items', cartItems);
-        setItems(cartItems);
+        logDebug('Loaded initial cart items', data);
+        setItems(data.items || []);
       } catch (err) {
         logDebug('Initialization error', err);
         setError(err instanceof Error ? err.message : 'Failed to initialize cart');
