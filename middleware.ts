@@ -14,6 +14,11 @@ const publicPaths = [
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Allow Stripe webhook requests to bypass CSRF protection
+  if (request.nextUrl.pathname === "/api/stripe/webhook") {
+    return NextResponse.next();
+  }
+
   // Function to check if path is public
   const isPublicPath = (path: string) => {
     return publicPaths.some(

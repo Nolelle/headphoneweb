@@ -20,7 +20,6 @@ export default function Checkout() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Redirect if cart is empty
     if (items.length === 0) {
       router.push("/cart");
       return;
@@ -52,11 +51,6 @@ export default function Checkout() {
         }
     
         const data = await response.json();
-        
-        if (!data.clientSecret) {
-          throw new Error("No client secret received");
-        }
-    
         setClientSecret(data.clientSecret);
       } catch (err) {
         console.error("Payment Intent creation failed:", err);
@@ -64,10 +58,10 @@ export default function Checkout() {
       } finally {
         setIsLoading(false);
       }
-    }; 
+    };
 
     createPaymentIntent();
-  }, [items, router, total]);
+  }, [items, router]);
 
   if (isLoading) {
     return (
@@ -106,6 +100,51 @@ export default function Checkout() {
     }
   };
 
+  const createPaymentIntent = async (email: string) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+  
+      const response = await fetch("/api/stripe/payment-intent", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          items: items.map(item => ({
+            product_id: item.product_id,
+            quantity: item.quantity,
+            price: item.price,
+            name: item.name
+          })),
+          email: email
+        })
+      });
+    
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to create payment intent");
+      }
+    
+      const data = await response.json();
+      
+      if (!data.clientSecret) {
+        throw new Error("No client secret received");
+      }
+    
+      setClientSecret(data.clientSecret);
+    } catch (err) {
+      console.error("Payment Intent creation failed:", err);
+      setError(err instanceof Error ? err.message : "An error occurred");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleFormSubmit = async (email: string) => {
+    await createPaymentIntent(email);
+  };
+
   return (
     <div className="min-h-screen bg-[hsl(0_0%_3.9%)]">
       <div className="container mx-auto px-4 py-8">
@@ -117,7 +156,7 @@ export default function Checkout() {
               appearance
             }}
           >
-            <CheckoutForm />
+            <CheckoutForm onSubmit={handleFormSubmit} />
           </Elements>
         )}
       </div>

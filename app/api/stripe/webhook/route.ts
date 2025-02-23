@@ -11,11 +11,10 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
 export async function POST(request: Request) {
-  try {
-    // Get the raw body
-    const body = await request.text();
+  console.log("Webhook received"); // Add logging
 
-    // Get headers using the async headers() function
+  try {
+    const body = await request.text();
     const headersList = await headers();
     const stripeSignature = headersList.get("stripe-signature");
 
@@ -40,21 +39,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
     }
 
-    // Handle different webhook events
+    console.log("Webhook event type:", event.type); // Add logging
+
     if (event.type === "payment_intent.succeeded") {
       const paymentIntent = event.data.object as Stripe.PaymentIntent;
       console.log("Processing successful payment:", paymentIntent.id);
 
-      // Begin database transaction
       const client = await pool.connect();
       try {
         await client.query("BEGIN");
 
-        // Parse the metadata string back to an object
         const orderItems = JSON.parse(
           paymentIntent.metadata.order_items || "[]"
         );
-        console.log("Order items:", orderItems);
 
         // Create order record
         const orderResult = await client.query(
@@ -62,15 +59,13 @@ export async function POST(request: Request) {
             total_price, 
             status, 
             payment_intent_id,
-            email,
-            metadata
-          ) VALUES ($1, $2, $3, $4, $5) RETURNING order_id`,
+            email
+          ) VALUES ($1, $2, $3, $4) RETURNING order_id`,
           [
             paymentIntent.amount / 100,
             "paid",
             paymentIntent.id,
-            paymentIntent.receipt_email,
-            JSON.stringify(paymentIntent.metadata)
+            paymentIntent.receipt_email || null
           ]
         );
 
@@ -138,11 +133,7 @@ export async function POST(request: Request) {
       }
     }
 
-    // Return a 200 response to acknowledge receipt of the event
-    return NextResponse.json({
-      received: true,
-      type: event.type
-    });
+    return NextResponse.json({ received: true, type: event.type });
   } catch (err) {
     console.error("Webhook handler failed:", err);
     return NextResponse.json(
