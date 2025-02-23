@@ -10,7 +10,7 @@ import { Separator } from "../ui/separator";
 import { Badge } from "../ui/badge";
 import { AspectRatio } from "../ui/aspect-ratio";
 import { Alert, AlertDescription } from "../ui/alert";
-import { toast } from "sonner";
+import { toast } from 'sonner'
 
 const Cart = () => {
   const { 
@@ -23,7 +23,6 @@ const Cart = () => {
   } = useCart();
 
   const handleQuantityUpdate = async (cartItemId: number, newQuantity: number) => {
-    // Define validation checks first
     if (newQuantity < 1) {
       toast.error("Quantity must be at least 1");
       return;
@@ -41,11 +40,8 @@ const Cart = () => {
     }
   
     try {
-      // Wrap the updateQuantity call in a try-catch
       await updateQuantity(cartItemId, newQuantity);
-      // No success toast needed since the UI updates visually
     } catch (error) {
-      // Handle any errors thrown by the context
       toast.error(error instanceof Error ? error.message : "Failed to update quantity");
     }
   };
@@ -53,9 +49,7 @@ const Cart = () => {
   const handleRemoveItem = async (cartItemId: number) => {
     try {
       await removeItem(cartItemId);
-      // Remove the success toast since the item disappears from the UI
     } catch (err) {
-      // Keep error toast for unexpected failures
       toast.error(err instanceof Error ? err.message : "Failed to remove item");
     }
   };

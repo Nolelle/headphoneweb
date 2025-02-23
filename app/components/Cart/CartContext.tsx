@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { v4 as uuidv4 } from 'uuid';
 import { CartItem, CartResponse } from "./CartTypes";
+import { toast } from 'sonner'
 
 // Define the shape of our cart context
 interface CartContextType {
@@ -159,12 +160,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   // Remove item from cart
   const removeItem = async (cartItemId: number) => {
     if (!sessionId) {
-      setError('Cart not initialized');
+      toast.error("Cart not initialized");
       return;
     }
 
-    logDebug('Removing item', { cartItemId });
-    
     try {
       setItemLoading(cartItemId, true);
       setError(null);
@@ -175,22 +174,19 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       // Optimistic update
       setItems(items.filter(item => item.cart_item_id !== cartItemId));
 
-      // Sync with backend
-      const data = await fetchWithErrorHandling('/api/cart/remove', {
-        method: 'DELETE',
-        body: JSON.stringify({ sessionId, cartItemId })
+      // Changed from '/api/cart/remove' to '/api/cart/remove/route'
+      const data = await fetchWithErrorHandling(`/api/cart/remove?sessionId=${sessionId}&cartItemId=${cartItemId}`, {
+        method: 'DELETE'
       });
 
       if (data.items) {
         setItems(data.items);
+        toast.success("Item removed from cart");
       }
-      
-      logDebug('Item removed successfully', data.items);
     } catch (err) {
       logDebug('Remove item error', err);
-      // Rollback on error
       setItems(previousItems);
-      setError(err instanceof Error ? err.message : 'Failed to remove item');
+      toast.error(err instanceof Error ? err.message : "Failed to remove item");
       throw err;
     } finally {
       setItemLoading(cartItemId, false);
@@ -316,3 +312,33 @@ export function useCart() {
   }
   return context;
 }
+
+const removeFromCart = async (cartItemId: string) => {
+  try {
+    // Store previous items before removal
+    const previousItems = [...items];
+    
+    // Optimistically update UI
+    setItems(items.filter(item => item.cart_item_id !== cartItemId));
+
+    const response = await fetchWithErrorHandling(
+      `/api/cart/remove?sessionId=${sessionId}&cartItemId=${cartItemId}`,
+      {
+        method: "DELETE"
+      }
+    );
+
+    if (!response?.items) {
+      // Revert to previous state if API call fails
+      setItems(previousItems);
+      throw new Error("Failed to remove item from cart");
+    }
+
+    // Update with server response
+    setItems(response.items);
+    toast.success("Item removed from cart");
+  } catch (error) {
+    toast.error(error instanceof Error ? error.message : "Failed to remove item");
+    console.error("Failed to remove item from cart:", error);
+  }
+};
