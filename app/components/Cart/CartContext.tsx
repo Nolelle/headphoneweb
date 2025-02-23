@@ -90,33 +90,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // const fetchWithErrorHandling = async (
-  //   url: string, 
-  //   options: RequestInit
-  // ): Promise<CartResponse> => {
-  //   try {
-  //     logDebug(`API Request to ${url}`, options);
-  //     const response = await fetch(url, {
-  //       ...options,
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //         ...options.headers,
-  //       },
-  //     });
-
-  //     const data = await response.json();
-  //     logDebug('API Response', data);
-
-  //     if (!response.ok) {
-  //       throw new Error(data.error || 'Operation failed');
-  //     }
-
-  //     return data;
-  //   } catch (err) {
-  //     logDebug('API Error', err);
-  //     throw new Error(err instanceof Error ? err.message : 'Operation failed');
-  //   }
-  // };
 
   // Initialize cart and load existing items
   useEffect(() => {
