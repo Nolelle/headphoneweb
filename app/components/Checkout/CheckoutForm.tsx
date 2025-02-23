@@ -48,6 +48,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSubmit }) => {
     setError(null);
 
     try {
+      // First create the payment intent with the email
       const { error: submitError } = await elements.submit();
       if (submitError) {
         throw new Error(submitError.message);

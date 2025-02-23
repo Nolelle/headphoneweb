@@ -45,6 +45,13 @@ export async function POST(request: Request) {
       const paymentIntent = event.data.object as Stripe.PaymentIntent;
       console.log("Processing successful payment:", paymentIntent.id);
 
+      // Get the payment method to access billing details
+      const paymentMethod = await stripe.paymentMethods.retrieve(
+        paymentIntent.payment_method as string
+      );
+
+      const email = paymentMethod.billing_details.email;
+
       const client = await pool.connect();
       try {
         await client.query("BEGIN");
@@ -53,7 +60,7 @@ export async function POST(request: Request) {
           paymentIntent.metadata.order_items || "[]"
         );
 
-        // Create order record
+        // Create order record with email from payment method
         const orderResult = await client.query(
           `INSERT INTO "ORDER" (
             total_price, 
@@ -61,12 +68,7 @@ export async function POST(request: Request) {
             payment_intent_id,
             email
           ) VALUES ($1, $2, $3, $4) RETURNING order_id`,
-          [
-            paymentIntent.amount / 100,
-            "paid",
-            paymentIntent.id,
-            paymentIntent.receipt_email || null
-          ]
+          [paymentIntent.amount / 100, "paid", paymentIntent.id, email]
         );
 
         const orderId = orderResult.rows[0].order_id;
