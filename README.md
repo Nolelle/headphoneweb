@@ -1,3 +1,17 @@
+# HeadphoneWeb 🎧
+
+An e-commerce platform for premium headphones built with Next.js.
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Node.js (v18 or higher)
+- PostgreSQL
+- Stripe CLI (for payment processing)
+
+### Database Setup
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
@@ -43,3 +57,63 @@ user = myuser
 password  = mypassword
 
 psql command: psql -d headphoneweb -U myuser
+
+Stripe web hook listener command local = stripe listen --forward-to localhost:3000/api/stripe/webhook
+
+### Installation
+
+1. Clone the repository:
+
+```bash
+git clone [your-repo-url]
+cd headphoneweb
+```
+
+2. Install dependencies:
+
+```bash
+npm install
+```
+
+3. Start the development server:
+
+```bash
+npm run dev
+```
+
+4. Start Stripe webhook listener (in a separate terminal):
+
+```bash
+stripe listen --forward-to localhost:3000/api/stripe/webhook
+```
+
+Visit [http://localhost:3000](http://localhost:3000) to view the application.
+
+## 🛠 Tech Stack
+
+- **Framework**: [Next.js 14](https://nextjs.org/)
+- **Database**: PostgreSQL
+- **Payment Processing**: Stripe
+- **Styling**: Tailwind CSS
+- **Font**: Geist (via next/font)
+
+## 📚 Documentation
+
+For more information about the technologies used:
+
+- [Next.js Documentation](https://nextjs.org/docs)
+- [Next.js Learning Guide](https://nextjs.org/learn)
+- [PostgreSQL Documentation](https://www.postgresql.org/docs/)
+- [Stripe Documentation](https://stripe.com/docs)
+
+## 🚀 Deployment
+
+Deploy easily with [Vercel](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme), the platform from the creators of Next.js.
+
+## 🤝 Contributing
+
+Contributions, issues, and feature requests are welcome! Feel free to check the [issues page](your-issues-url).
+
+## 📝 License
+
+This project is licensed under the [MIT License](LICENSE).

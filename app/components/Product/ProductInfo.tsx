@@ -1,5 +1,5 @@
 'use client'
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Separator } from '@radix-ui/react-dropdown-menu';
 import { Carousel } from '@/app/components/ui/carousel';
 import { CarouselItem, CarouselContent, CarouselNext, CarouselPrevious } from '@/app/components/ui/carousel';
@@ -13,11 +13,10 @@ import {
 } from "@/app/components/ui/tooltip"
 import Image from 'next/image';
 import { useCart } from '../Cart/CartContext';
-// Import toast from sonner for notifications
 import { toast } from 'sonner';
+import { ChevronUp } from 'lucide-react';
 
-// Define the Product interface for type safety
-
+// Interface defining the structure of a product
 interface Product {
   product_id: number;
   name: string;
@@ -27,13 +26,21 @@ interface Product {
 }
 
 const ProductInfo: React.FC = () => {
-  // Get addItem function from cart context
-  const { addItem } = useCart();
-  
-  // State to manage loading state during cart addition
+  // State management for adding to cart and scroll to top
   const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const { addItem, items } = useCart(); // Include 'items' to track current cart state
 
-  // Product details - in a real app, this would likely come from a database or API
+  // Scroll to top functionality
+  const [showScrollToTop, setShowScrollToTop] = useState(false);
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollToTop(window.pageYOffset > 300);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Product details hardcoded for now
   const product: Product = {
     product_id: 1,
     name: 'Bone+ Headphone',
@@ -42,29 +49,58 @@ const ProductInfo: React.FC = () => {
     image_url: '/h_1.png'
   };
 
-  // Handler for adding item to cart with enhanced error handling and feedback
+  // Handler for adding item to cart with robust error handling
   const handleAddToCart = async () => {
+    if (isAddingToCart) return;
+    
     try {
       setIsAddingToCart(true);
       
-      // Add item to cart - quantity hardcoded to 1 for now
+      const stockResponse = await fetch('/api/products/check-stock', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ 
+          id: product.product_id, 
+          quantity: 1 
+        })
+      });
+  
+      // More robust response handling
+      const responseText = await stockResponse.text();
+      console.log('Stock check raw response:', responseText);
+  
+      let stockData;
+      try {
+        stockData = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('Response parsing error:', {
+          responseText,
+          parseError
+        });
+        throw new Error('Invalid server response');
+      }
+  
+      if (!stockResponse.ok) {
+        throw new Error(stockData.error || 'Stock check failed');
+      }
+  
+      // Proceed with cart addition
       await addItem(product.product_id, 1);
       
-      // Show success message with product details
-      toast.success('Added to cart', {
-        description: `${product.name} has been added to your cart`,
-        duration: 3000,
-      });
+      toast.success('Added to cart');
     } catch (error) {
-      // Show detailed error message
-      toast.error('Failed to add to cart', {
-        description: error instanceof Error ? error.message : 'An error occurred while adding the item to cart',
-        duration: 4000,
-      });
+      console.error('Add to cart error:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to add to cart');
     } finally {
-      // Reset loading state whether successful or not
       setIsAddingToCart(false);
     }
+  };
+
+  // Scroll to top functionality
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
@@ -73,72 +109,73 @@ const ProductInfo: React.FC = () => {
         Product Information
       </h2>
       <div className='flex text-white gap-32'>
-        {/* Product Image Carousel with Next.js Image optimization */}
         <Carousel className='mx-10 w-full max-w-[550px]'>
           <CarouselContent className='flex'>
-
-           <CarouselItem className=''><Image src="/h_1.png" width={500} height={500} alt="icon 1"/></CarouselItem>
-           <CarouselItem className=''><Image src="/h_2.png" width={500}height={500} alt="icon 2"/></CarouselItem> 
-           <CarouselItem className=''><Image src="/h_3.png" width={500}height={500} alt="icon 3"/></CarouselItem>
-           <CarouselItem className=''><Image src="/h_4.png" width={500}height={500} alt="icon 4"/></CarouselItem>
-           <CarouselItem className=''><Image src="/h_5.png" width={500}height={500} alt="icon 5"/></CarouselItem>
-
+            <CarouselItem><Image src="/h_1.png" width={500} height={500} alt="Bone+ Headphones Front View"/></CarouselItem>
+            <CarouselItem><Image src="/h_2.png" width={500} height={500} alt="Bone+ Headphones Side View"/></CarouselItem> 
+            <CarouselItem><Image src="/h_3.png" width={500} height={500} alt="Bone+ Headphones Detail View"/></CarouselItem>
+            <CarouselItem><Image src="/h_4.png" width={500} height={500} alt="Bone+ Headphones Wear View"/></CarouselItem>
+            <CarouselItem><Image src="/h_5.png" width={500} height={500} alt="Bone+ Headphones Lifestyle View"/></CarouselItem>
           </CarouselContent>
           <CarouselPrevious className='bg-black hover:bg-gradient-to-r from-[hsl(220_70%_50%)] to-[hsl(260,100%,77%)]'/>
           <CarouselNext className='bg-black hover:bg-gradient-to-r from-[hsl(220_70%_50%)] to-[hsl(260,100%,77%)] mr-10'/>
         </Carousel>
           
-        {/* Product Features and Add to Cart */}
         <ul className='list-disc text-white'>
           <li className='text-3xl tracking-tight font-extrabold text-white mb-3 -ml-6 list-none'>Features</li>
           <li className='text-2xl font-sans font-bold'>Super Lightweight</li>
           <Separator className="my-2" />
-
           <li className='text-2xl font-sans font-bold'>Comfortable fit</li>
           <Separator className="my-2" />
-
           <li className='text-2xl font-sans font-bold'>Long battery life</li>
           <Separator className="my-2" />
-
           <li className='text-2xl font-sans font-bold'>Noise cancellation</li>
           <Separator className="my-2" />
-
           <li className='text-2xl font-sans font-bold'>Bluetooth support</li>
           <Separator className="my-2" />
-
           <li className='text-2xl font-sans font-bold'>Personalised audio spectrum</li>
           <Separator className="my-2" />
-
           <li className='text-2xl font-sans font-bold'>Make a different preset for different environment</li>
           <br />
           <li className='list-none text-2xl'>${product.price.toFixed(2)}</li>
           <br />
-          {/* Add to Cart Button with loading state */}
           <Button 
             onClick={handleAddToCart}
             disabled={isAddingToCart}
-            className="w-52 bg-gradient-to-r from-[hsl(220_70%_50%)] to-[hsl(260,100%,77%)] text-[hsl(0_0%_98%)] 
-                     hover:opacity-80 transition-opacity rounded-xl p-3"
+            className="w-52 bg-gradient-to-r from-[hsl(220_70%_50%)] to-[hsl(260,100%,77%)] text-[hsl(0_0%_98%)] hover:opacity-80 transition-opacity rounded-xl p-3"
           >
-            {isAddingToCart ? 'Adding...' : 'Add to Cart'}
+            {isAddingToCart ? (
+              <div className="flex items-center gap-2">
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-[hsl(0_0%_98%)] border-t-transparent" />
+                Adding...
+              </div>
+            ) : (
+              'Add to Cart'
+            )}
           </Button>
         </ul>
       </div>
 
-      <div className='-mt-10'>
+      {showScrollToTop && (
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <a href="" ><Image src="/up_icon.png" width={30} height={30} alt="up"/></a>
+              <Button
+                variant="secondary"
+                size="icon"
+                className="fixed bottom-4 right-4 z-50 rounded-full bg-[hsl(0_0%_14.9%)] text-[hsl(0_0%_98%)] hover:bg-[hsl(0_0%_83.1%)] hover:text-[hsl(0_0%_3.9%)]"
+                onClick={scrollToTop}
+              >
+                <ChevronUp className="h-4 w-4" />
+              </Button>
             </TooltipTrigger>
-            <TooltipContent  side="top" align="start">
-              <p>Go to the top</p>
+            <TooltipContent side="top" align="center">
+              <p>Scroll to top</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
-      </div>
-     
-      {/* Specifications Accordion */}      
+      )}
+      
       <Accordion type="single" collapsible className="">
         <AccordionItem value="item-1">
           <AccordionTrigger className='text-3xl tracking-tight font-extrabold text-white'>

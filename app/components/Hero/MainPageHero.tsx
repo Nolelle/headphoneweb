@@ -1,6 +1,7 @@
 import Image from "next/image";
 import React from "react";
 import { Button } from "../ui/button";
+import Link from "next/link";
 
 const MainPageHero: React.FC = () => {
   return (
@@ -42,12 +43,14 @@ const MainPageHero: React.FC = () => {
             </p>
             
             <div className="pt-4">
+              <Link href="/#headphone">
               <Button 
                 size="lg"
                 className="bg-gradient-to-r from-[hsl(220_70%_50%)] to-[hsl(260,100%,77%)] text-[hsl(0_0%_98%)] hover:opacity-90 transition-opacity"
               >
-                Explore Our Headphones
+                Learn more about Bone+!
               </Button>
+              </Link>
             </div>
           </div>
         </div>

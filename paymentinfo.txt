@@ -1,5 +1,5 @@
 Name: Emily Richardson
-Email: emily.r.test@example.com
+Email: testuser@example.com
 Address: 892 Maple Grove Lane
 City: Burlington
 State: Vermont

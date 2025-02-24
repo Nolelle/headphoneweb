@@ -12,10 +12,10 @@ import { Separator } from "../ui/separator";
 import { Lock } from "lucide-react";
 
 interface CheckoutFormProps {
-  onPaymentSuccess: () => void;
+  onSubmit: (email: string) => Promise<void>;
 }
 
-const CheckoutForm: React.FC<CheckoutFormProps> = ({ onPaymentSuccess }) => {
+const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSubmit }) => {
   const stripe = useStripe();
   const elements = useElements();
   const router = useRouter();
@@ -40,7 +40,6 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onPaymentSuccess }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-
     if (!stripe || !elements) {
       return;
     }
@@ -49,13 +48,13 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onPaymentSuccess }) => {
     setError(null);
 
     try {
+      // First create the payment intent with the email
       const { error: submitError } = await elements.submit();
       if (submitError) {
         throw new Error(submitError.message);
       }
 
       const { error: confirmError } = await stripe.confirmPayment({
-
         elements,
         confirmParams: {
           return_url: `${window.location.origin}/payment-success`,
@@ -74,14 +73,10 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onPaymentSuccess }) => {
       if (confirmError) {
         throw new Error(confirmError.message);
       }
-
-      // Payment successful - redirect handled by return_url
-      onPaymentSuccess();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Payment failed");
     } finally {
       setIsLoading(false);
-
     }
   };
 

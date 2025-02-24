@@ -4,7 +4,6 @@ import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
 import { Button } from "../ui/button";
 import { Alert, AlertDescription } from "../ui/alert";
-import Image from "next/image";
 import {
   Dialog,
   DialogContent,
@@ -20,7 +19,6 @@ import {
 } from "@/app/components/ui/tooltip"
 import { Label } from "../ui/label";
 import { CheckCircle2, ChevronUp } from "lucide-react";
-
 
 const ContactForm: React.FC = () => {
   const [status, setStatus] = useState<string | null>(null);
@@ -174,30 +172,27 @@ const ContactForm: React.FC = () => {
         </Dialog>
 
         {showScrollToTop && (
-          <Button
-            variant="secondary"
-            size="icon"
-            className="fixed bottom-4 right-4 z-50 rounded-full bg-[hsl(0_0%_14.9%)] text-[hsl(0_0%_98%)] hover:bg-[hsl(0_0%_83.1%)] hover:text-[hsl(0_0%_3.9%)]"
-            onClick={scrollToTop}
-          >
-                    <ChevronUp className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-              <div className='-mt-24 ml-6'>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <a href="" ><Image src="/up_icon.png" width={30} height={30} alt="up"/></a>
-                    </TooltipTrigger>
-                    <TooltipContent  side="top" align="start">
-                      <p>Go to the top</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-            </section>
-          );
-        };
-        
-        export default ContactForm;
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  className="fixed bottom-4 right-4 z-50 rounded-full bg-[hsl(0_0%_14.9%)] text-[hsl(0_0%_98%)] hover:bg-[hsl(0_0%_83.1%)] hover:text-[hsl(0_0%_3.9%)]"
+                  onClick={scrollToTop}
+                >
+                  <ChevronUp className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top" align="center">
+                <p>Scroll to top</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+      </div>
+    </section>
+  );
+};
+
+export default ContactForm;

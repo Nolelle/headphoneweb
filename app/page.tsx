@@ -1,7 +1,7 @@
 import ContactForm from "./components/Contact/ContactForm";
 import MainPageHero from "./components/Hero/MainPageHero";
-import ProductInfo from "./components/Admin/ProductInfo";
-import AboutUs from "./components/Admin/AboutUs";
+import ProductInfo from "./components/Product/ProductInfo";
+import AboutUs from "./components/AboutUs/AboutUs";
 
 export default function Home() {
   return (

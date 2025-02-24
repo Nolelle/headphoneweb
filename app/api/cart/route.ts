@@ -42,7 +42,7 @@ export async function GET(request: Request) {
       [session_id]
     );
 
-    return NextResponse.json(result.rows);
+    return NextResponse.json({ items: result.rows });
   } catch (error) {
     console.error("Error fetching cart:", error);
     return NextResponse.json(
@@ -101,7 +101,7 @@ export async function POST(request: Request) {
         `INSERT INTO cart_items (session_id, product_id, quantity)
          VALUES ($1, $2, $3)
          ON CONFLICT (session_id, product_id) 
-         DO UPDATE SET quantity = cart_items.quantity + EXCLUDED.quantity`,
+         DO UPDATE SET quantity = EXCLUDED.quantity`,
         [session_id, productId, quantity]
       );
 
@@ -122,7 +122,7 @@ export async function POST(request: Request) {
       );
 
       await client.query("COMMIT");
-      return NextResponse.json(result.rows);
+      return NextResponse.json({ items: result.rows });
     } catch (err) {
       await client.query("ROLLBACK");
       throw err;

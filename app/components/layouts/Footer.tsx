@@ -38,10 +38,10 @@ const Footer = () => {
           <div className="space-y-4">
             <h6 className="text-lg font-semibold">Company</h6>
             <nav className="flex flex-col space-y-2">
-              <Link href="#about" className="text-[hsl(0_0%_63.9%)] hover:text-[hsl(0_0%_83.1%)] transition-colors">
+              <Link href="/#about" className="text-[hsl(0_0%_63.9%)] hover:text-[hsl(0_0%_83.1%)] transition-colors">
                 About us
               </Link>
-              <Link href="#contact" className="text-[hsl(0_0%_63.9%)] hover:text-[hsl(0_0%_83.1%)] transition-colors">
+              <Link href="/#contact" className="text-[hsl(0_0%_63.9%)] hover:text-[hsl(0_0%_83.1%)] transition-colors">
                 Contact
               </Link>
               <Link href="#jobs" className="text-[hsl(0_0%_63.9%)] hover:text-[hsl(0_0%_83.1%)] transition-colors">
