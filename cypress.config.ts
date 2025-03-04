@@ -16,8 +16,8 @@ export default defineConfig({
   },
   // Add env variables that might be needed for testing
   env: {
-    // Add environment-specific variables here
     adminUsername: "admin",
-    adminPassword: "admin123"
+    adminPassword: "admin123",
+    sitePassword: "mypassword" // Add site password from .env.local
   }
 });
