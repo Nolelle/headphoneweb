@@ -9,7 +9,7 @@ export async function POST(request: Request) {
     const { password } = await request.json();
 
     if (password === SITE_PASSWORD) {
-      // Create a session cookie
+      // Create a session cookie - cookies() doesn't need to be awaited, but the set method does
       const cookieStore = cookies();
       cookieStore.set("site_session", "authenticated", {
         httpOnly: true,
@@ -23,7 +23,8 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ error: "Invalid password" }, { status: 401 });
-  } catch (error) {
+  } catch (err) {
+    console.error("Password verification error:", err);
     return NextResponse.json({ error: "An error occurred" }, { status: 500 });
   }
 }

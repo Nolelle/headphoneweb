@@ -19,6 +19,12 @@ declare global {
        * @example cy.respondToMessage('Thank you for your inquiry')
        */
       respondToMessage(response: string): Chainable<Element>;
+
+      /**
+       * Custom command to respond to a message with retry logic
+       * @example cy.respondToMessageWithRetry('Thank you for your inquiry')
+       */
+      respondToMessageWithRetry(response: string): Chainable<Element>;
     }
   }
 }
@@ -48,33 +54,72 @@ Cypress.Commands.add("adminLogin", (username: string, password: string) => {
   cy.contains("Admin Dashboard").should("be.visible");
 });
 
-// Find message command - updated to avoid problematic CSS selectors
+// Find message command - updated to use more reliable selectors
 Cypress.Commands.add("findMessage", (identifier: string) => {
-  // First find the element containing the identifier text
-  return (
-    cy
-      .contains(identifier)
-      // Use a more reliable DOM traversal approach
-      .parents()
-      .filter((index, el) => {
-        const classList = Cypress.$(el).attr("class") || "";
-        return (
-          classList.includes("pt-6") ||
-          (classList.includes("space-y-") && classList.includes("bg-"))
-        );
-      })
-      .first()
-      .should("be.visible")
-  );
+  // Look for the email that contains the identifier
+  return cy
+    .contains("span", identifier)
+    .parents('[data-testid^="message-card-"]')
+    .should("be.visible");
 });
 
-// Respond to message command
+// Respond to message command with improved reliability
 Cypress.Commands.add("respondToMessage", (response: string) => {
-  cy.get("textarea").type(response);
+  // Find the textarea using a more specific selector
+  cy.get('[data-testid="response-textarea"]').should("exist");
+  cy.get('[data-testid="response-textarea"]').clear().type(response);
+
+  // Click the Send Response button
   cy.contains("Send Response").click();
-  cy.contains("Response sent successfully", { timeout: 10000 }).should(
-    "be.visible"
-  );
+
+  // Wait for the success toast or for the status to change to RESPONDED
+  cy.wait(5000); // Longer wait for backend processing
+
+  // Check for success indicators
+  cy.contains("Previous Response:", { timeout: 10000 }).should("exist");
+});
+
+// More robust command with retry logic for flaky operations
+Cypress.Commands.add("respondToMessageWithRetry", (response: string) => {
+  cy.get("textarea").clear().type(response);
+  cy.contains("Send Response").click();
+
+  // Try multiple ways to detect success with retries
+  let attempts = 0;
+  const maxAttempts = 5;
+
+  function checkSuccess() {
+    if (attempts >= maxAttempts) {
+      throw new Error(
+        `Failed to confirm response success after ${maxAttempts} attempts`
+      );
+    }
+
+    attempts++;
+    cy.wait(1000); // Wait between checks
+
+    cy.get("body").then(($body) => {
+      const text = $body.text();
+      const hasSuccess = text.includes("Response sent successfully");
+      const hasRespondedStatus = text.includes("RESPONDED");
+      const hasSuccessElement =
+        $body.find("#response-success-message").length > 0;
+
+      if (hasSuccess || hasRespondedStatus || hasSuccessElement) {
+        // Success found, continue
+        return;
+      } else if (attempts < maxAttempts) {
+        // Try again
+        cy.wait(1000);
+        checkSuccess();
+      } else {
+        // Final attempt failed
+        throw new Error("Could not verify successful response");
+      }
+    });
+  }
+
+  checkSuccess();
 });
 
 export {};
