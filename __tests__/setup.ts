@@ -41,6 +41,39 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 });
 
+// Mock NextRequest for API route testing
+class MockNextRequest {
+  url: string;
+  method: string;
+  body: any;
+  headers: Headers;
+  nextUrl: URL;
+  
+  constructor(url: string, options: any = {}) {
+    this.url = url;
+    this.method = options.method || 'GET';
+    this.body = options.body;
+    this.headers = new Headers(options.headers || {});
+    this.nextUrl = new URL(url);
+  }
+  
+  json() {
+    return Promise.resolve(JSON.parse(this.body));
+  }
+}
+
+// Add mock to global object
+global.NextRequest = MockNextRequest;
+
+// Mock cookies functions for Next.js API routes
+jest.mock('next/headers', () => ({
+  cookies: () => ({
+    set: jest.fn(),
+    get: jest.fn(),
+    delete: jest.fn(),
+  }),
+}));
+
 // Add a dummy test to prevent the "Your test suite must contain at least one test" error
 describe('Setup', () => {
   it('should set up test environment correctly', () => {
