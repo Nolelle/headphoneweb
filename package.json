@@ -11,7 +11,9 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "cypress:open": "cypress open",
-  "cypress:run": "cypress run"
+  "cypress:run": "cypress run",
+  "cypress:contact": "cypress run --spec 'cypress/e2e/contact/**/*'",
+    "test:e2e": "start-server-and-test dev http://localhost:3000 cypress:run"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.3",
