@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
-const SITE_PASSWORD = process.env.SITE_PASSWORD || "demo123"; // Change this in production
+const SITE_PASSWORD = process.env.SITE_PASSWORD || "mypassword"; // Change this in production
 const SESSION_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 
 export async function POST(request: Request) {
@@ -22,14 +22,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true });
     }
 
-    return NextResponse.json(
-      { error: "Invalid password" },
-      { status: 401 }
-    );
+    return NextResponse.json({ error: "Invalid password" }, { status: 401 });
   } catch (error) {
-    return NextResponse.json(
-      { error: "An error occurred" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "An error occurred" }, { status: 500 });
   }
 }
