@@ -29,52 +29,6 @@ const mockFetchResponse = (status: number, data: any) => {
   } as Response);
 };
 
-// Test component to access cart context
-const TestComponent = () => {
-  const { cart, addItem, removeItem, updateQuantity, clearCart, loading } = useCart();
-  
-  return (
-    <div>
-      <div data-testid="cart-count">{cart.items.length}</div>
-      <div data-testid="loading-state">{loading.toString()}</div>
-      <button 
-        data-testid="add-item" 
-        onClick={() => addItem({
-          id: 1,
-          name: 'Test Headphones',
-          price: 299.99,
-          image_url: '/test.webp',
-          stock: 10
-        }, 2)}
-      >
-        Add Item
-      </button>
-      <button 
-        data-testid="remove-item" 
-        onClick={() => cart.items.length && removeItem(cart.items[0].id)}
-      >
-        Remove Item
-      </button>
-      <button 
-        data-testid="update-quantity" 
-        onClick={() => cart.items.length && updateQuantity(cart.items[0].id, 5)}
-      >
-        Update Quantity
-      </button>
-      <button data-testid="clear-cart" onClick={() => clearCart()}>
-        Clear Cart
-      </button>
-      <ul data-testid="cart-items">
-        {cart.items.map(item => (
-          <li key={item.id} data-testid={`item-${item.id}`}>
-            {item.product.name} - Qty: {item.quantity}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-};
-
 describe('CartContext', () => {
   beforeEach(() => {
     // Reset mocks
