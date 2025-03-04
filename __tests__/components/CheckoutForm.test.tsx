@@ -1,5 +1,6 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 // Create a simple mock form component for testing
 const MockCheckoutForm = () => {
@@ -142,6 +143,9 @@ const MockCheckoutForm = () => {
 };
 
 describe('CheckoutForm', () => {
+  // Initialize userEvent
+  const user = userEvent.setup();
+
   it('should render all the required form fields', () => {
     render(<MockCheckoutForm />);
     
@@ -165,7 +169,7 @@ describe('CheckoutForm', () => {
     render(<MockCheckoutForm />);
     
     // Submit form without filling in any fields
-    fireEvent.click(screen.getByRole('button', { name: /Pay Now/i }));
+    await user.click(screen.getByRole('button', { name: /Pay Now/i }));
     
     // Check for error messages
     await waitFor(() => {
@@ -182,46 +186,31 @@ describe('CheckoutForm', () => {
     render(<MockCheckoutForm />);
     
     // Fill in an invalid email
-    fireEvent.change(screen.getByLabelText(/Email/i), {
-      target: { value: 'invalid-email' }
-    });
+    await user.type(screen.getByLabelText(/Email/i), 'invalid-email');
     
     // Submit the form
-    fireEvent.click(screen.getByRole('button', { name: /Pay Now/i }));
+    await user.click(screen.getByRole('button', { name: /Pay Now/i }));
     
     // Check for email validation error
     await waitFor(() => {
       expect(screen.getByTestId('email-error')).toHaveTextContent('Please enter a valid email address');
     });
     
+    // Clear the email field
+    await user.clear(screen.getByLabelText(/Email/i));
+    
     // Change to a valid email
-    fireEvent.change(screen.getByLabelText(/Email/i), {
-      target: { value: 'valid@example.com' }
-    });
+    await user.type(screen.getByLabelText(/Email/i), 'valid@example.com');
     
     // Fill in other required fields
-    fireEvent.change(screen.getByLabelText(/Full Name/i), {
-      target: { value: 'John Doe' }
-    });
-    
-    fireEvent.change(screen.getByLabelText(/Address/i), {
-      target: { value: '123 Main St' }
-    });
-    
-    fireEvent.change(screen.getByLabelText(/City/i), {
-      target: { value: 'Calgary' }
-    });
-    
-    fireEvent.change(screen.getByLabelText(/Postal Code/i), {
-      target: { value: 'T2N 1N4' }
-    });
-    
-    fireEvent.change(screen.getByLabelText(/Country/i), {
-      target: { value: 'Canada' }
-    });
+    await user.type(screen.getByLabelText(/Full Name/i), 'John Doe');
+    await user.type(screen.getByLabelText(/Address/i), '123 Main St');
+    await user.type(screen.getByLabelText(/City/i), 'Calgary');
+    await user.type(screen.getByLabelText(/Postal Code/i), 'T2N 1N4');
+    await user.type(screen.getByLabelText(/Country/i), 'Canada');
     
     // Submit again
-    fireEvent.click(screen.getByRole('button', { name: /Pay Now/i }));
+    await user.click(screen.getByRole('button', { name: /Pay Now/i }));
     
     // Email error should disappear
     await waitFor(() => {
