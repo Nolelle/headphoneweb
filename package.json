@@ -11,8 +11,8 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "cypress:open": "cypress open",
-  "cypress:run": "cypress run",
-  "cypress:contact": "cypress run --spec 'cypress/e2e/contact/**/*'",
+    "cypress:run": "cypress run",
+    "cypress:contact": "cypress run --spec 'cypress/e2e/contact/**/*'",
     "test:e2e": "start-server-and-test dev http://localhost:3000 cypress:run"
   },
   "dependencies": {
@@ -48,6 +48,7 @@
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.2.0",
     "@types/bcrypt": "^5.0.2",
+    "@types/jest": "^29.5.14",
     "@types/node": "22.10.1",
     "@types/pg": "^8.11.10",
     "@types/react": "^18",

@@ -1,5 +1,3 @@
-// cypress/e2e/contact/form-submission.cy.ts
-
 describe("Contact Form Submission", () => {
   // Test data to use in the form
   const testContactData = {
