@@ -1,35 +1,35 @@
-import '@testing-library/jest-dom';
+import "@testing-library/jest-dom";
 
 // Mock Next.js router
-jest.mock('next/router', () => ({
+jest.mock("next/router", () => ({
   useRouter: () => ({
     push: jest.fn(),
     replace: jest.fn(),
     prefetch: jest.fn(),
     back: jest.fn(),
-    pathname: '/',
-    query: {},
-  }),
+    pathname: "/",
+    query: {}
+  })
 }));
 
 // Mock next/navigation
-jest.mock('next/navigation', () => ({
+jest.mock("next/navigation", () => ({
   useRouter: () => ({
     push: jest.fn(),
     replace: jest.fn(),
     back: jest.fn(),
     forward: jest.fn(),
     refresh: jest.fn(),
-    prefetch: jest.fn(),
+    prefetch: jest.fn()
   }),
-  usePathname: () => '/',
-  useSearchParams: () => new URLSearchParams(),
+  usePathname: () => "/",
+  useSearchParams: () => new URLSearchParams()
 }));
 
 // Mock window.matchMedia
-Object.defineProperty(window, 'matchMedia', {
+Object.defineProperty(window, "matchMedia", {
   writable: true,
-  value: jest.fn().mockImplementation(query => ({
+  value: jest.fn().mockImplementation((query) => ({
     matches: false,
     media: query,
     onchange: null,
@@ -37,8 +37,8 @@ Object.defineProperty(window, 'matchMedia', {
     removeListener: jest.fn(),
     addEventListener: jest.fn(),
     removeEventListener: jest.fn(),
-    dispatchEvent: jest.fn(),
-  })),
+    dispatchEvent: jest.fn()
+  }))
 });
 
 // Mock NextRequest for API route testing
@@ -48,15 +48,15 @@ class MockNextRequest {
   body: any;
   headers: Headers;
   nextUrl: URL;
-  
+
   constructor(url: string, options: any = {}) {
     this.url = url;
-    this.method = options.method || 'GET';
+    this.method = options.method || "GET";
     this.body = options.body;
     this.headers = new Headers(options.headers || {});
     this.nextUrl = new URL(url);
   }
-  
+
   json() {
     return Promise.resolve(JSON.parse(this.body));
   }
@@ -66,17 +66,10 @@ class MockNextRequest {
 global.NextRequest = MockNextRequest;
 
 // Mock cookies functions for Next.js API routes
-jest.mock('next/headers', () => ({
+jest.mock("next/headers", () => ({
   cookies: () => ({
     set: jest.fn(),
     get: jest.fn(),
-    delete: jest.fn(),
-  }),
+    delete: jest.fn()
+  })
 }));
-
-// Add a dummy test to prevent the "Your test suite must contain at least one test" error
-describe('Setup', () => {
-  it('should set up test environment correctly', () => {
-    expect(true).toBeTruthy();
-  });
-});
