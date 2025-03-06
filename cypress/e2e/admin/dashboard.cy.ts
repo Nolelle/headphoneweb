@@ -2,7 +2,7 @@ describe("Admin Dashboard Management", () => {
   // Test data
   const admin = {
     username: "admin",
-    password: "admin123" // Should match your seed data
+    password: "admin123"
   };
   const testMessageResponse =
     "Thank you for your inquiry. Our headphones have a battery life of approximately 20 hours on a single charge.";
