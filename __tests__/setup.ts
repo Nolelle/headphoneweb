@@ -41,6 +41,9 @@ Object.defineProperty(window, "matchMedia", {
   }))
 });
 
+// **Add mock for fetch**
+global.fetch = jest.fn();
+
 // Mock NextRequest for API route testing
 class MockNextRequest {
   url: string;
