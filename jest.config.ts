@@ -38,7 +38,8 @@ const config: Config = {
   // Add this to exclude setup.ts from being treated as a test file
   testPathIgnorePatterns: [
     "<rootDir>/__tests__/setup.ts",
-    "<rootDir>/__tests__/utils/cn.test.ts"
+    "<rootDir>/__tests__/utils/cn.test.ts",
+    "<rootDir>/__tests__/types.d.ts"
   ],
 
   // A map from regular expressions to module names or to arrays of module names that allow to stub out resources with a single module

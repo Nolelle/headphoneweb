@@ -1,27 +1,27 @@
+/// <reference types="@testing-library/jest-dom" />
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import AdminDashboard from '@/app/components/Admin/AdminDashboard';
 import '@testing-library/jest-dom';
-import { jest } from '@jest/globals';
+import { expect, jest } from '@jest/globals';
+
+// Add type augmentation for Jest matchers
+declare module '@jest/expect' {
+  interface AsymmetricMatchers {
+    stringContaining(expected: string): unknown;
+    any(expected: unknown): unknown;
+  }
+  interface Matchers<R> {
+    toBeInTheDocument(): R;
+    toHaveBeenCalledWith(...args: unknown[]): R;
+  }
+}
 
 // Create a type-safe mock response
 function createMockResponse(data: unknown): Response {
   return {
     ok: true,
-    json: () => Promise.resolve(data),
-    status: 200,
-    statusText: 'OK',
-    headers: new Headers(),
-    redirected: false,
-    type: 'basic',
-    url: '',
-    clone: () => ({}) as Response,
-    body: null,
-    bodyUsed: false,
-    arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
-    blob: () => Promise.resolve(new Blob()),
-    formData: () => Promise.resolve(new FormData()),
-    text: () => Promise.resolve('')
+    json: () => Promise.resolve(data)
   } as Response;
 }
 
@@ -29,8 +29,10 @@ describe('AdminDashboard Component', () => {
   beforeEach(() => {
     // Reset all mocks before each test
     jest.resetAllMocks();
-    // Ensure fetch is cleared and ready to be mocked
-    (global.fetch as jest.Mock).mockClear();
+    // Reset the fetch mock
+    jest.spyOn(global, 'fetch').mockImplementation(() => 
+      Promise.resolve({} as Response)
+    );
   });
 
   it('fetches and displays messages', async () => {
