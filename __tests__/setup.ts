@@ -1,4 +1,8 @@
+// __tests__/setup.ts
 import "@testing-library/jest-dom";
+
+// Mock fetch
+global.fetch = jest.fn();
 
 // Mock Next.js router
 jest.mock("next/router", () => ({
@@ -41,9 +45,6 @@ Object.defineProperty(window, "matchMedia", {
   }))
 });
 
-// **Add mock for fetch**
-global.fetch = jest.fn();
-
 // Mock NextRequest for API route testing
 class MockNextRequest {
   url: string;
@@ -65,7 +66,6 @@ class MockNextRequest {
   }
 }
 
-// Add mock to global object
 global.NextRequest = MockNextRequest;
 
 // Mock cookies functions for Next.js API routes

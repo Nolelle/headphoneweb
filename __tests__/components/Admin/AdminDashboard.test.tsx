@@ -1,129 +1,102 @@
-/// <reference types="@testing-library/jest-dom" />
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import AdminDashboard from '@/app/components/Admin/AdminDashboard';
-import '@testing-library/jest-dom';
-import { expect, jest } from '@jest/globals';
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import AdminDashboard from "@/app/components/Admin/AdminDashboard";
 
-// Add type augmentation for Jest matchers
-declare module '@jest/expect' {
-  interface AsymmetricMatchers {
-    stringContaining(expected: string): unknown;
-    any(expected: unknown): unknown;
-  }
-  interface Matchers<R> {
-    toBeInTheDocument(): R;
-    toHaveBeenCalledWith(...args: unknown[]): R;
-  }
-}
+describe("AdminDashboard", () => {
+  const mockMessages = [
+    {
+      message_id: 1,
+      name: "John Smith",
+      email: "john@example.com",
+      message: "Test message",
+      message_date: "2023-01-01T12:00:00Z",
+      status: "UNREAD",
+    },
+  ];
 
-// Create a type-safe mock response
-function createMockResponse(data: unknown): Response {
-  return {
-    ok: true,
-    json: () => Promise.resolve(data)
-  } as Response;
-}
-
-describe('AdminDashboard Component', () => {
   beforeEach(() => {
-    // Reset all mocks before each test
-    jest.resetAllMocks();
-    // Reset the fetch mock
-    jest.spyOn(global, 'fetch').mockImplementation(() => 
-      Promise.resolve({} as Response)
-    );
+    jest.clearAllMocks();
   });
 
-  it('fetches and displays messages', async () => {
-    const mockMessages = [
-      {
-        message_id: 1,
-        name: 'John Smith',
-        email: 'john@example.com',
-        message: 'Test message',
-        message_date: '2023-01-01T12:00:00Z',
-        status: 'UNREAD'
-      }
-    ];
-
-    // Mock the fetch response
-    jest.spyOn(global, 'fetch').mockResolvedValueOnce(createMockResponse(mockMessages));
+  it("fetches and displays messages", async () => {
+    jest.spyOn(global, "fetch").mockResolvedValueOnce({
+      ok: true,
+      json: jest.fn().mockResolvedValue(mockMessages),
+    });
 
     render(<AdminDashboard />);
 
     await waitFor(() => {
-      expect(screen.getByText('john@example.com')).toBeInTheDocument();
-      expect(screen.getByText('Test message')).toBeInTheDocument();
+      expect(screen.getByText("john@example.com")).toBeInTheDocument();
+      expect(screen.getByText("Test message")).toBeInTheDocument();
+      expect(screen.getByText("UNREAD")).toBeInTheDocument();
     });
 
-    // Verify fetch was called with the correct URL (single argument)
-    expect(global.fetch).toHaveBeenCalledWith(
-      expect.stringContaining('/api')
-    );
+    expect(global.fetch).toHaveBeenCalledWith("/api/admin/messages");
   });
 
-  it('toggles message read status', async () => {
-    const mockMessages = [
-      {
-        message_id: 1,
-        email: 'john@example.com',
-        message: 'Test message',
-        status: 'UNREAD'
-      }
-    ];
-
+  it("toggles message read status", async () => {
     jest
-      .spyOn(global, 'fetch')
-      .mockResolvedValueOnce(createMockResponse(mockMessages)) // Initial fetch
-      .mockResolvedValueOnce(createMockResponse({ status: 'READ' })); // Status update
+      .spyOn(global, "fetch")
+      .mockResolvedValueOnce({
+        ok: true,
+        json: jest.fn().mockResolvedValue(mockMessages),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: jest.fn().mockResolvedValue({ status: "READ", updated_at: "2023-01-02T12:00:00Z" }),
+      });
 
     render(<AdminDashboard />);
 
     await waitFor(() => {
-      expect(screen.getByText('UNREAD')).toBeInTheDocument();
+      expect(screen.getByText("UNREAD")).toBeInTheDocument();
     });
 
-    await userEvent.click(screen.getByText('Mark as Read'));
+    await userEvent.click(screen.getByText("Mark as Read"));
 
     expect(global.fetch).toHaveBeenCalledWith(
-      expect.stringContaining('/api/admin/messages/1/status'),
-      expect.any(Object)
+      "/api/admin/messages/1/status",
+      expect.objectContaining({
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "READ" }),
+      })
     );
   });
 
-  it('sends response to message', async () => {
-    const mockMessages = [
-      {
-        message_id: 1,
-        email: 'john@example.com',
-        message: 'Test message',
-        status: 'READ'
-      }
-    ];
-
+  it("sends response to message", async () => {
     jest
-      .spyOn(global, 'fetch')
-      .mockResolvedValueOnce(createMockResponse(mockMessages)) // Initial fetch
-      .mockResolvedValueOnce(
-        createMockResponse({
-          admin_response: 'Test response',
-          status: 'RESPONDED'
-        })
-      ); // Response submission
+      .spyOn(global, "fetch")
+      .mockResolvedValueOnce({
+        ok: true,
+        json: jest.fn().mockResolvedValue(mockMessages),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: jest.fn().mockResolvedValue({
+          admin_response: "Test response",
+          status: "RESPONDED",
+          responded_at: "2023-01-02T12:00:00Z",
+        }),
+      });
 
     render(<AdminDashboard />);
 
     await waitFor(() => {
-      expect(screen.getByTestId('response-textarea')).toBeInTheDocument();
+      expect(screen.getByTestId("response-textarea")).toBeInTheDocument();
     });
 
-    await userEvent.type(screen.getByTestId('response-textarea'), 'Test response');
-    await userEvent.click(screen.getByText('Send Response'));
+    await userEvent.type(screen.getByTestId("response-textarea"), "Test response");
+    await userEvent.click(screen.getByText("Send Response"));
 
     expect(global.fetch).toHaveBeenCalledWith(
-      expect.stringContaining('/api/admin/messages/1/respond'),
-      expect.any(Object)
+      "/api/admin/messages/1/respond",
+      expect.objectContaining({
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ response: "Test response" }),
+      })
     );
   });
 });
