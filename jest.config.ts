@@ -30,7 +30,10 @@ const config: Config = {
     "\\.(css|less|sass|scss)$": "identity-obj-proxy",
     "\\.(gif|ttf|eot|svg|png|jpg|jpeg|webp)$": "<rootDir>/__mocks__/fileMock.js"
   },
-  setupFiles: ["<rootDir>/__tests__/polyfills.ts"], // Polyfills before environment
+  setupFiles: [
+    "<rootDir>/__tests__/polyfills.ts",
+    "dotenv-cli/config" // This will load env vars from .env.test when running tests
+  ], // Polyfills before environment
   setupFilesAfterEnv: ["<rootDir>/__tests__/setup.ts"], // Mocks and test utils after environment
   transform: {
     "^.+\\.(js|jsx|ts|tsx)$": ["babel-jest", { presets: ["next/babel"] }]

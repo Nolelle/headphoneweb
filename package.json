@@ -8,12 +8,14 @@
     "start": "next start",
     "lint": "next lint",
     "generate-hash": "ts-node --project tsconfig.json -r tsconfig-paths/register db/scripts/generate-admin-hash.ts",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "cypress:open": "cypress open",
-    "cypress:run": "cypress run",
-    "cypress:contact": "cypress run --spec 'cypress/e2e/contact/**/*'",
-    "test:e2e": "start-server-and-test dev http://localhost:3000 cypress:run"
+    "test": "dotenv -e .env.test -- jest",
+    "test:watch": "dotenv -e .env.test -- jest --watch",
+    "cypress:open": "dotenv -e .env.test -- cypress open",
+    "cypress:run": "dotenv -e .env.test -- cypress run",
+    "cypress:contact": "dotenv -e .env.test -- cypress run --spec 'cypress/e2e/contact/**/*'",
+    "test:e2e": "dotenv -e .env.test -- start-server-and-test dev http://localhost:3000 cypress:run",
+    "reset-test-db": "./scripts/reset-test-db.sh",
+    "test:reset": "npm run reset-test-db && npm test"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.3",
@@ -57,6 +59,7 @@
     "@types/uuid": "^10.0.0",
     "autoprefixer": "^10.4.20",
     "cypress": "^14.1.0",
+    "dotenv-cli": "^8.0.0",
     "eslint": "^8",
     "eslint-config-next": "15.0.3",
     "identity-obj-proxy": "^3.0.0",

@@ -1,0 +1,24 @@
+// cypress/fixtures/products.json
+[
+  {
+    "id": "1",
+    "name": "Wireless Headphones X1",
+    "price": 199.99,
+    "description": "Premium wireless headphones with noise cancellation",
+    "image": "/images/headphones-1.jpg"
+  },
+  {
+    "id": "2",
+    "name": "Studio Headphones Pro",
+    "price": 299.99,
+    "description": "Professional studio quality headphones for audio engineers",
+    "image": "/images/headphones-2.jpg"
+  },
+  {
+    "id": "3",
+    "name": "Gaming Headset Ultra",
+    "price": 149.99,
+    "description": "Immersive gaming headset with spatial audio",
+    "image": "/images/headphones-3.jpg"
+  }
+]
