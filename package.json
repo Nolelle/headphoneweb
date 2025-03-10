@@ -15,7 +15,15 @@
     "cypress:contact": "dotenv -e .env.test -- cypress run --spec 'cypress/e2e/contact/**/*'",
     "test:e2e": "dotenv -e .env.test -- start-server-and-test dev http://localhost:3000 cypress:run",
     "reset-test-db": "./scripts/reset-test-db.sh",
-    "test:reset": "npm run reset-test-db && npm test"
+    "test:reset": "npm run reset-test-db && npm test",
+    "perf": "ts-node --transpile-only performance/index.ts",
+    "perf:load": "ts-node --transpile-only performance/index.ts load",
+    "perf:frontend": "ts-node --transpile-only performance/index.ts frontend",
+    "perf:database": "ts-node --transpile-only performance/index.ts database",
+    "perf:endurance": "ts-node --transpile-only performance/index.ts endurance",
+    "perf:spike": "ts-node --transpile-only performance/index.ts spike",
+    "perf:dev": "NODE_ENV=development ts-node --transpile-only performance/index.ts",
+    "perf:prod": "NODE_ENV=production ts-node --transpile-only performance/index.ts"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.3",
