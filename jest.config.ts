@@ -32,7 +32,7 @@ const config: Config = {
   },
   setupFiles: [
     "<rootDir>/__tests__/polyfills.ts",
-    "dotenv-cli/config" // This will load env vars from .env.test when running tests
+    "<rootDir>/jest.setup.env.js" // Create this file
   ], // Polyfills before environment
   setupFilesAfterEnv: ["<rootDir>/__tests__/setup.ts"], // Mocks and test utils after environment
   transform: {

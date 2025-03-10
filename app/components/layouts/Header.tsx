@@ -7,12 +7,12 @@ import {
   NavigationMenu,
   NavigationMenuItem,
   NavigationMenuLink,
-  NavigationMenuList,
+  NavigationMenuList
 } from "../ui/navigation-menu";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuTrigger,
+  DropdownMenuTrigger
 } from "@/app/components/ui/dropdown-menu";
 import { Button } from "@/app/components/ui/button";
 import { Badge } from "@/app/components/ui/badge";
@@ -25,7 +25,10 @@ const Header = () => {
   const cartItemCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
   // Calculate cart subtotal
-  const cartSubtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const cartSubtotal = items.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
 
   return (
     <header className="bg-[hsl(0_0%_3.9%)] border-b border-border fixed w-full z-50">
@@ -34,7 +37,10 @@ const Header = () => {
           {/* Left section with logo and navigation */}
           <div className="flex items-center space-x-4">
             {/* Logo */}
-            <Link href="/" className="flex items-center space-x-2">
+            <Link
+              href="/"
+              className="flex items-center space-x-2"
+            >
               <Image
                 src="/headphones_plus_icon 1.png"
                 alt="Bone+"
@@ -51,21 +57,33 @@ const Header = () => {
             <NavigationMenu className="hidden md:flex">
               <NavigationMenuList>
                 <NavigationMenuItem>
-                  <Link href="/#about" legacyBehavior passHref>
+                  <Link
+                    href="/#about"
+                    legacyBehavior
+                    passHref
+                  >
                     <NavigationMenuLink className="px-3 py-2 text-[hsl(0_0%_98%)] hover:text-[hsl(0_0%_83.1%)]">
                       About Us
                     </NavigationMenuLink>
                   </Link>
                 </NavigationMenuItem>
                 <NavigationMenuItem>
-                  <Link href="/#headphone" legacyBehavior passHref>
+                  <Link
+                    href="/#headphone"
+                    legacyBehavior
+                    passHref
+                  >
                     <NavigationMenuLink className="px-3 py-2 text-[hsl(0_0%_98%)] hover:text-[hsl(0_0%_83.1%)]">
                       Headphones
                     </NavigationMenuLink>
                   </Link>
                 </NavigationMenuItem>
                 <NavigationMenuItem>
-                  <Link href="/#contact" legacyBehavior passHref>
+                  <Link
+                    href="/#contact"
+                    legacyBehavior
+                    passHref
+                  >
                     <NavigationMenuLink className="px-3 py-2 text-[hsl(0_0%_98%)] hover:text-[hsl(0_0%_83.1%)]">
                       Contact Us
                     </NavigationMenuLink>
@@ -82,6 +100,7 @@ const Header = () => {
                 <Button
                   variant="ghost"
                   size="icon"
+                  aria-label="Cart"
                   className="relative text-[hsl(0_0%_98%)] hover:text-[hsl(0_0%_83.1%)] hover:bg-[hsl(0_0%_14.9%)]"
                 >
                   <ShoppingCart className="h-5 w-5" />
@@ -95,7 +114,10 @@ const Header = () => {
                   )}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-64 bg-[hsl(0_0%_14.9%)] border-[hsl(0_0%_14.9%)]">
+              <DropdownMenuContent
+                align="end"
+                className="w-64 bg-[hsl(0_0%_14.9%)] border-[hsl(0_0%_14.9%)]"
+              >
                 <div className="p-4">
                   <div className="flex justify-between mb-4">
                     <span className="font-semibold text-[hsl(0_0%_98%)]">
@@ -112,9 +134,10 @@ const Header = () => {
                       </Button>
                     </Link>
                   ) : (
-                    <p className="text-center text-[hsl(0_0%_63.9%)]">Your cart is empty</p>
+                    <p className="text-center text-[hsl(0_0%_63.9%)]">
+                      Your cart is empty
+                    </p>
                   )}
-
                 </div>
               </DropdownMenuContent>
             </DropdownMenu>

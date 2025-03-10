@@ -26,7 +26,7 @@ const Footer = () => {
                 Copyright © {new Date().getFullYear()} - All rights reserved
               </p>
             </div>
-            <Link 
+            <Link
               href="/admin/login"
               className="text-sm hover:text-[hsl(0_0%_83.1%)] transition-colors"
             >
@@ -38,16 +38,28 @@ const Footer = () => {
           <div className="space-y-4">
             <h6 className="text-lg font-semibold">Company</h6>
             <nav className="flex flex-col space-y-2">
-              <Link href="/#about" className="text-[hsl(0_0%_63.9%)] hover:text-[hsl(0_0%_83.1%)] transition-colors">
+              <Link
+                href="/#about"
+                className="text-[hsl(0_0%_63.9%)] hover:text-[hsl(0_0%_83.1%)] transition-colors"
+              >
                 About us
               </Link>
-              <Link href="/#contact" className="text-[hsl(0_0%_63.9%)] hover:text-[hsl(0_0%_83.1%)] transition-colors">
+              <Link
+                href="/#contact"
+                className="text-[hsl(0_0%_63.9%)] hover:text-[hsl(0_0%_83.1%)] transition-colors"
+              >
                 Contact
               </Link>
-              <Link href="#jobs" className="text-[hsl(0_0%_63.9%)] hover:text-[hsl(0_0%_83.1%)] transition-colors">
+              <Link
+                href="#jobs"
+                className="text-[hsl(0_0%_63.9%)] hover:text-[hsl(0_0%_83.1%)] transition-colors"
+              >
                 Jobs
               </Link>
-              <Link href="#press" className="text-[hsl(0_0%_63.9%)] hover:text-[hsl(0_0%_83.1%)] transition-colors">
+              <Link
+                href="#press"
+                className="text-[hsl(0_0%_63.9%)] hover:text-[hsl(0_0%_83.1%)] transition-colors"
+              >
                 Press kit
               </Link>
             </nav>
@@ -57,13 +69,22 @@ const Footer = () => {
           <div className="space-y-4">
             <h6 className="text-lg font-semibold">Legal</h6>
             <nav className="flex flex-col space-y-2">
-              <Link href="#terms" className="text-[hsl(0_0%_63.9%)] hover:text-[hsl(0_0%_83.1%)] transition-colors">
+              <Link
+                href="#terms"
+                className="text-[hsl(0_0%_63.9%)] hover:text-[hsl(0_0%_83.1%)] transition-colors"
+              >
                 Terms of use
               </Link>
-              <Link href="#privacy" className="text-[hsl(0_0%_63.9%)] hover:text-[hsl(0_0%_83.1%)] transition-colors">
+              <Link
+                href="#privacy"
+                className="text-[hsl(0_0%_63.9%)] hover:text-[hsl(0_0%_83.1%)] transition-colors"
+              >
                 Privacy policy
               </Link>
-              <Link href="#cookies" className="text-[hsl(0_0%_63.9%)] hover:text-[hsl(0_0%_83.1%)] transition-colors">
+              <Link
+                href="#cookies"
+                className="text-[hsl(0_0%_63.9%)] hover:text-[hsl(0_0%_83.1%)] transition-colors"
+              >
                 Cookie policy
               </Link>
             </nav>
@@ -73,13 +94,25 @@ const Footer = () => {
           <div className="space-y-4">
             <h6 className="text-lg font-semibold">Follow Us</h6>
             <div className="flex space-x-4">
-              <Link href="#twitter" className="hover:text-[hsl(0_0%_83.1%)] transition-colors">
+              <Link
+                href="#twitter"
+                className="hover:text-[hsl(0_0%_83.1%)] transition-colors"
+                aria-label="Twitter"
+              >
                 <Twitter className="h-6 w-6" />
               </Link>
-              <Link href="#youtube" className="hover:text-[hsl(0_0%_83.1%)] transition-colors">
+              <Link
+                href="#youtube"
+                className="hover:text-[hsl(0_0%_83.1%)] transition-colors"
+                aria-label="Youtube"
+              >
                 <Youtube className="h-6 w-6" />
               </Link>
-              <Link href="#facebook" className="hover:text-[hsl(0_0%_83.1%)] transition-colors">
+              <Link
+                href="#facebook"
+                className="hover:text-[hsl(0_0%_83.1%)] transition-colors"
+                aria-label="Facebook"
+              >
                 <Facebook className="h-6 w-6" />
               </Link>
             </div>

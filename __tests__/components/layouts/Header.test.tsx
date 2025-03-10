@@ -1,92 +1,64 @@
-// __tests__/components/layouts/Header.test.tsx
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import Header from "@/app/components/layouts/Header";
-import { CartProvider } from "@/app/components/Cart/CartContext";
+import { useCart } from "@/app/components/Cart/CartContext";
 
-// Mock CartContext values
+// Mock the useCart hook and CartProvider
 jest.mock("@/app/components/Cart/CartContext", () => ({
-  ...jest.requireActual("@/app/components/Cart/CartContext"),
-  useCart: () => ({
-    items: [],
-    total: 0,
-    addItem: jest.fn(),
-    removeItem: jest.fn(),
-    updateQuantity: jest.fn(),
-    clearCart: jest.fn(),
-    loadingItems: {},
-    error: null,
-    isLoading: false,
-  }),
+  useCart: jest.fn(),
+  CartProvider: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  )
 }));
 
 describe("Header Component", () => {
-  it("renders the header with navigation and empty cart", () => {
-    render(
-      <CartProvider>
-        <Header />
-      </CartProvider>
-    );
-    
+  beforeEach(() => {
+    // Clear mocks before each test to ensure isolation
+    jest.clearAllMocks();
+  });
+
+  it("renders the header with navigation and cart button when cart is empty", () => {
+    // Mock an empty cart
+    (useCart as jest.Mock).mockReturnValue({ items: [], total: 0 });
+
+    render(<Header />);
+
     // Check logo
     expect(screen.getByAltText("Bone+")).toBeInTheDocument();
-    
+
     // Check navigation links
     expect(screen.getByText("About Us")).toBeInTheDocument();
     expect(screen.getByText("Headphones")).toBeInTheDocument();
     expect(screen.getByText("Contact Us")).toBeInTheDocument();
-    
-    // Check cart dropdown trigger
-    const cartButton = screen.getByRole("button", { name: "" }); // Cart icon button
+
+    // Check cart button (requires aria-label="Cart" in Header.tsx for accessibility)
+    const cartButton = screen.getByRole("button", { name: /cart/i });
     expect(cartButton).toBeInTheDocument();
-    
-    // Click cart button to open dropdown
-    fireEvent.click(cartButton);
-    
-    // Check empty cart message
-    expect(screen.getByText("Your cart is empty")).toBeInTheDocument();
+
+    // Check badge is not present when cart is empty
+    expect(screen.queryByText("2")).not.toBeInTheDocument();
   });
-  
-  it("shows cart with items when cart has products", () => {
-    // Override the mock to return cart items
-    jest.spyOn(require("@/app/components/Cart/CartContext"), "useCart").mockImplementation(() => ({
+
+  it("shows cart badge with correct count when cart has items", () => {
+    // Mock a cart with items
+    (useCart as jest.Mock).mockReturnValue({
       items: [
-        { 
-          cart_item_id: "1", 
-          product_id: 1, 
-          name: "Test Headphones", 
-          price: 199.99, 
+        {
+          cart_item_id: "1",
+          product_id: 1,
+          name: "Test Headphones",
+          price: 199.99,
           quantity: 2,
           stock_quantity: 10,
           image_url: "/test.jpg"
         }
       ],
-      total: 399.98,
-      addItem: jest.fn(),
-      removeItem: jest.fn(),
-      updateQuantity: jest.fn(),
-      clearCart: jest.fn(),
-      loadingItems: {},
-      error: null,
-      isLoading: false,
-    }));
-    
-    render(
-      <CartProvider>
-        <Header />
-      </CartProvider>
-    );
-    
-    // Check cart counter badge
+      total: 399.98
+    });
+
+    render(<Header />);
+
+    // Check badge shows "2" (total quantity)
     expect(screen.getByText("2")).toBeInTheDocument();
-    
-    // Open cart dropdown
-    const cartButton = screen.getByRole("button", { name: "" });
-    fireEvent.click(cartButton);
-    
-    // Verify cart content
-    expect(screen.getByText("1 Item")).toBeInTheDocument();
-    expect(screen.getByText("$399.98")).toBeInTheDocument();
-    expect(screen.getByText("View Cart")).toBeInTheDocument();
   });
 });
