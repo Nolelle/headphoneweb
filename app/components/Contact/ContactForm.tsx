@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import React, { useEffect, useState } from "react";
 import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
@@ -16,7 +16,7 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/app/components/ui/tooltip"
+} from "@/app/components/ui/tooltip";
 import { Label } from "../ui/label";
 import { CheckCircle2, ChevronUp } from "lucide-react";
 
@@ -41,6 +41,12 @@ const ContactForm: React.FC = () => {
     if (!formData.name || !formData.email || !formData.message) {
       setStatus("error");
       setErrorMessage("All fields are required");
+      return;
+    }
+
+    if (formData.message.length < 10) {
+      setStatus("error");
+      setErrorMessage("Message must be at least 10 characters long");
       return;
     }
 
@@ -138,8 +144,8 @@ const ContactForm: React.FC = () => {
           </div>
 
           <div className="space-y-4">
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="w-full bg-[hsl(220_70%_50%)] text-[hsl(0_0%_98%)] hover:bg-[hsl(220_70%_45%)]"
               disabled={status === "loading"}
             >
