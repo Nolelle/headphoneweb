@@ -88,29 +88,43 @@ function generateSummary(results: any): any {
     let totalPassed = 0;
     let totalMetrics = 0;
 
-    // Count individual metric passes vs. fails
-    frontendTests.forEach((test: any) => {
-      if (test.evaluations) {
-        const evaluationKeys = Object.keys(test.evaluations);
-        totalMetrics += evaluationKeys.length;
+    // Ensure frontendTests is an array before attempting to iterate
+    if (Array.isArray(frontendTests)) {
+      // Count individual metric passes vs. fails
+      frontendTests.forEach((test: any) => {
+        if (test.evaluations) {
+          const evaluationKeys = Object.keys(test.evaluations);
+          totalMetrics += evaluationKeys.length;
 
-        totalPassed += evaluationKeys.filter(
-          (key) => test.evaluations[key] === true
-        ).length;
-      }
+          totalPassed += evaluationKeys.filter(
+            (key) => test.evaluations[key] === true
+          ).length;
+        }
 
-      if (!test.passed) {
-        anyFailed = true;
-      }
-    });
+        if (!test.passed) {
+          anyFailed = true;
+        }
+      });
 
-    summary.metrics.frontend = {
-      pages: frontendTests.length,
-      metrics: totalMetrics,
-      passed: totalPassed,
-      failed: totalMetrics - totalPassed,
-      passRate: (totalPassed / totalMetrics) * 100
-    };
+      summary.metrics.frontend = {
+        pages: frontendTests.length,
+        metrics: totalMetrics,
+        passed: totalPassed,
+        failed: totalMetrics - totalPassed,
+        passRate: totalMetrics > 0 ? (totalPassed / totalMetrics) * 100 : 0
+      };
+    } else {
+      // Handle case where frontendTests is not an array (could be an error object)
+      summary.metrics.frontend = {
+        pages: 0,
+        metrics: 0,
+        passed: 0,
+        failed: 0,
+        passRate: 0,
+        error: frontendTests.error || "Unknown error in frontend tests"
+      };
+      anyFailed = true;
+    }
   }
 
   // Process database test results

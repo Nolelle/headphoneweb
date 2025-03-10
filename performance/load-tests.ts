@@ -8,6 +8,7 @@ import { writeFileSync } from "fs";
 import { exec } from "child_process";
 import { promisify } from "util";
 import path from "path";
+import { existsSync, mkdirSync } from "fs";
 
 const execAsync = promisify(exec);
 
@@ -32,8 +33,8 @@ const scenarios = {
         }
       },
       thresholds: {
-        http_req_duration: ['p95<500', 'p99<1500'],  // 95% of requests must complete within 500ms, 99% within 1.5s
-        http_req_failed: ['rate<0.01']              // Error rate must be less than 1%
+        'http_req_duration': ['p(95)<500', 'p(99)<1500'],  // 95% of requests must complete within 500ms, 99% within 1.5s
+        'http_req_failed': ['rate<0.01']              // Error rate must be less than 1%
       }
     };
     
@@ -73,8 +74,8 @@ const scenarios = {
         }
       },
       thresholds: {
-        http_req_duration: ['p95<1000', 'p99<3000'],
-        http_req_failed: ['rate<0.05']
+        'http_req_duration': ['p(95)<1000', 'p(99)<3000'],
+        'http_req_failed': ['rate<0.05']
       }
     };
     
@@ -145,8 +146,8 @@ const scenarios = {
         }
       },
       thresholds: {
-        http_req_duration: ['p95<2000', 'p99<5000'],
-        http_req_failed: ['rate<0.05']
+        'http_req_duration': ['p(95)<2000', 'p(99)<5000'],
+        'http_req_failed': ['rate<0.05']
       }
     };
     
@@ -213,8 +214,8 @@ const scenarios = {
         }
       },
       thresholds: {
-        http_req_duration: ['p95<1000', 'p99<2000'],
-        http_req_failed: ['rate<0.05']
+        'http_req_duration': ['p(95)<1000', 'p(99)<2000'],
+        'http_req_failed': ['rate<0.05']
       }
     };
     
@@ -255,8 +256,8 @@ const scenarios = {
         }
       },
       thresholds: {
-        http_req_duration: ['p95<2000', 'p99<5000'],
-        http_req_failed: ['rate<0.05']
+        'http_req_duration': ['p(95)<2000', 'p(99)<5000'],
+        'http_req_failed': ['rate<0.05']
       }
     };
     
@@ -301,6 +302,14 @@ const scenarios = {
   `
 };
 
+// Define types for test results
+interface LoadTestResult {
+  name: string;
+  success: boolean;
+  summary?: string;
+  error?: string;
+}
+
 /**
  * Executes a load test script using k6
  * @param scriptName - Name of the test scenario
@@ -310,10 +319,16 @@ const scenarios = {
 async function executeLoadTest(
   scriptName: string,
   scriptContent: string
-): Promise<any> {
+): Promise<LoadTestResult> {
   // Write the script to a temporary file
   const scriptPath = path.join(__dirname, `${scriptName}.js`);
   writeFileSync(scriptPath, scriptContent);
+
+  // Create results directory if it doesn't exist
+  const resultsDir = path.join(__dirname, "results");
+  if (!existsSync(resultsDir)) {
+    mkdirSync(resultsDir, { recursive: true });
+  }
 
   try {
     // Execute k6 with the script
@@ -323,14 +338,14 @@ async function executeLoadTest(
     );
 
     console.log(`${scriptName} test completed`);
-    if (stderr) {
+    if (stderr && stderr.trim() !== "") {
       console.error(`Error during test: ${stderr}`);
     }
 
     // Return basic results (a real implementation would parse the JSON output)
     return {
       name: scriptName,
-      success: !stderr,
+      success: !stderr || stderr.trim() === "",
       summary: stdout
     };
   } catch (error) {
@@ -338,18 +353,29 @@ async function executeLoadTest(
     return {
       name: scriptName,
       success: false,
-      error: error.message
+      error: error instanceof Error ? error.message : String(error)
     };
+  } finally {
+    // Clean up temporary script file
+    try {
+      const fs = await import("fs/promises");
+      await fs.unlink(scriptPath);
+    } catch (cleanupError) {
+      console.error(
+        `Error cleaning up script file ${scriptPath}:`,
+        cleanupError
+      );
+    }
   }
 }
 
 /**
  * Runs all load tests and collects the results
  */
-export async function runLoadTests() {
+export async function runLoadTests(): Promise<LoadTestResult[]> {
   console.log("Starting load tests for critical user journeys...");
 
-  const results = [];
+  const results: LoadTestResult[] = [];
 
   // Execute each test scenario
   for (const [name, script] of Object.entries(scenarios)) {

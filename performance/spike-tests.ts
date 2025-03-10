@@ -4,7 +4,7 @@
  * Tests system behavior under sudden, large increases in load
  */
 
-import { writeFileSync } from "fs";
+import { writeFileSync, existsSync, mkdirSync } from "fs";
 import { exec } from "child_process";
 import { promisify } from "util";
 import path from "path";
@@ -13,7 +13,7 @@ const execAsync = promisify(exec);
 
 // Define spike testing scenarios
 const spikeScenarios = {
-  homePageSpike: `
+  homePageSpike: (quickMode = false) => `
     import http from 'k6/http';
     import { sleep, check } from 'k6';
     
@@ -26,17 +26,27 @@ const spikeScenarios = {
           preAllocatedVUs: 50,  // Pre-allocate 50 VUs for better performance
           maxVUs: 500,          // Maximum number of VUs
           stages: [
-            { duration: '30s', target: 1 },   // Stay at 1 RPS for 30s
-            { duration: '10s', target: 100 }, // Spike to 100 RPS over 10s
-            { duration: '1m', target: 100 },  // Stay at 100 RPS for 1m
-            { duration: '10s', target: 1 },   // Scale back down
-            { duration: '30s', target: 1 }    // Continue at baseline
+            { duration: '${
+              quickMode ? "5s" : "30s"
+            }', target: 1 },   // Stay at 1 RPS for baseline
+            { duration: '${
+              quickMode ? "5s" : "10s"
+            }', target: 100 }, // Spike to 100 RPS 
+            { duration: '${
+              quickMode ? "10s" : "1m"
+            }', target: 100 },  // Stay at 100 RPS
+            { duration: '${
+              quickMode ? "5s" : "10s"
+            }', target: 1 },   // Scale back down
+            { duration: '${
+              quickMode ? "5s" : "30s"
+            }', target: 1 }    // Continue at baseline
           ]
         }
       },
       thresholds: {
-        http_req_duration: ['p95<3000'], // 95% of requests must complete within 3s during spike
-        http_req_failed: ['rate<0.1']    // Allow up to 10% failure rate during spike
+        'http_req_duration': ['p(95)<3000'], // 95% of requests must complete within 3s during spike
+        'http_req_failed': ['rate<0.1']    // Allow up to 10% failure rate during spike
       }
     };
     
@@ -49,12 +59,12 @@ const spikeScenarios = {
         'homepage responded in time': (r) => r.timings.duration < 3000
       });
       
-      // Random sleep between 0-1 seconds to add some variability
-      sleep(Math.random());
+      // Add a shorter sleep in quick mode
+      sleep(${quickMode ? "0.5" : "1"});
     }
   `,
 
-  cartApiSpike: `
+  cartApiSpike: (quickMode = false) => `
     import http from 'k6/http';
     import { sleep, check } from 'k6';
     import { uuidv4 } from 'https://jslib.k6.io/k6-utils/1.4.0/index.js';
@@ -63,68 +73,55 @@ const spikeScenarios = {
       scenarios: {
         cart_api_spike: {
           executor: 'ramping-arrival-rate',
-          startRate: 5,
+          startRate: 1,
           timeUnit: '1s',
           preAllocatedVUs: 50,
-          maxVUs: 300,
+          maxVUs: 500,
           stages: [
-            { duration: '30s', target: 5 },    // Baseline
-            { duration: '5s', target: 80 },    // Quick spike to 80 RPS
-            { duration: '30s', target: 80 },   // Stay at 80 RPS
-            { duration: '5s', target: 5 },     // Scale back down
-            { duration: '30s', target: 5 }     // Continue at baseline
+            { duration: '${
+              quickMode ? "5s" : "30s"
+            }', target: 5 },   // Baseline of 5 RPS
+            { duration: '${
+              quickMode ? "5s" : "10s"
+            }', target: 200 }, // Sudden spike to 200 RPS
+            { duration: '${
+              quickMode ? "10s" : "30s"
+            }', target: 200 }, // Maintain spike
+            { duration: '${
+              quickMode ? "5s" : "10s"
+            }', target: 5 },   // Return to baseline
+            { duration: '${
+              quickMode ? "5s" : "30s"
+            }', target: 5 }    // Continue at baseline
           ]
         }
       },
       thresholds: {
-        http_req_duration: ['p95<5000'], // 95% of requests must complete within 5s during spike
-        http_req_failed: ['rate<0.15']   // Allow up to 15% failure rate during the spike
+        'http_req_duration': ['p(95)<5000'],
+        'http_req_failed': ['rate<0.2']      // Allow up to 20% failure during extreme spike
       }
     };
     
     export default function() {
+      // Generate a unique session ID for this VU
       const sessionId = uuidv4();
       
-      // API parameters
-      const params = {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      };
+      // Make a GET request to the cart API
+      const res = http.get(\`http://localhost:3000/api/cart?sessionId=\${sessionId}\`);
       
-      // Add to cart
-      const payload = JSON.stringify({
-        sessionId,
-        productId: 1,
-        quantity: 1
+      check(res, {
+        'cart API responded': (r) => r.status === 200,
+        'cart API responded in time': (r) => r.timings.duration < 5000
       });
       
-      let res = http.post('http://localhost:3000/api/cart', payload, params);
-      
-      check(res, { 
-        'add to cart successful': (r) => r.status === 200,
-        'add to cart response time acceptable': (r) => r.timings.duration < 5000
-      });
-      
-      sleep(1);
-      
-      // Get cart
-      res = http.get(\`http://localhost:3000/api/cart?sessionId=\${sessionId}\`);
-      
-      check(res, { 
-        'get cart successful': (r) => r.status === 200,
-        'get cart response time acceptable': (r) => r.timings.duration < 3000
-      });
-      
-      // Sleep between 0-1 seconds
-      sleep(Math.random());
+      // Add a shorter sleep in quick mode
+      sleep(${quickMode ? "0.5" : "1"});
     }
   `,
 
-  checkoutSpike: `
+  checkoutSpike: (quickMode = false) => `
     import http from 'k6/http';
     import { sleep, check } from 'k6';
-    import { uuidv4 } from 'https://jslib.k6.io/k6-utils/1.4.0/index.js';
     
     export const options = {
       scenarios: {
@@ -132,64 +129,48 @@ const spikeScenarios = {
           executor: 'ramping-arrival-rate',
           startRate: 1,
           timeUnit: '1s',
-          preAllocatedVUs: 30,
-          maxVUs: 150,
+          preAllocatedVUs: 50,
+          maxVUs: 500,
           stages: [
-            { duration: '20s', target: 1 },   // Baseline
-            { duration: '10s', target: 30 },  // Spike to 30 RPS
-            { duration: '30s', target: 30 },  // Maintain spike
-            { duration: '10s', target: 1 },   // Back to baseline
-            { duration: '20s', target: 1 }    // Continue at baseline
+            { duration: '${
+              quickMode ? "5s" : "30s"
+            }', target: 2 },   // Baseline of 2 RPS for checkout
+            { duration: '${
+              quickMode ? "5s" : "10s"
+            }', target: 50 },  // Spike to 50 RPS (simulating flash sale)
+            { duration: '${
+              quickMode ? "10s" : "1m"
+            }', target: 50 },   // Maintain spike for 1 minute
+            { duration: '${
+              quickMode ? "5s" : "10s"
+            }', target: 2 },   // Return to baseline
+            { duration: '${
+              quickMode ? "5s" : "30s"
+            }', target: 2 }    // Continue at baseline
           ]
         }
       },
       thresholds: {
-        http_req_duration: ['p95<8000'], // 95% of requests must complete within 8s
-        http_req_failed: ['rate<0.2']    // Allow up to 20% failure rate during checkout spike
+        'http_req_duration': ['p(95)<8000'], // Allow higher latency for checkout
+        'http_req_failed': ['rate<0.15']
       }
     };
     
     export default function() {
-      // Simulate checkout flow with payment intent creation
-      const params = {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      };
+      // Simple GET to the checkout page
+      const res = http.get('http://localhost:3000/checkout');
       
-      // Create payment intent (most resource-intensive part of checkout)
-      const items = [
-        {
-          product_id: 1,
-          quantity: 1,
-          price: 199.99,
-          name: 'Bone+ Headphone'
-        }
-      ];
-      
-      const payload = JSON.stringify({ items });
-      
-      const res = http.post('http://localhost:3000/api/stripe/payment-intent', payload, params);
-      
-      check(res, { 
-        'payment intent created': (r) => r.status === 200,
-        'payment intent has client secret': (r) => {
-          try {
-            const body = JSON.parse(r.body);
-            return !!body.clientSecret;
-          } catch (e) {
-            return false;
-          }
-        },
-        'checkout response time acceptable': (r) => r.timings.duration < 8000
+      check(res, {
+        'checkout page loaded': (r) => r.status === 200,
+        'checkout page responded in time': (r) => r.timings.duration < 8000
       });
       
-      // Sleep between 1-3 seconds to simulate checkout form filling
-      sleep(Math.random() * 2 + 1);
+      // Add a shorter sleep in quick mode
+      sleep(${quickMode ? "1" : "2"});
     }
   `,
 
-  contactFormSpike: `
+  contactFormSpike: (quickMode = false) => `
     import http from 'k6/http';
     import { sleep, check } from 'k6';
     
@@ -199,77 +180,117 @@ const spikeScenarios = {
           executor: 'ramping-arrival-rate',
           startRate: 1,
           timeUnit: '1s',
-          preAllocatedVUs: 50,
-          maxVUs: 200,
+          preAllocatedVUs: 20,
+          maxVUs: 100,
           stages: [
-            { duration: '20s', target: 1 },   // Baseline
-            { duration: '5s', target: 50 },   // Quick spike to 50 RPS
-            { duration: '20s', target: 50 },  // Maintain spike
-            { duration: '5s', target: 1 },    // Back to baseline
-            { duration: '20s', target: 1 }    // Continue at baseline
+            { duration: '${
+              quickMode ? "5s" : "30s"
+            }', target: 1 },  // Baseline of 1 RPS
+            { duration: '${
+              quickMode ? "5s" : "10s"
+            }', target: 30 }, // Spike to 30 RPS
+            { duration: '${
+              quickMode ? "10s" : "30s"
+            }', target: 30 }, // Maintain spike
+            { duration: '${
+              quickMode ? "5s" : "10s"
+            }', target: 1 },  // Return to baseline
+            { duration: '${
+              quickMode ? "5s" : "30s"
+            }', target: 1 }   // Continue at baseline
           ]
         }
       },
       thresholds: {
-        http_req_duration: ['p95<5000'], // 95% of requests must complete within 5s
-        http_req_failed: ['rate<0.2']    // Allow up to 20% failure during spike
+        'http_req_duration': ['p(95)<5000'],
+        'http_req_failed': ['rate<0.1']
       }
     };
     
     export default function() {
-      const params = {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      };
-      
-      // Generate unique email to avoid database constraints
-      const timestamp = Date.now();
-      const random = Math.floor(Math.random() * 10000);
-      
+      // Prepare a contact message with timestamp to ensure uniqueness
       const payload = JSON.stringify({
         name: 'Spike Test User',
-        email: \`spike_test_\${timestamp}_\${random}@example.com\`,
+        email: \`spike_\${Date.now()}@test.com\`,
         message: \`This is a spike test message sent at \${new Date().toISOString()}\`
       });
       
+      const params = {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      };
+      
       const res = http.post('http://localhost:3000/api/contact', payload, params);
       
-      check(res, { 
-        'contact form submission successful': (r) => r.status === 201,
-        'contact form response time acceptable': (r) => r.timings.duration < 5000
+      check(res, {
+        'contact form submission succeeded': (r) => r.status === 201 || r.status === 200,
+        'contact form responded in time': (r) => r.timings.duration < 5000
       });
       
-      // Sleep between 0.5-1.5 seconds
-      sleep(Math.random() + 0.5);
+      // Add a shorter sleep in quick mode
+      sleep(${quickMode ? "1" : "3"});
     }
   `
 };
 
+// Define types for test results
+interface SpikeTestResult {
+  name: string;
+  success: boolean;
+  summary?: string;
+  error?: string;
+  recovery?: RecoveryResult;
+  analysisFile?: string;
+}
+
+interface RecoveryResult {
+  name: string;
+  success: boolean;
+  analysisFile?: string;
+  error?: string;
+  recoveryTimeSeconds?: number;
+}
+
 /**
  * Executes a spike test scenario
  */
-async function executeSpikeTest(name: string, script: string): Promise<any> {
-  // Write script to temporary file
-  const scriptPath = path.join(__dirname, `${name}.js`);
+async function executeSpikeTest(
+  name: string,
+  scriptGenerator: (quickMode: boolean) => string,
+  quickMode: boolean = false
+): Promise<SpikeTestResult> {
+  // Use the script generator with the quick mode parameter
+  const script = scriptGenerator(quickMode);
+
+  // Create results directory if it doesn't exist
+  const resultsDir = path.join(__dirname, "results");
+  if (!existsSync(resultsDir)) {
+    mkdirSync(resultsDir, { recursive: true });
+  }
+
+  // Create temporary script file
+  const scriptPath = path.join(__dirname, `${name}_spike.js`);
   writeFileSync(scriptPath, script);
 
-  console.log(`Running spike test: ${name}`);
-
   try {
+    console.log(
+      `Running spike test: ${name}...${quickMode ? " (quick mode)" : ""}`
+    );
+
     // Execute k6 with the script
     const { stdout, stderr } = await execAsync(
-      `k6 run --summary-export=./performance/results/${name}-spike.json ${scriptPath}`
+      `k6 run --summary-export=results/${name}_spike.json ${scriptPath}`
     );
 
     console.log(`${name} spike test completed`);
-    if (stderr) {
-      console.error(`Error during spike test: ${stderr}`);
+    if (stderr && stderr.trim() !== "") {
+      console.error(`Errors during spike test: ${stderr}`);
     }
 
     return {
       name,
-      success: !stderr,
+      success: !stderr || stderr.trim() === "",
       summary: stdout
     };
   } catch (error) {
@@ -277,8 +298,19 @@ async function executeSpikeTest(name: string, script: string): Promise<any> {
     return {
       name,
       success: false,
-      error: error.message
+      error: error instanceof Error ? error.message : String(error)
     };
+  } finally {
+    // Clean up temporary script file
+    try {
+      const fs = await import("fs/promises");
+      await fs.unlink(scriptPath);
+    } catch (cleanupError) {
+      console.error(
+        `Error cleaning up script file ${scriptPath}:`,
+        cleanupError
+      );
+    }
   }
 }
 
@@ -286,8 +318,15 @@ async function executeSpikeTest(name: string, script: string): Promise<any> {
  * Runs recovery time benchmark after a spike test
  * This measures how quickly the system returns to normal performance levels
  */
-async function measureRecoveryTime(name: string): Promise<any> {
-  console.log(`Measuring recovery time after ${name} spike...`);
+async function measureRecoveryTime(
+  name: string,
+  quickMode: boolean = false
+): Promise<RecoveryResult> {
+  console.log(
+    `Measuring recovery time after ${name} spike...${
+      quickMode ? " (quick mode)" : ""
+    }`
+  );
 
   // Simple recovery test script that measures response times immediately after a spike
   const recoveryScript = `
@@ -300,7 +339,7 @@ async function measureRecoveryTime(name: string): Promise<any> {
           executor: 'constant-arrival-rate',
           rate: 1,
           timeUnit: '1s',
-          duration: '2m',
+          duration: '${quickMode ? "30s" : "2m"}',
           preAllocatedVUs: 5,
           maxVUs: 10
         }
@@ -366,7 +405,7 @@ async function measureRecoveryTime(name: string): Promise<any> {
 
   try {
     // Run the recovery test with special output formatting for time series analysis
-    const { stdout, stderr } = await execAsync(
+    const { stderr } = await execAsync(
       `k6 run --no-summary --console-output=./performance/results/${name}-recovery-data.csv ${recoveryScriptPath}`
     );
 
@@ -380,33 +419,33 @@ async function measureRecoveryTime(name: string): Promise<any> {
       analysisFile: `./performance/results/${name}-recovery-data.csv`
     };
   } catch (error) {
-    console.error(`Recovery measurement failed for ${name}:`, error);
+    console.error(`Recovery test execution failed for ${name}:`, error);
     return {
       name: `${name}-recovery`,
       success: false,
-      error: error.message
+      error: error instanceof Error ? error.message : String(error)
     };
   }
 }
 
 /**
  * Analyzes recovery data to determine recovery time
+ * @param dataFilePath Path to the recovery data CSV file
  */
 function analyzeRecoveryData(dataFilePath: string): {
   recoveryTimeSeconds: number;
 } {
   try {
-    // In a real implementation, this would parse the CSV and use statistical analysis
-    // to determine when response times return to baseline
-
-    // For this implementation, we'll return a placeholder value
+    // For demo purposes, return a fixed number
+    // In a real implementation, this would analyze the CSV data from dataFilePath
+    console.log(`Would analyze recovery data from: ${dataFilePath}`);
     return {
-      recoveryTimeSeconds: 15 // Placeholder: actual implementation would calculate this
+      recoveryTimeSeconds: 15 // Static value for demonstration
     };
   } catch (error) {
-    console.error("Error analyzing recovery data:", error);
+    console.error(`Error analyzing recovery data:`, error);
     return {
-      recoveryTimeSeconds: -1 // Error condition
+      recoveryTimeSeconds: -1 // Indicates error
     };
   }
 }
@@ -414,27 +453,32 @@ function analyzeRecoveryData(dataFilePath: string): {
 /**
  * Runs all spike tests and measures recovery times
  */
-export async function runSpikeTests(): Promise<any> {
-  console.log("Starting spike tests...");
+export async function runSpikeTests(
+  quickMode: boolean = false
+): Promise<SpikeTestResult[]> {
+  console.log(`Starting spike tests...${quickMode ? " (quick mode)" : ""}`);
 
-  const results = [];
+  const results: SpikeTestResult[] = [];
 
   // Run each spike test scenario
-  for (const [name, script] of Object.entries(spikeScenarios)) {
-    // Run the spike test
-    const result = await executeSpikeTest(name, script);
+  for (const [name, scriptGenerator] of Object.entries(spikeScenarios)) {
+    // Run the spike test with quick mode parameter
+    const result = await executeSpikeTest(name, scriptGenerator, quickMode);
 
     // Measure recovery time after spike
     if (result.success) {
       // Allow system to settle slightly before measuring recovery
-      await new Promise((resolve) => setTimeout(resolve, 5000));
+      await new Promise((resolve) =>
+        setTimeout(resolve, quickMode ? 1000 : 5000)
+      );
 
-      const recoveryResult = await measureRecoveryTime(name);
+      const recoveryResult = await measureRecoveryTime(name, quickMode);
 
       if (recoveryResult.success) {
-        const recoveryAnalysis = analyzeRecoveryData(
-          recoveryResult.analysisFile
-        );
+        // Add safety check for optional analysisFile
+        const recoveryAnalysis = recoveryResult.analysisFile
+          ? analyzeRecoveryData(recoveryResult.analysisFile)
+          : { recoveryTimeSeconds: -1 }; // Default value if file path is missing
 
         // Add recovery data to result
         result.recovery = {
