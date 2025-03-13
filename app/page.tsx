@@ -6,7 +6,9 @@ import AboutUs from "./components/AboutUs/AboutUs";
 export default function Home() {
   return (
     <div>
-      <MainPageHero />
+      <div id="hero">
+        <MainPageHero />
+      </div>
       <div id="about">
         <AboutUs/>
       </div>
