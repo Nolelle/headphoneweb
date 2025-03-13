@@ -38,7 +38,7 @@ const Header = () => {
           <div className="flex items-center space-x-4">
             {/* Logo */}
             <Link
-              href="/"
+              href="/#hero"
               className="flex items-center space-x-2"
             >
               <Image
