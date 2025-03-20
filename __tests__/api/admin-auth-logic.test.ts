@@ -21,7 +21,14 @@ jest.mock("@/db/helpers/db", () => ({
 }));
 
 jest.mock("bcrypt", () => ({
-  compare: jest.fn().mockImplementation(() => Promise.resolve(false))
+  compare: jest
+    .fn()
+    .mockImplementation((plaintext, hash) =>
+      Promise.resolve(plaintext === "admin123")
+    ),
+  hash: jest
+    .fn()
+    .mockImplementation((str, salt) => Promise.resolve(`hashed_${str}`))
 }));
 
 // Mock NextResponse from next/server
@@ -131,23 +138,23 @@ describe("Admin Authentication Logic", () => {
   it("should handle session token creation", async () => {
     const username = "admin";
     const adminId = 1;
-  
+
     // Mock NextResponse.json to capture cookie operations
     const mockSetCookie = jest.fn();
     mockNextResponse.json.mockImplementationOnce(() => ({
       cookies: {
         set: mockSetCookie,
-        delete: jest.fn(),
-      },
+        delete: jest.fn()
+      }
     }));
-  
+
     // Simulate successful admin lookup
     const mockQueryResult = {
-      rows: [{ admin_id: adminId, username, password_hash: "hashedpassword" }],
+      rows: [{ admin_id: adminId, username, password_hash: "hashedpassword" }]
     };
     jest.spyOn(pool, "query").mockResolvedValueOnce(mockQueryResult);
     jest.spyOn(bcrypt, "compare").mockResolvedValueOnce(true);
-  
+
     // Call login endpoint directly (or simulate its behavior)
     // For this test, we'll simulate its core behavior
     const response = mockNextResponse.json({ success: true });
@@ -155,9 +162,9 @@ describe("Admin Authentication Logic", () => {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
-      maxAge: 60 * 60 * 24, // 24 hours
+      maxAge: 60 * 60 * 24 // 24 hours
     });
-  
+
     // Verify cookie was set with correct properties
     expect(response.cookies.set).toHaveBeenCalledWith(
       "admin_session",
@@ -165,54 +172,54 @@ describe("Admin Authentication Logic", () => {
       expect.objectContaining({
         httpOnly: true,
         sameSite: "strict",
-        maxAge: 60 * 60 * 24,
+        maxAge: 60 * 60 * 24
       })
     );
   });
-  
+
   it("should validate password correctly with different complexities", async () => {
     // Test case 1: Simple password
     const simplePassword = "password123";
     const simpleHash = await bcrypt.hash(simplePassword, 10);
     const validSimple = await bcrypt.compare(simplePassword, simpleHash);
     expect(validSimple).toBe(true);
-    
+
     // Test case 2: Complex password with special characters
     const complexPassword = "P@$$w0rd!123";
     const complexHash = await bcrypt.hash(complexPassword, 10);
     const validComplex = await bcrypt.compare(complexPassword, complexHash);
     expect(validComplex).toBe(true);
-    
+
     // Test case 3: Password with Unicode characters
     const unicodePassword = "пароль123!";
     const unicodeHash = await bcrypt.hash(unicodePassword, 10);
     const validUnicode = await bcrypt.compare(unicodePassword, unicodeHash);
     expect(validUnicode).toBe(true);
-    
+
     // Test case 4: Wrong password should fail
     const wrongMatch = await bcrypt.compare("wrongpassword", complexHash);
     expect(wrongMatch).toBe(false);
   });
-  
+
   it("should protect against timing attacks", async () => {
     // This test is to ensure that bcrypt.compare takes similar time
     // regardless of whether the password is correct or not
-  
+
     const password = "securepassword";
     const hash = await bcrypt.hash(password, 10);
-    
+
     // Measure time for correct password
     const startCorrect = Date.now();
     await bcrypt.compare(password, hash);
     const endCorrect = Date.now();
     const correctTime = endCorrect - startCorrect;
-    
+
     // Measure time for wrong password (same length)
     const startWrong = Date.now();
     await bcrypt.compare("wrongpasswrd", hash); // Same length
     const endWrong = Date.now();
     const wrongTime = endWrong - startWrong;
-    
+
     // The times shouldn't be exactly the same but should be close
     // We allow for some variance due to system load, etc.
     const timeDifference = Math.abs(correctTime - wrongTime);
