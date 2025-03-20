@@ -37,9 +37,8 @@ Cypress.Commands.add("adminLogin", (username: string, password: string) => {
   // Check if we're on the site password page
   cy.url().then((url) => {
     if (url.includes("/enter-password")) {
-      // Handle site password
-      cy.get('input[type="password"]').type("mypassword");
-      cy.contains("button", "Enter Site").click();
+      // Handle site password using environment variable
+      cy.enterSitePassword(Cypress.env("sitePassword"));
 
       // After site password, we should be redirected to admin login
       cy.url().should("include", "/admin/login");
@@ -50,8 +49,10 @@ Cypress.Commands.add("adminLogin", (username: string, password: string) => {
   cy.get("#username").type(username);
   cy.get("#password").type(password);
   cy.get('button[type="submit"]').click();
-  cy.url().should("include", "/admin/dashboard");
-  cy.contains("Admin Dashboard").should("be.visible");
+
+  // Wait for redirect and confirm we're on the dashboard
+  cy.url().should("include", "/admin/dashboard", { timeout: 10000 });
+  cy.contains("Admin Dashboard", { timeout: 10000 }).should("be.visible");
 });
 
 // Find message command - updated to use more reliable selectors

@@ -30,6 +30,22 @@ jest.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams()
 }));
 
+// Mock database
+jest.mock("@/db/helpers/db", () => {
+  const mockQuery = jest.fn().mockImplementation(() => {
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  });
+
+  return {
+    __esModule: true,
+    default: {
+      query: mockQuery,
+      connect: jest.fn(),
+      end: jest.fn()
+    }
+  };
+});
+
 // Mock window.matchMedia
 Object.defineProperty(window, "matchMedia", {
   writable: true,
@@ -49,24 +65,57 @@ Object.defineProperty(window, "matchMedia", {
 class MockNextRequest {
   url: string;
   method: string;
-  body: any;
+  body: string | null;
   headers: Headers;
   nextUrl: URL;
+  cookies: {
+    get: (name: string) => { name: string; value: string } | undefined;
+    getAll: () => { name: string; value: string }[];
+    has: (name: string) => boolean;
+    set: (name: string, value: string) => void;
+  };
 
-  constructor(url: string, options: any = {}) {
+  constructor(
+    url: string,
+    options: {
+      method?: string;
+      body?: string;
+      headers?: Record<string, string>;
+    } = {}
+  ) {
     this.url = url;
     this.method = options.method || "GET";
-    this.body = options.body;
+    this.body = options.body || null;
     this.headers = new Headers(options.headers || {});
     this.nextUrl = new URL(url);
+
+    // Initialize cookies
+    const cookiesMap = new Map<string, string>();
+    this.cookies = {
+      get: (name: string) => {
+        const value = cookiesMap.get(name);
+        return value ? { name, value } : undefined;
+      },
+      getAll: () => {
+        return Array.from(cookiesMap.entries()).map(([name, value]) => ({
+          name,
+          value
+        }));
+      },
+      has: (name: string) => cookiesMap.has(name),
+      set: (name: string, value: string) => cookiesMap.set(name, value)
+    };
   }
 
   json() {
-    return Promise.resolve(JSON.parse(this.body));
+    return this.body
+      ? Promise.resolve(JSON.parse(this.body))
+      : Promise.resolve({});
   }
 }
 
-global.NextRequest = MockNextRequest;
+// Add to global scope with proper typing
+(global as any).NextRequest = MockNextRequest;
 
 // Mock cookies functions for Next.js API routes
 jest.mock("next/headers", () => ({
