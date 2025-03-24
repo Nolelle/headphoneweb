@@ -1,5 +1,6 @@
 // app/api/admin/messages/[id]/respond/route.ts
 import { NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import pool from "@/db/helpers/db";
 import { Resend } from "resend";
 
@@ -11,12 +12,14 @@ const TEST_EMAIL = "eyu1@ualberta.ca"; // Your verified email
 const isDevelopment = process.env.NODE_ENV === "development";
 
 export async function POST(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  // Extract the message ID from params (Next.js 15 makes params a Promise)
+  const { id: messageId } = await params;
+
   try {
     const { response } = await request.json();
-    const messageId = params.id;
     console.log(`Handling response to message ${messageId}:`, response);
 
     // Start a database transaction
@@ -24,117 +27,110 @@ export async function POST(
     try {
       await client.query("BEGIN");
 
-      // Get the message details including customer info
-      const messageResult = await client.query(
-        `SELECT email, name, message FROM contact_message WHERE message_id = $1`,
-        [messageId]
-      );
-
-      if (messageResult.rows.length === 0) {
-        throw new Error("Message not found");
-      }
-
-      const { email, name, message } = messageResult.rows[0];
-      console.log("Found message with email:", email);
-
-      // Create base HTML email content
-      const baseHtmlContent = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #333;">Hello ${name},</h2>
-          
-          <p style="color: #666; margin-bottom: 20px;">
-            Thank you for contacting Bone+ Support. Here is our response to your inquiry:
-          </p>
-          
-          <div style="background-color: #f5f5f5; padding: 20px; border-radius: 5px; margin-bottom: 20px;">
-            <h3 style="color: #333; margin-top: 0;">Your Original Message:</h3>
-            <p style="color: #666;">${message}</p>
-          </div>
-          
-          <div style="background-color: #f0f7ff; padding: 20px; border-radius: 5px;">
-            <h3 style="color: #333; margin-top: 0;">Our Response:</h3>
-            <p style="color: #666;">${response}</p>
-          </div>
-          
-          <p style="color: #666; margin-top: 20px;">
-            If you have any further questions, please don't hesitate to contact us again.
-          </p>
-          
-          <p style="color: #666;">
-            Best regards,<br>
-            The Bone+ Support Team
-          </p>
-        </div>
+      // 1. Find the message to respond to
+      const messageQuery = `
+        SELECT * FROM messages 
+        WHERE id = $1 AND deleted_at IS NULL
       `;
 
-      // Add development mode notice if in development
-      const htmlContent = isDevelopment
-        ? `
-          ${baseHtmlContent}
-          <div style="margin-top: 20px; padding: 10px; background-color: #f5f5f5; border: 1px solid #ddd;">
-            <p style="color: #666; margin: 0;">
-              <strong>Development Mode Notice:</strong><br>
-              Original recipient would have been: ${email}<br>
-              This email is being sent to your test email (${TEST_EMAIL}) because we're in development mode.
-            </p>
-          </div>
-        `
-        : baseHtmlContent;
+      const messageResult = await client.query(messageQuery, [messageId]);
 
-      // Log email details in development
-      if (isDevelopment) {
-        console.log("Development Mode: Sending email to test address");
-        console.log("Original recipient:", email);
-        console.log("Test recipient:", TEST_EMAIL);
+      if (messageResult.rows.length === 0) {
+        await client.query("ROLLBACK");
+        return NextResponse.json(
+          { error: "Message not found" },
+          { status: 404 }
+        );
       }
 
-      // Send the email using Resend with fallback logic
-      let emailResult = { error: null, data: { id: "mock-email-id" } };
+      const message = messageResult.rows[0];
+
+      // 2. Add the response to the database
+      const responseQuery = `
+        UPDATE messages
+        SET 
+          admin_response = $1, 
+          status = 'responded', 
+          updated_at = NOW()
+        WHERE id = $2
+        RETURNING *
+      `;
+
+      const result = await client.query(responseQuery, [response, messageId]);
+      console.log("Database updated with response:", result.rows[0]);
+
+      // 3. Send an email with the response
+      let emailSent = false;
+      let emailData = null;
+
       try {
-        // Try to send the email, but don't fail the whole request if it doesn't work
-        const result = await resend.emails.send({
-          from: "Bone+ Support <onboarding@resend.dev>",
-          to: isDevelopment ? TEST_EMAIL : email,
-          subject: "Response to Your Inquiry - Bone+",
+        // Render the email content with both the original message and the response
+        const htmlContent = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2>Response to Your Message</h2>
+            <p>Thank you for contacting us about your inquiry. Here's a copy of your original message and our response:</p>
+            
+            <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
+              <h3>Your Message:</h3>
+              <p>${message.content}</p>
+            </div>
+            
+            <div style="background-color: #e8f4ff; padding: 15px; border-radius: 5px; margin: 20px 0;">
+              <h3>Our Response:</h3>
+              <p>${response}</p>
+            </div>
+            
+            <p>If you have any further questions, please don't hesitate to contact us again.</p>
+            <p>Best regards,<br>The SoundWave Team</p>
+          </div>
+        `;
+
+        const emailTo = isDevelopment ? TEST_EMAIL : message.email;
+
+        // Send the email
+        const emailResponse = await resend.emails.send({
+          from: "SoundWave Customer Support <onboarding@resend.dev>",
+          to: emailTo,
+          subject: "Response to Your Inquiry - SoundWave",
           html: htmlContent
         });
 
-        emailResult = result;
-        console.log("Email sent successfully:", emailResult);
+        // Check if the email was sent successfully
+        if (emailResponse.error) {
+          console.error("Failed to send email:", emailResponse.error);
+        } else {
+          emailSent = true;
+          emailData = emailResponse.data;
+          console.log("Email sent successfully:", emailData);
+        }
       } catch (emailError) {
-        console.error(
-          "Email sending failed, but continuing with the response:",
-          emailError
-        );
-        // Don't throw, just log and continue
+        console.error("Error sending email:", emailError);
       }
 
-      // Update the message status in the database
-      const result = await client.query(
-        `UPDATE contact_message 
-         SET admin_response = $1,
-             responded_at = CURRENT_TIMESTAMP,
-             status = 'RESPONDED'
-         WHERE message_id = $2
-         RETURNING *`,
-        [response, messageId]
-      );
-
+      // Commit the transaction
       await client.query("COMMIT");
       console.log("Database transaction committed successfully");
 
       // Return success response with email tracking ID
       return NextResponse.json({
         ...result.rows[0],
-        emailId: emailResult.data?.id,
+        emailId: emailData?.id,
         developmentMode: isDevelopment,
-        success: true // Add explicit success flag
+        success: emailSent
       });
     } catch (err) {
+      // Rollback transaction on error
       await client.query("ROLLBACK");
-      console.error("Transaction rolled back:", err);
-      throw err;
+      console.error("Error responding to message:", err);
+      return NextResponse.json(
+        {
+          error: "Failed to process the response",
+          details: err instanceof Error ? err.message : String(err)
+        },
+        { status: 500 }
+      );
     } finally {
+      // Release the client back to the pool
       client.release();
     }
   } catch (error) {

@@ -12,7 +12,7 @@ declare global {
        * Custom command to find a message by email or content
        * @example cy.findMessage('john@example.com')
        */
-      findMessage(identifier: string): Chainable<Element>;
+      findMessage(identifier: string): Chainable<JQuery<HTMLElement>>;
 
       /**
        * Custom command to respond to a message

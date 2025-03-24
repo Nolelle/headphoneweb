@@ -13,7 +13,7 @@ const stripePromise = loadStripe(
 );
 
 export default function Checkout() {
-  const { items, total } = useCart();
+  const { items } = useCart();
   const router = useRouter();
   const [clientSecret, setClientSecret] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
@@ -29,14 +29,14 @@ export default function Checkout() {
       try {
         setIsLoading(true);
         setError(null);
-    
+
         const response = await fetch("/api/stripe/payment-intent", {
           method: "POST",
           headers: {
-            "Content-Type": "application/json",
+            "Content-Type": "application/json"
           },
           body: JSON.stringify({
-            items: items.map(item => ({
+            items: items.map((item) => ({
               product_id: item.product_id,
               quantity: item.quantity,
               price: item.price,
@@ -44,12 +44,12 @@ export default function Checkout() {
             }))
           })
         });
-    
+
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(errorData.error || "Failed to create payment intent");
         }
-    
+
         const data = await response.json();
         setClientSecret(data.clientSecret);
       } catch (err) {
@@ -91,58 +91,13 @@ export default function Checkout() {
   }
 
   const appearance = {
-    theme: "night",
+    theme: "night" as const,
     variables: {
       colorPrimary: "#3b82f6",
       colorBackground: "#1f2937",
       colorText: "#f9fafb",
       colorDanger: "#ef4444"
     }
-  };
-
-  const createPaymentIntent = async (email: string) => {
-    try {
-      setIsLoading(true);
-      setError(null);
-  
-      const response = await fetch("/api/stripe/payment-intent", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          items: items.map(item => ({
-            product_id: item.product_id,
-            quantity: item.quantity,
-            price: item.price,
-            name: item.name
-          })),
-          email: email
-        })
-      });
-    
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to create payment intent");
-      }
-    
-      const data = await response.json();
-      
-      if (!data.clientSecret) {
-        throw new Error("No client secret received");
-      }
-    
-      setClientSecret(data.clientSecret);
-    } catch (err) {
-      console.error("Payment Intent creation failed:", err);
-      setError(err instanceof Error ? err.message : "An error occurred");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleFormSubmit = async (email: string) => {
-    await createPaymentIntent(email);
   };
 
   return (
@@ -156,11 +111,10 @@ export default function Checkout() {
               appearance
             }}
           >
-            <CheckoutForm onSubmit={handleFormSubmit} />
+            <CheckoutForm />
           </Elements>
         )}
       </div>
     </div>
   );
 }
-

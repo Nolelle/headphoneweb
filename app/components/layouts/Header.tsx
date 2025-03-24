@@ -19,7 +19,7 @@ import { Badge } from "@/app/components/ui/badge";
 import { useCart } from "../Cart/CartContext";
 
 const Header = () => {
-  const { items, total } = useCart();
+  const { items } = useCart();
 
   // Calculate total number of items in cart
   const cartItemCount = items.reduce((sum, item) => sum + item.quantity, 0);
