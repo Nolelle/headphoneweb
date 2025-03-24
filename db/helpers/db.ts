@@ -1,7 +1,7 @@
 // db.ts
 import pg from "pg";
 
-let pool;
+let pool: pg.Pool;
 
 // Check if connection string is provided (common for production environments)
 if (process.env.DATABASE_URL) {
