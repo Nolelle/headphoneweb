@@ -51,57 +51,91 @@ export default function PaymentSuccessPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [orderDetails, setOrderDetails] = useState<OrderDetails | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const [verificationInProgress, setVerificationInProgress] = useState(false);
 
   // Get URL parameters from Stripe redirect
   const paymentIntent = searchParams.get("payment_intent");
 
-  useEffect(() => {
-    const verifyPayment = async () => {
-      try {
-        if (!paymentIntent) {
-          throw new Error("No payment intent found");
-        }
+  // Function to verify payment with retries
+  const verifyPayment = async () => {
+    if (verificationInProgress) return;
 
-        // Call our payment verification API
-        const response = await fetch(
-          `/api/payment-verify?payment_intent=${paymentIntent}`
-        );
+    try {
+      setVerificationInProgress(true);
+      setIsLoading(true);
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || "Failed to verify payment");
-        }
-
-        const data = await response.json();
-
-        if (data.success) {
-          const order = data.order;
-          // Convert total_price to a number in case it's returned as a string
-          order.total_price = Number(order.total_price);
-          // If any other numeric values are coming as strings, convert them as well.
-          setOrderDetails(order);
-
-          // Only clear cart if payment was successful
-          if (order.stripe_status === "succeeded") {
-            clearCart();
-          }
-        } else {
-          throw new Error(data.error || "Payment verification failed");
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred");
-      } finally {
-        setIsLoading(false);
+      if (!paymentIntent) {
+        throw new Error("No payment intent found");
       }
-    };
 
-    // Add a small delay to allow webhook processing
+      console.log(
+        `Verifying payment (attempt ${retryCount + 1}): ${paymentIntent}`
+      );
+
+      // Call our payment verification API
+      const response = await fetch(
+        `/api/payment-verify?payment_intent=${paymentIntent}`
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 404 && retryCount < 3) {
+          // Order not found but still retries left - could be a timing issue with the webhook
+          console.log("Order not found, will retry verification");
+          setRetryCount((prevCount) => prevCount + 1);
+          return; // Will trigger another retry via useEffect
+        }
+
+        throw new Error(data.error || "Failed to verify payment");
+      }
+
+      if (data.success) {
+        console.log("Payment verification successful:", data.order.order_id);
+        const order = data.order;
+        // Convert total_price to a number in case it's returned as a string
+        order.total_price = Number(order.total_price);
+
+        setOrderDetails(order);
+
+        // Only clear cart if payment was successful
+        if (order.stripe_status === "succeeded") {
+          try {
+            await clearCart();
+            console.log("Cart cleared successfully");
+          } catch (clearError) {
+            console.error("Failed to clear cart:", clearError);
+            // Continue despite cart clear failure
+          }
+        }
+      } else {
+        throw new Error(data.error || "Payment verification failed");
+      }
+    } catch (err) {
+      console.error("Payment verification error:", err);
+      setError(err instanceof Error ? err.message : "An error occurred");
+    } finally {
+      setIsLoading(false);
+      setVerificationInProgress(false);
+    }
+  };
+
+  // Manual retry function for user-initiated retries
+  const handleRetry = () => {
+    setError(null);
+    setRetryCount(0);
+    verifyPayment();
+  };
+
+  useEffect(() => {
+    // Add a delay that increases with each retry to allow for webhook processing
     const timer = setTimeout(() => {
       verifyPayment();
-    }, 2000);
+    }, 2000 + retryCount * 1500); // Increasing delay for each retry
 
     return () => clearTimeout(timer);
-  }, [paymentIntent, clearCart]);
+  }, [paymentIntent, retryCount]);
 
   // Loading state
   if (isLoading) {
@@ -111,8 +145,15 @@ export default function PaymentSuccessPage() {
           <CardContent className="flex flex-col items-center justify-center p-6">
             <Loader2 className="h-16 w-16 animate-spin text-[hsl(220_70%_50%)]" />
             <p className="mt-4 text-[hsl(0_0%_98%)]">
-              Verifying your payment...
+              {retryCount > 0
+                ? `Verifying your payment (attempt ${retryCount + 1})...`
+                : "Verifying your payment..."}
             </p>
+            {retryCount > 0 && (
+              <p className="mt-2 text-sm text-[hsl(0_0%_63.9%)]">
+                This is taking longer than expected. Please wait...
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -137,6 +178,13 @@ export default function PaymentSuccessPage() {
               {error ||
                 "We couldn't verify your payment. Please contact support."}
             </p>
+            {error?.includes("Order not found") && (
+              <p className="mt-4 text-sm text-[hsl(0_0%_83.9%)]">
+                Your payment may have been processed, but we&apos;re having
+                trouble locating your order details. Rest assured, if your
+                payment was successful, your order is being processed.
+              </p>
+            )}
           </CardContent>
           <CardFooter className="flex justify-center gap-4">
             <Link href="/">
@@ -144,12 +192,28 @@ export default function PaymentSuccessPage() {
                 Return to Home
               </Button>
             </Link>
+            {error?.includes("Order not found") && (
+              <Button
+                onClick={handleRetry}
+                disabled={verificationInProgress}
+                className="bg-[hsl(140_40%_40%)] hover:bg-[hsl(140_40%_35%)] text-[hsl(0_0%_98%)]"
+              >
+                {verificationInProgress ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Checking
+                  </>
+                ) : (
+                  "Try Again"
+                )}
+              </Button>
+            )}
             <Link href="/cart">
               <Button
                 variant="outline"
                 className="border-[hsl(220_70%_50%)] text-[hsl(220_70%_50%)] hover:bg-[hsl(220_70%_50%)] hover:text-[hsl(0_0%_98%)]"
               >
-                Try Again
+                View Cart
               </Button>
             </Link>
           </CardFooter>
