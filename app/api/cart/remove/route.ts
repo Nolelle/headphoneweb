@@ -1,4 +1,3 @@
-import { NextResponse } from "next/server";
 import pool from "@/db/helpers/db";
 
 export async function DELETE(request: Request) {
@@ -7,13 +6,26 @@ export async function DELETE(request: Request) {
     const sessionId = searchParams.get("sessionId");
     const cartItemId = searchParams.get("cartItemId");
 
+    console.log("DELETE /api/cart/remove - Request params:", {
+      sessionId: sessionId ? `${sessionId.substring(0, 8)}...` : undefined,
+      cartItemId
+    });
+
     if (!sessionId || !cartItemId) {
-      return NextResponse.json(
-        {
+      console.error("DELETE /api/cart/remove - Missing required parameters:", {
+        hasSessionId: !!sessionId,
+        hasCartItemId: !!cartItemId
+      });
+      return new Response(
+        JSON.stringify({
           error: "Missing required parameters",
-          details: { sessionId: !!sessionId, cartItemId: !!cartItemId }
-        },
-        { status: 400 }
+          details: { sessionId: !!sessionId, cartItemId: !!cartItemId },
+          items: []
+        }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" }
+        }
       );
     }
 
@@ -30,22 +42,42 @@ export async function DELETE(request: Request) {
       );
 
       if (verifyResult.rowCount === 0) {
-        return NextResponse.json(
-          { error: "Item not found or doesn't belong to session" },
-          { status: 404 }
+        console.error(
+          `DELETE /api/cart/remove - Item not found: sessionId=${sessionId.substring(
+            0,
+            8
+          )}..., cartItemId=${cartItemId}`
+        );
+        await client.query("ROLLBACK");
+        return new Response(
+          JSON.stringify({
+            error: "Item not found or doesn't belong to session",
+            items: []
+          }),
+          {
+            status: 404,
+            headers: { "Content-Type": "application/json" }
+          }
         );
       }
 
       // Delete the cart item
-      await client.query(
+      const deleteResult = await client.query(
         `DELETE FROM cart_items 
          WHERE cart_item_id = $1 
          AND session_id = (
            SELECT session_id 
            FROM cart_session 
            WHERE user_identifier = $2
-         )`,
+         )
+         RETURNING cart_item_id`,
         [cartItemId, sessionId]
+      );
+
+      console.log(
+        `DELETE /api/cart/remove - Deleted items count: ${
+          deleteResult.rowCount || 0
+        }`
       );
 
       // Get updated cart items
@@ -69,19 +101,37 @@ export async function DELETE(request: Request) {
       );
 
       await client.query("COMMIT");
+      console.log(
+        `DELETE /api/cart/remove - Request successful, returned ${result.rows.length} items`
+      );
 
-      return NextResponse.json({ items: result.rows });
+      // Ensure we always return a valid items array
+      const items = result.rows || [];
+      return new Response(JSON.stringify({ items }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" }
+      });
     } catch (err) {
       await client.query("ROLLBACK");
+      console.error("DELETE /api/cart/remove - Transaction error:", err);
       throw err;
     } finally {
       client.release();
     }
   } catch (error) {
     console.error("Cart remove error:", error);
-    return NextResponse.json(
-      { error: "Failed to remove item from cart" },
-      { status: 500 }
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+    return new Response(
+      JSON.stringify({
+        error: "Failed to remove item from cart",
+        details: errorMessage,
+        items: []
+      }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" }
+      }
     );
   }
 }

@@ -1,6 +1,41 @@
 import { NextResponse } from "next/server";
 import pool from "@/db/helpers/db";
 
+// Helper function to retry database operations
+async function retryOperation<T>(
+  operation: () => Promise<T>,
+  maxRetries = 3,
+  delay = 200
+): Promise<T> {
+  let lastError;
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error;
+      console.error(`Attempt ${attempt} failed:`, error);
+
+      // Only retry if it's a connection error
+      if (
+        error instanceof Error &&
+        (error.message.includes("connection") ||
+          error.message.includes("connect") ||
+          error.message.includes("timeout"))
+      ) {
+        if (attempt < maxRetries) {
+          console.log(`Retrying in ${delay}ms...`);
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          delay *= 2; // Exponential backoff
+        }
+      } else {
+        // If it's not a connection error, don't retry
+        break;
+      }
+    }
+  }
+  throw lastError;
+}
+
 // Get cart items
 export async function GET(request: Request) {
   try {
@@ -8,46 +43,100 @@ export async function GET(request: Request) {
     const sessionId = searchParams.get("sessionId");
 
     if (!sessionId) {
-      return NextResponse.json(
-        { error: "Session ID is required" },
-        { status: 400 }
+      console.error("GET /api/cart - Missing sessionId");
+      return new Response(
+        JSON.stringify({ error: "Session ID is required", items: [] }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" }
+        }
       );
     }
 
-    // Get or create cart session
-    const sessionResult = await pool.query(
-      `INSERT INTO cart_session (user_identifier)
-       VALUES ($1)
-       ON CONFLICT (user_identifier) DO UPDATE 
-       SET last_modified = CURRENT_TIMESTAMP
-       RETURNING session_id`,
-      [sessionId]
+    console.log(
+      `GET /api/cart - Processing request for sessionId: ${sessionId.substring(
+        0,
+        8
+      )}...`
     );
+
+    // Get or create cart session with retry
+    const sessionResult = await retryOperation(async () => {
+      return await pool.query(
+        `INSERT INTO cart_session (user_identifier)
+         VALUES ($1)
+         ON CONFLICT (user_identifier) DO UPDATE 
+         SET last_modified = CURRENT_TIMESTAMP
+         RETURNING session_id`,
+        [sessionId]
+      );
+    });
+
+    if (!sessionResult.rows || sessionResult.rows.length === 0) {
+      console.error("GET /api/cart - Failed to get or create session");
+      return new Response(
+        JSON.stringify({
+          error: "Database error: Failed to get or create session",
+          items: []
+        }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json" }
+        }
+      );
+    }
 
     const session_id = sessionResult.rows[0].session_id;
+    console.log(`GET /api/cart - Session retrieved, ID: ${session_id}`);
 
     // Get cart items with product details
-    const result = await pool.query(
-      `SELECT 
-        ci.cart_item_id,
-        ci.product_id,
-        h.name,
-        h.price,
-        ci.quantity,
-        h.stock_quantity,
-        h.image_url
-       FROM cart_items ci
-       JOIN headphones h ON ci.product_id = h.product_id
-       WHERE ci.session_id = $1`,
-      [session_id]
-    );
+    const result = await retryOperation(async () => {
+      return await pool.query(
+        `SELECT 
+          ci.cart_item_id,
+          ci.product_id,
+          h.name,
+          h.price,
+          ci.quantity,
+          h.stock_quantity,
+          h.image_url
+         FROM cart_items ci
+         JOIN headphones h ON ci.product_id = h.product_id
+         WHERE ci.session_id = $1`,
+        [session_id]
+      );
+    });
 
-    return NextResponse.json({ items: result.rows });
+    // Make sure we always have an array for items even if rows is undefined
+    const items = result.rows || [];
+    console.log(`GET /api/cart - Retrieved ${items.length} items`);
+
+    // Return a standard Response to ensure proper content-type
+    return new Response(JSON.stringify({ items }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" }
+    });
   } catch (error) {
     console.error("Error fetching cart:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch cart" },
-      { status: 500 }
+
+    // Determine if it's a database connection error
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+    const isConnectionError =
+      errorMessage.includes("connect") || errorMessage.includes("connection");
+
+    // Always return a valid JSON response with items array
+    return new Response(
+      JSON.stringify({
+        error: "Failed to fetch cart",
+        details: errorMessage,
+        type: isConnectionError ? "connection_error" : "query_error",
+        items: [] // Always include empty items array
+      }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" }
+      }
     );
   }
 }

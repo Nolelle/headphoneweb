@@ -39,6 +39,40 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 // Key for storing session ID in localStorage
 const SESSION_ID_KEY = "cart_session_id";
 
+// Helper function to safely get or create a session ID
+const getOrCreateSessionId = (): string => {
+  try {
+    let sessionId = localStorage.getItem(SESSION_ID_KEY);
+
+    // Check if the retrieved sessionId is valid
+    if (
+      !sessionId ||
+      sessionId.trim() === "" ||
+      sessionId === "null" ||
+      sessionId === "undefined"
+    ) {
+      // Generate new UUID and store it
+      sessionId = uuidv4();
+      localStorage.setItem(SESSION_ID_KEY, sessionId);
+      console.log(
+        "[CartContext] Created new session ID:",
+        sessionId.substring(0, 8) + "..."
+      );
+    } else {
+      console.log(
+        "[CartContext] Using existing session ID:",
+        sessionId.substring(0, 8) + "..."
+      );
+    }
+
+    return sessionId;
+  } catch (error) {
+    // If localStorage fails, generate a temporary session ID
+    console.error("[CartContext] Error accessing localStorage:", error);
+    return uuidv4();
+  }
+};
+
 export function CartProvider({ children }: { children: React.ReactNode }) {
   // State management
   const [items, setItems] = useState<CartItem[]>([]);
@@ -66,6 +100,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     options: RequestInit
   ): Promise<CartResponse> => {
     try {
+      logDebug("API Request", { url, method: options.method });
+
       const response = await fetch(url, {
         ...options,
         headers: {
@@ -74,20 +110,90 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         }
       });
 
-      const responseText = await response.text();
+      let responseText = "";
+      try {
+        responseText = await response.text();
+      } catch (textError) {
+        console.error("Error reading response text:", textError);
+        // Return empty results if we can't even read the response
+        return { items: [] };
+      }
+
+      logDebug("API Response", {
+        url,
+        status: response.status,
+        responseLength: responseText?.length || 0,
+        responsePreview: responseText?.substring(0, 100)
+      });
+
+      // Check for empty response
+      if (!responseText || responseText.trim() === "") {
+        console.warn("Empty response received from server");
+        return { items: [] };
+      }
+
       let data: CartResponse;
       try {
-        data = responseText ? JSON.parse(responseText) : { items: [] };
-      } catch {
+        data = JSON.parse(responseText);
+
+        // Ensure data.items is always an array
+        if (!data.items) {
+          data.items = [];
+        }
+      } catch (parseError) {
         console.error("JSON Parse Error:", {
           responseText,
           status: response.status,
-          url: response.url
+          url: response.url,
+          contentType: response.headers.get("content-type"),
+          parseError:
+            parseError instanceof Error
+              ? parseError.message
+              : String(parseError)
         });
-        throw new Error("Invalid response from server");
+
+        // Recovery mechanism - try to clean up the response text
+        if (responseText) {
+          try {
+            // Check if it's an HTML error page
+            if (
+              responseText.includes("<!DOCTYPE html>") ||
+              responseText.includes("<html>")
+            ) {
+              console.warn("Received HTML instead of JSON response");
+              return { items: [] };
+            }
+
+            // Try to extract a valid JSON object if there's additional text
+            const jsonMatch = responseText.match(/\{.*\}/s);
+            if (jsonMatch) {
+              const extractedJson = jsonMatch[0];
+              console.log(
+                "Attempting to parse extracted JSON:",
+                extractedJson.substring(0, 100)
+              );
+              data = JSON.parse(extractedJson);
+              // Ensure items property exists
+              if (!data.items) {
+                data.items = [];
+              }
+              return data;
+            }
+          } catch (secondaryError) {
+            console.error("Recovery attempt failed:", secondaryError);
+          }
+        }
+
+        // If all recovery attempts fail, return empty cart
+        console.warn("Using fallback empty response");
+        return { items: [] };
       }
 
       if (!response.ok) {
+        // If server returned an error but with valid JSON, ensure items exists
+        if (!data.items) {
+          data.items = [];
+        }
         throw new Error(data?.error || `Server error: ${response.status}`);
       }
 
@@ -96,10 +202,35 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       console.error("API Error:", {
         url,
         error: err,
-        method: options.method
+        method: options.method,
+        online: typeof navigator !== "undefined" ? navigator.onLine : "unknown"
       });
       throw new Error(err instanceof Error ? err.message : "Operation failed");
     }
+  };
+
+  // Helper for retrying failed operations
+  const retryOperation = async <T,>(
+    operation: () => Promise<T>,
+    retries = 3,
+    delay = 300
+  ): Promise<T> => {
+    let lastError;
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        return await operation();
+      } catch (error) {
+        lastError = error;
+        logDebug(`Attempt ${attempt} failed`, error);
+
+        if (attempt < retries) {
+          logDebug(`Retrying in ${delay}ms...`);
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          delay *= 1.5; // Increase delay for next retry
+        }
+      }
+    }
+    throw lastError;
   };
 
   // Initialize cart and load existing items
@@ -109,29 +240,52 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       try {
         logDebug("Initializing cart");
 
-        // Get existing session ID or create new one
-        let currentSessionId = localStorage.getItem(SESSION_ID_KEY);
-        if (!currentSessionId) {
-          currentSessionId = uuidv4();
-          localStorage.setItem(SESSION_ID_KEY, currentSessionId);
-          logDebug("Created new session ID", currentSessionId);
-        }
-
+        // Get or create session ID using our helper function
+        const currentSessionId = getOrCreateSessionId();
         setSessionId(currentSessionId);
 
-        // Fetch existing cart items
-        const data = await fetchWithErrorHandling(
-          `/api/cart?sessionId=${currentSessionId}`,
-          { method: "GET" }
+        // Fetch existing cart items with retry
+        const data = await retryOperation(() =>
+          fetchWithErrorHandling(`/api/cart?sessionId=${currentSessionId}`, {
+            method: "GET"
+          })
         );
 
         logDebug("Loaded initial cart items", data);
         setItems(data.items || []);
       } catch (err) {
         logDebug("Initialization error", err);
+        // Log additional info about the error
+        console.error("Cart initialization failed:", {
+          error: err,
+          message: err instanceof Error ? err.message : String(err),
+          sessionId: sessionId ? `${sessionId.substring(0, 8)}...` : "none",
+          isOnline: navigator.onLine,
+          timestamp: new Date().toISOString()
+        });
+
+        // Set a more user-friendly error
+        const errMessage =
+          err instanceof Error ? err.message : "Failed to initialize cart";
+
+        // Check for specific types of errors
+        const isNetworkError =
+          navigator.onLine === false ||
+          (err instanceof Error &&
+            (err.message.includes("network") ||
+              err.message.includes("fetch") ||
+              err.message.includes("connection")));
+
         setError(
-          err instanceof Error ? err.message : "Failed to initialize cart"
+          isNetworkError
+            ? "Network issue. Please check your connection."
+            : errMessage
         );
+
+        // If there's a network issue, we'll use an empty cart for now
+        if (isNetworkError) {
+          setItems([]);
+        }
       } finally {
         setIsLoading(false); // Done loading
         setIsInitialized(true);
@@ -271,16 +425,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       throw err;
     }
   };
-
-  // Clean up session when user leaves
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      localStorage.removeItem(SESSION_ID_KEY);
-    };
-
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, []);
 
   // Log state changes in development
   useEffect(() => {

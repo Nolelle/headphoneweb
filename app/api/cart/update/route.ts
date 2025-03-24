@@ -1,29 +1,66 @@
-import { NextResponse } from "next/server";
 import pool from "@/db/helpers/db";
 
 export async function PUT(request: Request) {
   try {
-    const { sessionId, cartItemId, quantity } = await request.json();
+    // Try to read and parse the request body
+    let body;
+    try {
+      body = await request.json();
+    } catch (e) {
+      console.error("PUT /api/cart/update - Failed to parse request body:", e);
+      return new Response(
+        JSON.stringify({
+          error: "Invalid request: Could not parse JSON body",
+          items: []
+        }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" }
+        }
+      );
+    }
+
+    const { sessionId, cartItemId, quantity } = body;
     console.log("Cart update API received request:", {
-      sessionId,
+      sessionId: sessionId ? `${sessionId.substring(0, 8)}...` : undefined,
       cartItemId,
       quantity
     });
 
     // Validate input and convert cartItemId to a number if it's a string
     if (!sessionId || !cartItemId || !quantity) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
+      console.error("PUT /api/cart/update - Missing required fields:", {
+        hasSessionId: !!sessionId,
+        hasCartItemId: !!cartItemId,
+        hasQuantity: !!quantity
+      });
+      return new Response(
+        JSON.stringify({
+          error: "Missing required fields",
+          items: []
+        }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" }
+        }
       );
     }
 
     // Ensure cartItemId is a valid number
     const parsedCartItemId = parseInt(cartItemId.toString(), 10);
     if (isNaN(parsedCartItemId)) {
-      return NextResponse.json(
-        { error: "Invalid cart item ID" },
-        { status: 400 }
+      console.error(
+        `PUT /api/cart/update - Invalid cart item ID: ${cartItemId}`
+      );
+      return new Response(
+        JSON.stringify({
+          error: "Invalid cart item ID",
+          items: []
+        }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" }
+        }
       );
     }
 
@@ -42,7 +79,23 @@ export async function PUT(request: Request) {
       );
 
       if (verifyResult.rows.length === 0) {
-        throw new Error("Cart item not found or doesn't belong to session");
+        console.error(
+          `PUT /api/cart/update - Cart item not found: sessionId=${sessionId.substring(
+            0,
+            8
+          )}..., cartItemId=${parsedCartItemId}`
+        );
+        await client.query("ROLLBACK");
+        return new Response(
+          JSON.stringify({
+            error: "Cart item not found or doesn't belong to session",
+            items: []
+          }),
+          {
+            status: 404,
+            headers: { "Content-Type": "application/json" }
+          }
+        );
       }
 
       // Update quantity
@@ -74,7 +127,16 @@ export async function PUT(request: Request) {
       );
 
       await client.query("COMMIT");
-      return NextResponse.json({ items: result.rows });
+      console.log(
+        `PUT /api/cart/update - Successfully updated item, returned ${result.rows.length} items`
+      );
+
+      // Ensure we always return a valid items array
+      const items = result.rows || [];
+      return new Response(JSON.stringify({ items }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" }
+      });
     } catch (err) {
       await client.query("ROLLBACK");
       throw err;
@@ -83,11 +145,18 @@ export async function PUT(request: Request) {
     }
   } catch (error) {
     console.error("Error updating cart:", error);
-    return NextResponse.json(
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+    return new Response(
+      JSON.stringify({
+        error: errorMessage,
+        details: "Failed to update cart item",
+        items: [] // Always include empty items array
+      }),
       {
-        error: error instanceof Error ? error.message : "Failed to update cart"
-      },
-      { status: 500 }
+        status: 500,
+        headers: { "Content-Type": "application/json" }
+      }
     );
   }
 }
