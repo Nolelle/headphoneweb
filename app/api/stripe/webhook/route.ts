@@ -4,11 +4,19 @@ import { headers } from "next/headers";
 import { Stripe } from "stripe";
 import pool from "@/db/helpers/db";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+if (!stripeSecretKey) {
+  throw new Error("Missing STRIPE_SECRET_KEY environment variable");
+}
+
+const stripe = new Stripe(stripeSecretKey, {
   apiVersion: "2025-02-24.acacia"
 });
 
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
+const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+if (!webhookSecret) {
+  throw new Error("Missing STRIPE_WEBHOOK_SECRET environment variable");
+}
 
 export async function POST(request: Request) {
   console.log("Webhook received"); // Add logging
@@ -32,7 +40,7 @@ export async function POST(request: Request) {
       event = stripe.webhooks.constructEvent(
         body,
         stripeSignature,
-        webhookSecret
+        webhookSecret as string
       );
     } catch (err) {
       console.error("Error verifying webhook signature:", err);
