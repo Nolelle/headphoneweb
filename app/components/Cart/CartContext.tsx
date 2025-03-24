@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { toast } from "sonner";
+import { ErrorBoundary } from "../ErrorBoundary";
 
 // Define the cart item type (adjust as needed based on your actual data structure)
 interface CartItem {
@@ -126,6 +127,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         responsePreview: responseText?.substring(0, 100)
       });
 
+      // Enhanced validation: check response content type before attempting to parse
+      const contentType = response.headers.get("content-type");
+      if (contentType && !contentType.includes("application/json")) {
+        console.warn("Response is not JSON format:", contentType);
+        return { items: [] }; // Return empty cart for non-JSON responses
+      }
+
       // Check for empty response
       if (!responseText || responseText.trim() === "") {
         console.warn("Empty response received from server");
@@ -134,6 +142,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
       let data: CartResponse;
       try {
+        // Simple sanity check before parsing - must start with { and end with }
+        if (
+          !responseText.trim().startsWith("{") ||
+          !responseText.trim().endsWith("}")
+        ) {
+          console.warn("Response doesn't appear to be JSON object format");
+          return { items: [] };
+        }
+
         data = JSON.parse(responseText);
 
         // Ensure data.items is always an array
@@ -142,7 +159,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (parseError) {
         console.error("JSON Parse Error:", {
-          responseText,
+          responseText, // This might be truncated in console
           status: response.status,
           url: response.url,
           contentType: response.headers.get("content-type"),
@@ -150,6 +167,21 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             parseError instanceof Error
               ? parseError.message
               : String(parseError)
+        });
+
+        // Add detailed logging of the full response
+        console.log("Full response causing parse error:", responseText);
+
+        // Log more details about response characteristics
+        console.log("Response analysis:", {
+          length: responseText?.length || 0,
+          firstChar: responseText?.[0] || "none",
+          lastChar: responseText?.[responseText.length - 1] || "none",
+          containsHTML:
+            responseText?.includes("<!DOCTYPE") ||
+            responseText?.includes("<html"),
+          containsBOM: responseText?.charCodeAt(0) === 0xfeff,
+          isEmptyOrWhitespace: !responseText || /^\s*$/.test(responseText)
         });
 
         // Recovery mechanism - try to clean up the response text
@@ -218,15 +250,47 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     let lastError;
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
-        return await operation();
+        // Add timeout to prevent hanging requests
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          setTimeout(
+            () => {
+              reject(
+                new Error(
+                  `Operation timed out after ${
+                    attempt === 1 ? 5000 : attempt * 3000
+                  }ms`
+                )
+              );
+            },
+            attempt === 1 ? 5000 : attempt * 3000
+          ); // Increase timeout for subsequent attempts
+        });
+
+        // Race the operation against the timeout
+        const result = await Promise.race([operation(), timeoutPromise]);
+        return result as T;
       } catch (error) {
         lastError = error;
         logDebug(`Attempt ${attempt} failed`, error);
 
+        // Collect more diagnostic information
+        console.warn(`Retry attempt ${attempt}/${retries} failed:`, {
+          error: error instanceof Error ? error.message : String(error),
+          timestamp: new Date().toISOString(),
+          isOnline:
+            typeof navigator !== "undefined" ? navigator.onLine : "unknown"
+        });
+
         if (attempt < retries) {
-          logDebug(`Retrying in ${delay}ms...`);
-          await new Promise((resolve) => setTimeout(resolve, delay));
-          delay *= 1.5; // Increase delay for next retry
+          // Calculate backoff with jitter to prevent thundering herd
+          const jitter = Math.random() * 300;
+          const backoff = Math.min(
+            delay * Math.pow(1.5, attempt - 1) + jitter,
+            10000
+          );
+
+          logDebug(`Retrying in ${Math.round(backoff)}ms...`);
+          await new Promise((resolve) => setTimeout(resolve, backoff));
         }
       }
     }
@@ -238,21 +302,68 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     const initializeCart = async () => {
       setIsLoading(true); // Start loading
       try {
-        logDebug("Initializing cart");
+        // Check if we're on the payment success page
+        const isPaymentSuccessPage =
+          typeof window !== "undefined" &&
+          window.location.pathname.includes("payment-success");
+
+        logDebug(
+          `Initializing cart (isPaymentSuccessPage: ${isPaymentSuccessPage})`
+        );
 
         // Get or create session ID using our helper function
         const currentSessionId = getOrCreateSessionId();
         setSessionId(currentSessionId);
 
-        // Fetch existing cart items with retry
-        const data = await retryOperation(() =>
-          fetchWithErrorHandling(`/api/cart?sessionId=${currentSessionId}`, {
-            method: "GET"
-          })
-        );
+        // Add a counter for initialization attempts
+        let initAttempt = 0;
+        const maxInitAttempts = 2;
+
+        const loadCart = async (): Promise<CartResponse> => {
+          initAttempt++;
+          logDebug(`Cart initialization attempt ${initAttempt}`);
+
+          try {
+            // Fetch existing cart items with retry
+            return await retryOperation(() =>
+              fetchWithErrorHandling(
+                `/api/cart?sessionId=${currentSessionId}`,
+                {
+                  method: "GET"
+                }
+              )
+            );
+          } catch (initError) {
+            // Special handling for payment success page
+            if (isPaymentSuccessPage) {
+              console.log(
+                "On payment success page - using empty cart as expected"
+              );
+              return { items: [] };
+            }
+
+            // If this is our last attempt, use a local fallback
+            if (initAttempt >= maxInitAttempts) {
+              console.warn(
+                "All cart initialization attempts failed, using empty cart"
+              );
+              return { items: [] };
+            }
+            throw initError; // Otherwise let it retry
+          }
+        };
+
+        // Try to load the cart with fallback
+        const data = await loadCart();
 
         logDebug("Loaded initial cart items", data);
         setItems(data.items || []);
+
+        // On payment success page, we might need to clear the cart
+        if (isPaymentSuccessPage && data.items.length > 0) {
+          console.log("Payment successful, clearing cart items");
+          // Either clear cart here or let the order processing handle it
+        }
       } catch (err) {
         logDebug("Initialization error", err);
         // Log additional info about the error
@@ -295,6 +406,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     if (!isInitialized) {
       initializeCart();
     }
+
+    // Add a recovery mechanism for when the app comes back online
+    const handleOnline = () => {
+      if (isInitialized && navigator.onLine) {
+        logDebug("Network back online, refreshing cart");
+        initializeCart();
+      }
+    };
+
+    window.addEventListener("online", handleOnline);
+    return () => window.removeEventListener("online", handleOnline);
   }, [isInitialized]);
 
   // Calculate total price of items in cart
@@ -463,4 +585,29 @@ export function useCart() {
     throw new Error("useCart must be used within a CartProvider");
   }
   return context;
+}
+
+// Higher-order component for safer cart provider with error boundary
+export function SafeCartProvider({ children }: { children: React.ReactNode }) {
+  return (
+    <ErrorBoundary
+      fallback={
+        <div className="p-4 bg-orange-50 border border-orange-200 rounded">
+          <h3 className="font-medium text-orange-800">Cart system error</h3>
+          <p className="text-sm text-orange-700 mt-1">
+            There was a problem loading your cart. You can continue shopping but
+            some cart features may be limited.
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-2 px-3 py-1 text-xs bg-orange-600 text-white rounded hover:bg-orange-700"
+          >
+            Refresh
+          </button>
+        </div>
+      }
+    >
+      <CartProvider>{children}</CartProvider>
+    </ErrorBoundary>
+  );
 }

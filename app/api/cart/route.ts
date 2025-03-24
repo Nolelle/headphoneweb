@@ -125,19 +125,42 @@ export async function GET(request: Request) {
     const isConnectionError =
       errorMessage.includes("connect") || errorMessage.includes("connection");
 
+    // Log the full error details
+    console.error("Detailed cart fetch error:", {
+      message: errorMessage,
+      isConnectionError,
+      stack: error instanceof Error ? error.stack : "No stack trace",
+      time: new Date().toISOString()
+    });
+
     // Always return a valid JSON response with items array
-    return new Response(
-      JSON.stringify({
-        error: "Failed to fetch cart",
-        details: errorMessage,
-        type: isConnectionError ? "connection_error" : "query_error",
-        items: [] // Always include empty items array
-      }),
-      {
+    const errorResponse = {
+      error: "Failed to fetch cart",
+      details: errorMessage,
+      type: isConnectionError ? "connection_error" : "query_error",
+      items: [] // Always include empty items array
+    };
+
+    // Make sure we're really returning a valid JSON string
+    const safeJSONString = JSON.stringify(errorResponse);
+
+    // Extra validation to ensure we have a proper JSON string
+    try {
+      // Verify the JSON is valid by parsing it
+      JSON.parse(safeJSONString);
+    } catch (jsonError) {
+      console.error("Failed to create valid JSON response:", jsonError);
+      // Fallback to a simple guaranteed valid JSON
+      return new Response('{"items":[],"error":"Internal server error"}', {
         status: 500,
         headers: { "Content-Type": "application/json" }
-      }
-    );
+      });
+    }
+
+    return new Response(safeJSONString, {
+      status: 500,
+      headers: { "Content-Type": "application/json" }
+    });
   }
 }
 

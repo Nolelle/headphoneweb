@@ -51,7 +51,19 @@ export async function GET(request: Request) {
       );
 
       if (orderResult.rows.length === 0) {
-        throw new Error("Order not found");
+        // Instead of throwing an error, return a structured JSON response
+        await client.query("ROLLBACK");
+        client.release();
+
+        console.warn(`Order not found for payment_intent: ${paymentIntentId}`);
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Order not found",
+            paymentStatus: paymentIntent.status
+          },
+          { status: 404 }
+        );
       }
 
       const order = orderResult.rows[0];
@@ -103,10 +115,25 @@ export async function GET(request: Request) {
     }
   } catch (error) {
     console.error("Error processing payment success:", error);
+
+    // Get URL params again for the error logs as the outer ones might be out of scope
+    const errorSearchParams = new URL(request.url).searchParams;
+
+    // Log detailed diagnostic information
+    console.error("Payment verification error details:", {
+      paymentIntentId: errorSearchParams.get("payment_intent"),
+      errorMessage: error instanceof Error ? error.message : String(error),
+      errorStack: error instanceof Error ? error.stack : "No stack trace",
+      timestamp: new Date().toISOString()
+    });
+
     return NextResponse.json(
       {
+        success: false,
         error:
-          error instanceof Error ? error.message : "Failed to verify payment"
+          error instanceof Error ? error.message : "Failed to verify payment",
+        paymentId: errorSearchParams.get("payment_intent") || "unknown",
+        timestamp: new Date().toISOString()
       },
       { status: 500 }
     );
