@@ -1,11 +1,10 @@
 // app/api/payment-verify/route.ts
 import { NextResponse } from "next/server";
-import { headers } from "next/headers";
 import pool from "@/db/helpers/db";
 import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2023-10-16"
+  apiVersion: "2025-02-24.acacia"
 });
 
 export async function GET(request: Request) {

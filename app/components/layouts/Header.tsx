@@ -19,13 +19,13 @@ import { Badge } from "@/app/components/ui/badge";
 import { useCart } from "../Cart/CartContext";
 
 const Header = () => {
-  const { items, total } = useCart();
+  const { items } = useCart();
 
   // Calculate total number of items in cart
   const cartItemCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
   // Calculate cart subtotal
-  const cartSubtotal = items.reduce(
+  const subtotal = items.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0
   );
@@ -124,15 +124,51 @@ const Header = () => {
                       {cartItemCount} {cartItemCount === 1 ? "Item" : "Items"}
                     </span>
                     <span className="text-[hsl(0_0%_83.1%)]">
-                      ${cartSubtotal.toFixed(2)}
+                      ${subtotal.toFixed(2)}
                     </span>
                   </div>
+
                   {items.length > 0 ? (
-                    <Link href="/cart">
-                      <Button className="w-full bg-[hsl(220_70%_50%)] hover:bg-[hsl(220_70%_45%)] text-[hsl(0_0%_98%)]">
-                        View Cart
-                      </Button>
-                    </Link>
+                    <>
+                      <div className="max-h-48 overflow-y-auto mb-4">
+                        {items.slice(0, 3).map((item) => (
+                          <div
+                            key={item.cart_item_id}
+                            className="flex items-center gap-2 mb-2"
+                          >
+                            <div className="h-8 w-8 bg-[hsl(0_0%_20%)] rounded overflow-hidden flex-shrink-0">
+                              {item.image_url && (
+                                <Image
+                                  src={item.image_url}
+                                  alt={item.name}
+                                  width={32}
+                                  height={32}
+                                  className="object-cover"
+                                />
+                              )}
+                            </div>
+                            <div className="flex-1 text-sm">
+                              <p className="text-[hsl(0_0%_90%)] truncate">
+                                {item.name}
+                              </p>
+                              <p className="text-[hsl(0_0%_63.9%)]">
+                                {item.quantity} × ${item.price.toFixed(2)}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                        {items.length > 3 && (
+                          <p className="text-center text-xs text-[hsl(0_0%_63.9%)]">
+                            +{items.length - 3} more items
+                          </p>
+                        )}
+                      </div>
+                      <Link href="/cart">
+                        <Button className="w-full bg-[hsl(220_70%_50%)] hover:bg-[hsl(220_70%_45%)] text-[hsl(0_0%_98%)]">
+                          View Cart
+                        </Button>
+                      </Link>
+                    </>
                   ) : (
                     <p className="text-center text-[hsl(0_0%_63.9%)]">
                       Your cart is empty

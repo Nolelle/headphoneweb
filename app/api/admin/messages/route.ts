@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import pool from "@/db/helpers/db";
 
 // GET /api/admin/messages - Fetch all messages
-export async function GET(request: Request) {
+export async function GET() {
   try {
     const result = await pool.query(
       `SELECT 

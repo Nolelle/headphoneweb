@@ -1,27 +1,15 @@
 "use client";
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { v4 as uuidv4 } from 'uuid';
-import { toast } from 'sonner';
-
-// Define the cart item type (adjust as needed based on your actual data structure)
-interface CartItem {
-  cart_item_id: string;
-  product_id: number;
-  quantity: number;
-  price: number;
-}
-
-interface CartResponse {
-  items: CartItem[];
-  total?: number;
-}
+import { v4 as uuidv4 } from "uuid";
+import { toast } from "sonner";
+import { CartItem, CartResponse as CartResponseType } from "./CartTypes";
 
 // Define the shape of the cart context
 interface CartContextType {
   items: CartItem[];
   addItem: (productId: number, quantity: number) => Promise<void>;
-  removeItem: (cartItemId: string) => Promise<void>;
-  updateQuantity: (cartItemId: string, quantity: number) => Promise<void>;
+  removeItem: (cartItemId: number) => Promise<void>;
+  updateQuantity: (cartItemId: number, quantity: number) => Promise<void>;
   clearCart: () => Promise<void>;
   total: number;
   loadingItems: Record<string, boolean>;
@@ -29,11 +17,16 @@ interface CartContextType {
   isLoading: boolean; // Added loading state
 }
 
+// Interface for API response, extending the base CartResponse type
+interface CartResponse extends CartResponseType {
+  total?: number;
+}
+
 // Create the context with undefined default value
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 // Key for storing session ID in localStorage
-const SESSION_ID_KEY = 'cart_session_id';
+const SESSION_ID_KEY = "cart_session_id";
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   // State management
@@ -45,15 +38,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true); // Initialize as true
 
   // Debug logging function - only active in development
-  const logDebug = (action: string, details?: any) => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`[CartContext] ${action}:`, details || '');
+  const logDebug = (action: string, details?: unknown) => {
+    if (process.env.NODE_ENV === "development") {
+      console.log(`[CartContext] ${action}:`, details || "");
     }
   };
 
   // Helper to manage loading state for individual items
   const setItemLoading = (itemId: string, loading: boolean) => {
-    setLoadingItems(prev => ({ ...prev, [itemId]: loading }));
+    setLoadingItems((prev) => ({ ...prev, [itemId]: loading }));
   };
 
   // Helper for making API requests with error handling
@@ -65,22 +58,22 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       const response = await fetch(url, {
         ...options,
         headers: {
-          'Content-Type': 'application/json',
-          ...options.headers,
-        },
+          "Content-Type": "application/json",
+          ...options.headers
+        }
       });
 
       const responseText = await response.text();
       let data: CartResponse;
       try {
         data = responseText ? JSON.parse(responseText) : { items: [] };
-      } catch (parseError) {
-        console.error('JSON Parse Error:', {
+      } catch (_) {
+        console.error("JSON Parse Error:", {
           responseText,
           status: response.status,
-          url: response.url,
+          url: response.url
         });
-        throw new Error('Invalid response from server');
+        throw new Error("Invalid response from server");
       }
 
       if (!response.ok) {
@@ -89,12 +82,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
       return data;
     } catch (err) {
-      console.error('API Error:', {
+      console.error("API Error:", {
         url,
         error: err,
-        method: options.method,
+        method: options.method
       });
-      throw new Error(err instanceof Error ? err.message : 'Operation failed');
+      throw new Error(err instanceof Error ? err.message : "Operation failed");
     }
   };
 
@@ -103,14 +96,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     const initializeCart = async () => {
       setIsLoading(true); // Start loading
       try {
-        logDebug('Initializing cart');
+        logDebug("Initializing cart");
 
         // Get existing session ID or create new one
         let currentSessionId = localStorage.getItem(SESSION_ID_KEY);
         if (!currentSessionId) {
           currentSessionId = uuidv4();
           localStorage.setItem(SESSION_ID_KEY, currentSessionId);
-          logDebug('Created new session ID', currentSessionId);
+          logDebug("Created new session ID", currentSessionId);
         }
 
         setSessionId(currentSessionId);
@@ -118,14 +111,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         // Fetch existing cart items
         const data = await fetchWithErrorHandling(
           `/api/cart?sessionId=${currentSessionId}`,
-          { method: 'GET' }
+          { method: "GET" }
         );
 
-        logDebug('Loaded initial cart items', data);
+        logDebug("Loaded initial cart items", data);
         setItems(data.items || []);
       } catch (err) {
-        logDebug('Initialization error', err);
-        setError(err instanceof Error ? err.message : 'Failed to initialize cart');
+        logDebug("Initialization error", err);
+        setError(
+          err instanceof Error ? err.message : "Failed to initialize cart"
+        );
       } finally {
         setIsLoading(false); // Done loading
         setIsInitialized(true);
@@ -138,12 +133,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, [isInitialized]);
 
   // Calculate total price of items in cart
-  const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const total = items.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
 
   // Add item to cart
   const addItem = async (productId: number, quantity: number) => {
     if (!sessionId) {
-      throw new Error('Cart not initialized');
+      throw new Error("Cart not initialized");
     }
 
     const tempId = uuidv4(); // Temporary ID until server response
@@ -151,17 +149,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       setItemLoading(tempId, true);
       setError(null);
 
-      const data = await fetchWithErrorHandling('/api/cart', {
-        method: 'POST',
-        body: JSON.stringify({ sessionId, productId, quantity }),
+      const data = await fetchWithErrorHandling("/api/cart", {
+        method: "POST",
+        body: JSON.stringify({ sessionId, productId, quantity })
       });
 
       if (data.items) {
         setItems(data.items);
-        toast.success('Item added to cart');
+        toast.success("Item added to cart");
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add item');
+      setError(err instanceof Error ? err.message : "Failed to add item");
       throw err;
     } finally {
       setItemLoading(tempId, false);
@@ -169,22 +167,22 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Remove item from cart
-  const removeItem = async (cartItemId: string) => {
+  const removeItem = async (cartItemId: number) => {
     if (!sessionId) {
       toast.error("Cart not initialized");
       return;
     }
 
     try {
-      setItemLoading(cartItemId, true);
+      setItemLoading(cartItemId.toString(), true);
       setError(null);
 
-      const previousItems = [...items];
-      setItems(items.filter(item => item.cart_item_id !== cartItemId)); // Optimistic update
+      // Optimistic update
+      setItems(items.filter((item) => item.cart_item_id !== cartItemId));
 
       const data = await fetchWithErrorHandling(
         `/api/cart/remove?sessionId=${sessionId}&cartItemId=${cartItemId}`,
-        { method: 'DELETE' }
+        { method: "DELETE" }
       );
 
       if (data.items) {
@@ -192,83 +190,86 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         toast.success("Item removed from cart");
       }
     } catch (err) {
-      logDebug('Remove item error', err);
-      setItems(previousItems); // Rollback on error
+      logDebug("Remove item error", err);
+      // Fetch fresh data instead of keeping track of previous items
+      const data = await fetchWithErrorHandling(
+        `/api/cart?sessionId=${sessionId}`,
+        { method: "GET" }
+      );
+      setItems(data.items || []);
+
       toast.error(err instanceof Error ? err.message : "Failed to remove item");
       throw err;
     } finally {
-      setItemLoading(cartItemId, false);
+      setItemLoading(cartItemId.toString(), false);
     }
   };
 
   // Update item quantity
-  const updateQuantity = async (cartItemId: string, quantity: number) => {
+  const updateQuantity = async (cartItemId: number, quantity: number) => {
     if (!sessionId) {
-      throw new Error('Cart not initialized');
+      throw new Error("Cart not initialized");
     }
 
-    const previousItems = [...items];
     try {
-      setItemLoading(cartItemId, true);
+      setItemLoading(cartItemId.toString(), true);
       setError(null);
 
-      const data = await fetchWithErrorHandling('/api/cart/update', {
-        method: 'PUT',
-        body: JSON.stringify({ sessionId, cartItemId, quantity }),
+      const data = await fetchWithErrorHandling("/api/cart/update", {
+        method: "PUT",
+        body: JSON.stringify({ sessionId, cartItemId, quantity })
       });
 
       if (data.items) {
         setItems(data.items);
       }
     } catch (err) {
-      console.error('Update failed:', err);
-      setItems(previousItems); // Rollback on error
+      console.error("Update failed:", err);
+      // Fetch fresh data instead of rolling back
+      const data = await fetchWithErrorHandling(
+        `/api/cart?sessionId=${sessionId}`,
+        { method: "GET" }
+      );
+      setItems(data.items || []);
+
       throw err;
     } finally {
-      setItemLoading(cartItemId, false);
+      setItemLoading(cartItemId.toString(), false);
     }
   };
 
   // Clear cart
   const clearCart = async () => {
     if (!sessionId) {
-      setError('Cart not initialized');
+      setError("Cart not initialized");
       return;
     }
 
-    logDebug('Clearing cart');
+    logDebug("Clearing cart");
     try {
       setError(null);
-      const previousItems = [...items];
-      setItems([]); // Optimistic update
+      // Optimistic update
+      setItems([]);
 
-      await fetchWithErrorHandling('/api/cart/clear', {
-        method: 'DELETE',
-        body: JSON.stringify({ sessionId }),
+      await fetchWithErrorHandling("/api/cart/clear", {
+        method: "DELETE",
+        body: JSON.stringify({ sessionId })
       });
 
-      logDebug('Cart cleared successfully');
+      // Remove session ID when cart is cleared
+      localStorage.removeItem(SESSION_ID_KEY);
+
+      logDebug("Cart cleared successfully");
     } catch (err) {
-      logDebug('Clear cart error', err);
-      setItems(previousItems); // Rollback on error
-      setError(err instanceof Error ? err.message : 'Failed to clear cart');
+      logDebug("Clear cart error", err);
+      setError(err instanceof Error ? err.message : "Failed to clear cart");
       throw err;
     }
   };
 
-  // Clean up session when user leaves
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      localStorage.removeItem(SESSION_ID_KEY);
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, []);
-
   // Log state changes in development
   useEffect(() => {
-    logDebug('Cart state updated', { items, total });
+    logDebug("Cart state updated", { items, total });
   }, [items, total]);
 
   // Don't render until cart is initialized
@@ -287,7 +288,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         total,
         loadingItems,
         error,
-        isLoading, // Expose loading state
+        isLoading // Expose loading state
       }}
       data-testid="cart-provider"
     >
@@ -300,7 +301,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 export function useCart() {
   const context = useContext(CartContext);
   if (context === undefined) {
-    throw new Error('useCart must be used within a CartProvider');
+    throw new Error("useCart must be used within a CartProvider");
   }
   return context;
 }

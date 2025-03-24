@@ -1,0 +1,14 @@
+**/*
+!app/admin/login/page.tsx
+!app/api/admin/messages/route.ts
+!app/api/payment-verify/route.ts
+!app/api/stripe/payment-intent/route.ts
+!app/components/Cart/CartContext.tsx
+!app/components/Checkout/Checkout.tsx
+!app/components/Checkout/CheckoutForm.tsx
+!app/components/Product/ProductInfo.tsx
+!app/components/Providers/StripeProvider.tsx
+!app/components/layouts/Header.tsx
+!app/enter-password/page.tsx
+!app/hooks/use-payment.ts
+!app/payment-success/page.tsx

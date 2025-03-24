@@ -1,11 +1,24 @@
-'use client';
+"use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { CheckCircle, XCircle, Loader2, Package, CreditCard, Mail } from "lucide-react";
+import {
+  CheckCircle,
+  XCircle,
+  Loader2,
+  Package,
+  CreditCard,
+  Mail
+} from "lucide-react";
 import { Button } from "@/app/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/app/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle
+} from "@/app/components/ui/card";
 import { Separator } from "@/app/components/ui/separator";
 import { useCart } from "@/app/components/Cart/CartContext";
 
@@ -30,19 +43,17 @@ interface OrderDetails {
 
 export default function PaymentSuccessPage() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const { clearCart } = useCart();
 
-  console.log('Payment success page attempting to load');
-  
+  console.log("Payment success page attempting to load");
+
   // State management
   const [isLoading, setIsLoading] = useState(true);
   const [orderDetails, setOrderDetails] = useState<OrderDetails | null>(null);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Get URL parameters from Stripe redirect
   const paymentIntent = searchParams.get("payment_intent");
-  const redirectStatus = searchParams.get("redirect_status");
 
   useEffect(() => {
     const verifyPayment = async () => {
@@ -62,14 +73,14 @@ export default function PaymentSuccessPage() {
         }
 
         const data = await response.json();
-        
+
         if (data.success) {
           const order = data.order;
           // Convert total_price to a number in case it's returned as a string
           order.total_price = Number(order.total_price);
           // If any other numeric values are coming as strings, convert them as well.
           setOrderDetails(order);
-          
+
           // Only clear cart if payment was successful
           if (order.stripe_status === "succeeded") {
             clearCart();
@@ -99,7 +110,9 @@ export default function PaymentSuccessPage() {
         <Card className="w-full max-w-md bg-[hsl(0_0%_14.9%)] border-[hsl(0_0%_14.9%)]">
           <CardContent className="flex flex-col items-center justify-center p-6">
             <Loader2 className="h-16 w-16 animate-spin text-[hsl(220_70%_50%)]" />
-            <p className="mt-4 text-[hsl(0_0%_98%)]">Verifying your payment...</p>
+            <p className="mt-4 text-[hsl(0_0%_98%)]">
+              Verifying your payment...
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -121,7 +134,8 @@ export default function PaymentSuccessPage() {
           </CardHeader>
           <CardContent className="text-center">
             <p className="text-[hsl(0_0%_63.9%)]">
-              {error || "We couldn't verify your payment. Please contact support."}
+              {error ||
+                "We couldn't verify your payment. Please contact support."}
             </p>
           </CardContent>
           <CardFooter className="flex justify-center gap-4">
@@ -131,7 +145,10 @@ export default function PaymentSuccessPage() {
               </Button>
             </Link>
             <Link href="/cart">
-              <Button variant="outline" className="border-[hsl(220_70%_50%)] text-[hsl(220_70%_50%)] hover:bg-[hsl(220_70%_50%)] hover:text-[hsl(0_0%_98%)]">
+              <Button
+                variant="outline"
+                className="border-[hsl(220_70%_50%)] text-[hsl(220_70%_50%)] hover:bg-[hsl(220_70%_50%)] hover:text-[hsl(0_0%_98%)]"
+              >
                 Try Again
               </Button>
             </Link>
@@ -162,7 +179,7 @@ export default function PaymentSuccessPage() {
               {isSuccess ? "Payment Successful!" : "Payment Failed"}
             </CardTitle>
           </CardHeader>
-          
+
           <CardContent className="space-y-6">
             {/* Order Summary */}
             <div className="space-y-4">
@@ -170,17 +187,24 @@ export default function PaymentSuccessPage() {
                 <Package className="h-5 w-5" />
                 <span className="font-semibold">Order Summary</span>
               </div>
-              
+
               <div className="space-y-3">
                 {orderDetails.items.map((item, index) => (
-                  <div key={index} className="flex justify-between text-[hsl(0_0%_63.9%)]">
-                    <span>{item.name} × {item.quantity}</span>
-                    <span>${(item.price_at_time * item.quantity).toFixed(2)}</span>
+                  <div
+                    key={index}
+                    className="flex justify-between text-[hsl(0_0%_63.9%)]"
+                  >
+                    <span>
+                      {item.name} × {item.quantity}
+                    </span>
+                    <span>
+                      ${(item.price_at_time * item.quantity).toFixed(2)}
+                    </span>
                   </div>
                 ))}
-                
+
                 <Separator className="my-2 bg-[hsl(0_0%_9%)]" />
-                
+
                 <div className="flex justify-between font-bold text-[hsl(0_0%_98%)]">
                   <span>Total</span>
                   <span>${orderDetails.total_price.toFixed(2)}</span>
@@ -194,11 +218,13 @@ export default function PaymentSuccessPage() {
                 <CreditCard className="h-5 w-5" />
                 <span className="font-semibold">Order Details</span>
               </div>
-              
+
               <div className="space-y-2 text-[hsl(0_0%_63.9%)]">
                 <div className="flex justify-between">
                   <span>Order Number</span>
-                  <span className="text-[hsl(0_0%_98%)]">#{orderDetails.order_id}</span>
+                  <span className="text-[hsl(0_0%_98%)]">
+                    #{orderDetails.order_id}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span>Date</span>
@@ -206,7 +232,9 @@ export default function PaymentSuccessPage() {
                 </div>
                 <div className="flex justify-between">
                   <span>Payment Status</span>
-                  <span className={isSuccess ? "text-green-500" : "text-red-500"}>
+                  <span
+                    className={isSuccess ? "text-green-500" : "text-red-500"}
+                  >
                     {isSuccess ? "Paid" : "Failed"}
                   </span>
                 </div>
@@ -219,7 +247,7 @@ export default function PaymentSuccessPage() {
                 <Mail className="h-5 w-5" />
                 <span className="font-semibold">Contact Information</span>
               </div>
-              
+
               <p className="text-[hsl(0_0%_63.9%)]">
                 A confirmation email has been sent to {orderDetails.email}
               </p>

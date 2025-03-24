@@ -1,7 +1,5 @@
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useCart } from "@/app/components/Cart/CartContext";
-import { Elements } from "@stripe/react-stripe-js";
 import { useStripe, useElements } from "@stripe/react-stripe-js";
 
 export interface PaymentFormData {
@@ -13,8 +11,7 @@ export interface PaymentFormData {
 export function usePayment() {
   const stripe = useStripe();
   const elements = useElements();
-  const router = useRouter();
-  const { cartItem } = useCart();
+  const { items } = useCart();
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +24,7 @@ export function usePayment() {
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ cartItem })
+        body: JSON.stringify({ items })
       });
 
       if (!response.ok) {

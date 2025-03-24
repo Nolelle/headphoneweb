@@ -1,7 +1,10 @@
 "use client";
 import React, { useState } from "react";
-import { useStripe, useElements, PaymentElement } from "@stripe/react-stripe-js";
-import { useRouter } from "next/navigation";
+import {
+  useStripe,
+  useElements,
+  PaymentElement
+} from "@stripe/react-stripe-js";
 import { useCart } from "../Cart/CartContext";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -11,16 +14,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Separator } from "../ui/separator";
 import { Lock } from "lucide-react";
 
-interface CheckoutFormProps {
-  onSubmit: (email: string) => Promise<void>;
-}
-
-const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSubmit }) => {
+export default function CheckoutForm() {
   const stripe = useStripe();
   const elements = useElements();
-  const router = useRouter();
-  const { items, total, clearCart } = useCart();
-
+  const { items, total } = useCart();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -30,11 +27,10 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSubmit }) => {
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [e.target.name]: e.target.value
     }));
-
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -91,11 +87,17 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSubmit }) => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form
+            onSubmit={handleSubmit}
+            className="space-y-6"
+          >
             {/* Personal Information */}
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name" className="text-gray-200">
+                <Label
+                  htmlFor="name"
+                  className="text-gray-200"
+                >
                   Full Name
                 </Label>
                 <Input
@@ -112,7 +114,10 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSubmit }) => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-gray-200">
+                <Label
+                  htmlFor="email"
+                  className="text-gray-200"
+                >
                   Email
                 </Label>
                 <Input
@@ -130,7 +135,10 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSubmit }) => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="address" className="text-gray-200">
+                <Label
+                  htmlFor="address"
+                  className="text-gray-200"
+                >
                   Address
                 </Label>
                 <Input
@@ -156,8 +164,13 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSubmit }) => {
             </div>
 
             {error && (
-              <Alert variant="destructive" className="bg-red-900/50 border border-red-800">
-                <AlertDescription className="text-red-200">{error}</AlertDescription>
+              <Alert
+                variant="destructive"
+                className="bg-red-900/50 border border-red-800"
+              >
+                <AlertDescription className="text-red-200">
+                  {error}
+                </AlertDescription>
               </Alert>
             )}
 
@@ -188,7 +201,10 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSubmit }) => {
         <CardContent>
           <div className="space-y-4">
             {items.map((item) => (
-              <div key={item.cart_item_id} className="flex justify-between">
+              <div
+                key={item.cart_item_id}
+                className="flex justify-between"
+              >
                 <div className="flex items-center gap-2">
                   <span className="text-gray-100">{item.name}</span>
                   <span className="text-gray-400">x{item.quantity}</span>
@@ -198,22 +214,16 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSubmit }) => {
                 </span>
               </div>
             ))}
-            
+
             <Separator className="bg-gray-800" />
-            
+
             <div className="flex justify-between text-lg font-bold">
               <span className="text-gray-50">Total</span>
-              <span className="text-blue-500">
-                ${total.toFixed(2)}
-              </span>
+              <span className="text-blue-500">${total.toFixed(2)}</span>
             </div>
           </div>
         </CardContent>
       </Card>
     </div>
-
-    
   );
-};
-
-export default CheckoutForm;
+}

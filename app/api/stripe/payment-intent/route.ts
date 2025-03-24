@@ -1,9 +1,17 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
+// Define a type for cart items
+interface CartItem {
+  product_id: string;
+  name: string;
+  price: number;
+  quantity: number;
+}
+
 // Initialize Stripe with the secret key
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2023-10-16"
+  apiVersion: "2025-02-24.acacia"
 });
 
 export async function POST(request: Request) {
@@ -19,7 +27,7 @@ export async function POST(request: Request) {
 
     // Calculate total amount in cents
     const amount = Math.round(
-      items.reduce((sum: number, item: any) => {
+      items.reduce((sum: number, item: CartItem) => {
         return sum + item.price * item.quantity;
       }, 0) * 100
     );
@@ -33,7 +41,7 @@ export async function POST(request: Request) {
       },
       metadata: {
         order_items: JSON.stringify(
-          items.map((item: any) => ({
+          items.map((item: CartItem) => ({
             id: item.product_id,
             quantity: item.quantity,
             name: item.name

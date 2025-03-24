@@ -1,6 +1,11 @@
 "use client";
 import React, { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle
+} from "@/app/components/ui/card";
 import { Input } from "@/app/components/ui/input";
 import { Button } from "@/app/components/ui/button";
 import { Label } from "@/app/components/ui/label";
@@ -31,6 +36,7 @@ const AdminLogin = () => {
         setError("Invalid credentials");
       }
     } catch (err) {
+      console.error("Login error:", err);
       setError("Login failed");
     } finally {
       setIsLoading(false);
@@ -49,9 +55,15 @@ const AdminLogin = () => {
           </CardHeader>
 
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form
+              onSubmit={handleSubmit}
+              className="space-y-4"
+            >
               <div className="space-y-2">
-                <Label htmlFor="username" className="text-[hsl(0_0%_98%)]">
+                <Label
+                  htmlFor="username"
+                  className="text-[hsl(0_0%_98%)]"
+                >
                   Username
                 </Label>
                 <Input
@@ -69,7 +81,10 @@ const AdminLogin = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-[hsl(0_0%_98%)]">
+                <Label
+                  htmlFor="password"
+                  className="text-[hsl(0_0%_98%)]"
+                >
                   Password
                 </Label>
                 <Input
@@ -87,7 +102,10 @@ const AdminLogin = () => {
               </div>
 
               {error && (
-                <Alert variant="destructive" className="bg-[hsl(0_62.8%_30.6%)] border-[hsl(0_62.8%_30.6%)]">
+                <Alert
+                  variant="destructive"
+                  className="bg-[hsl(0_62.8%_30.6%)] border-[hsl(0_62.8%_30.6%)]"
+                >
                   <AlertDescription className="text-[hsl(0_0%_98%)]">
                     {error}
                   </AlertDescription>

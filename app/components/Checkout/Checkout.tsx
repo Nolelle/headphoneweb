@@ -13,7 +13,7 @@ const stripePromise = loadStripe(
 );
 
 export default function Checkout() {
-  const { items, total } = useCart();
+  const { items } = useCart();
   const router = useRouter();
   const [clientSecret, setClientSecret] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
@@ -29,14 +29,14 @@ export default function Checkout() {
       try {
         setIsLoading(true);
         setError(null);
-    
+
         const response = await fetch("/api/stripe/payment-intent", {
           method: "POST",
           headers: {
-            "Content-Type": "application/json",
+            "Content-Type": "application/json"
           },
           body: JSON.stringify({
-            items: items.map(item => ({
+            items: items.map((item) => ({
               product_id: item.product_id,
               quantity: item.quantity,
               price: item.price,
@@ -44,12 +44,12 @@ export default function Checkout() {
             }))
           })
         });
-    
+
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(errorData.error || "Failed to create payment intent");
         }
-    
+
         const data = await response.json();
         setClientSecret(data.clientSecret);
       } catch (err) {
@@ -104,14 +104,14 @@ export default function Checkout() {
     try {
       setIsLoading(true);
       setError(null);
-  
+
       const response = await fetch("/api/stripe/payment-intent", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          items: items.map(item => ({
+          items: items.map((item) => ({
             product_id: item.product_id,
             quantity: item.quantity,
             price: item.price,
@@ -120,18 +120,18 @@ export default function Checkout() {
           email: email
         })
       });
-    
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || "Failed to create payment intent");
       }
-    
+
       const data = await response.json();
-      
+
       if (!data.clientSecret) {
         throw new Error("No client secret received");
       }
-    
+
       setClientSecret(data.clientSecret);
     } catch (err) {
       console.error("Payment Intent creation failed:", err);
@@ -163,4 +163,3 @@ export default function Checkout() {
     </div>
   );
 }
-
