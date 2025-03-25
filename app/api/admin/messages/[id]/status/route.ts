@@ -14,8 +14,8 @@ export async function PATCH(
   try {
     const { status } = await request.json();
 
-    // Validate status value
-    if (!["pending", "responded", "archived"].includes(status)) {
+    // Validate status value to match the contact_message table constraints
+    if (!["UNREAD", "READ", "RESPONDED"].includes(status)) {
       return NextResponse.json(
         { error: "Invalid status value" },
         { status: 400 }
@@ -28,11 +28,11 @@ export async function PATCH(
       await client.query("BEGIN");
 
       const query = `
-        UPDATE messages
+        UPDATE contact_message
         SET 
           status = $1,
           updated_at = NOW()
-        WHERE id = $2 AND deleted_at IS NULL
+        WHERE message_id = $2
         RETURNING *
       `;
 

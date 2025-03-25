@@ -29,8 +29,8 @@ export async function POST(
 
       // 1. Find the message to respond to
       const messageQuery = `
-        SELECT * FROM messages 
-        WHERE id = $1 AND deleted_at IS NULL
+        SELECT * FROM contact_message 
+        WHERE message_id = $1
       `;
 
       const messageResult = await client.query(messageQuery, [messageId]);
@@ -47,81 +47,90 @@ export async function POST(
 
       // 2. Add the response to the database
       const responseQuery = `
-        UPDATE messages
+        UPDATE contact_message
         SET 
           admin_response = $1, 
-          status = 'responded', 
+          status = 'RESPONDED', 
+          responded_at = NOW(),
           updated_at = NOW()
-        WHERE id = $2
+        WHERE message_id = $2
         RETURNING *
       `;
 
       const result = await client.query(responseQuery, [response, messageId]);
       console.log("Database updated with response:", result.rows[0]);
 
-      // 3. Send an email with the response
+      // Commit the transaction and release the client BEFORE sending email
+      await client.query("COMMIT");
+      client.release();
+
+      // Store the result for response
+      const updatedMessage = result.rows[0];
+
+      // 3. Send an email with the response - AFTER database transaction is complete
       let emailSent = false;
-      let emailData = null;
 
-      try {
-        // Render the email content with both the original message and the response
-        const htmlContent = `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2>Response to Your Message</h2>
-            <p>Thank you for contacting us about your inquiry. Here's a copy of your original message and our response:</p>
-            
-            <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
-              <h3>Your Message:</h3>
-              <p>${message.content}</p>
-            </div>
-            
-            <div style="background-color: #e8f4ff; padding: 15px; border-radius: 5px; margin: 20px 0;">
-              <h3>Our Response:</h3>
-              <p>${response}</p>
-            </div>
-            
-            <p>If you have any further questions, please don't hesitate to contact us again.</p>
-            <p>Best regards,<br>The SoundWave Team</p>
-          </div>
-        `;
+      // Only attempt to send email if we have a valid email address
+      if (message.email) {
+        try {
+          const targetEmail = isDevelopment ? TEST_EMAIL : message.email;
 
-        const emailTo = isDevelopment ? TEST_EMAIL : message.email;
+          // Send email but don't wait for it to complete
+          resend.emails
+            .send({
+              from: "Bone+ <admin@boneplus.ca>",
+              to: targetEmail,
+              subject: "Response to your inquiry",
+              text: `Dear ${
+                message.name || "Customer"
+              },\n\nThank you for contacting us. Here's our response to your inquiry:\n\n${response}\n\nOriginal message:\n${
+                message.message
+              }\n\nBest regards,\nBone+ Team`,
+              html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #333;">Response to Your Inquiry</h2>
+                <p>Dear ${message.name || "Customer"},</p>
+                <p>Thank you for contacting us. Here's our response to your inquiry:</p>
+                <div style="padding: 15px; background-color: #f7f7f7; border-left: 4px solid #0070f3; margin: 20px 0;">
+                  <p style="white-space: pre-wrap;">${response}</p>
+                </div>
+                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+                  <p style="color: #666; font-size: 0.9em;">Your original message:</p>
+                  <p style="color: #666; font-style: italic; font-size: 0.9em; white-space: pre-wrap;">${
+                    message.message
+                  }</p>
+                </div>
+                <div style="margin-top: 30px; color: #666; font-size: 0.8em;">
+                  <p>Best regards,<br>Bone+ Team</p>
+                </div>
+              </div>
+            `
+            })
+            .then((data) => {
+              console.log("Email sent:", data);
+            })
+            .catch((emailError) => {
+              console.error("Error sending email:", emailError);
+            });
 
-        // Send the email
-        const emailResponse = await resend.emails.send({
-          from: "SoundWave Customer Support <onboarding@resend.dev>",
-          to: emailTo,
-          subject: "Response to Your Inquiry - SoundWave",
-          html: htmlContent
-        });
-
-        // Check if the email was sent successfully
-        if (emailResponse.error) {
-          console.error("Failed to send email:", emailResponse.error);
-        } else {
           emailSent = true;
-          emailData = emailResponse.data;
-          console.log("Email sent successfully:", emailData);
+        } catch (emailError) {
+          console.error("Error setting up email:", emailError);
+          // We won't fail the request if email sending fails
         }
-      } catch (emailError) {
-        console.error("Error sending email:", emailError);
       }
 
-      // Commit the transaction
-      await client.query("COMMIT");
-      console.log("Database transaction committed successfully");
-
-      // Return success response with email tracking ID
+      // Return success response with email tracking ID - no need to wait for email to complete
       return NextResponse.json({
-        ...result.rows[0],
-        emailId: emailData?.id,
-        developmentMode: isDevelopment,
-        success: emailSent
+        success: true,
+        message: updatedMessage,
+        emailSent
       });
     } catch (err) {
       // Rollback transaction on error
       await client.query("ROLLBACK");
       console.error("Error responding to message:", err);
+      client.release();
       return NextResponse.json(
         {
           error: "Failed to process the response",
@@ -129,9 +138,6 @@ export async function POST(
         },
         { status: 500 }
       );
-    } finally {
-      // Release the client back to the pool
-      client.release();
     }
   } catch (error) {
     console.error("Error responding to message:", error);
