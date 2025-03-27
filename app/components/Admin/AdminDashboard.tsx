@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback, memo } from "react";
-import { useRouter } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -242,7 +241,6 @@ export default function AdminDashboard() {
   const [loadingItems, setLoadingItems] = useState<{ [key: number]: boolean }>(
     {}
   );
-  const router = useRouter();
 
   // Fetch messages on component mount
   useEffect(() => {
@@ -276,14 +274,13 @@ export default function AdminDashboard() {
         throw new Error("Logout failed");
       }
 
-      // This is a programmatic navigation, so we need to wait for the fetch to complete
-      // and then use router.replace instead of router.push to force a full navigation
-      router.replace("/admin/login");
+      // Use window.location.href instead of router.replace to force a full page reload
+      window.location.href = "/admin/login";
     } catch (error) {
       console.error("Error:", error);
       toast.error("Logout failed");
     }
-  }, [router]);
+  }, []);
 
   // Update the handleToggleReadStatus function to be memoized
   const handleToggleReadStatus = useCallback(
