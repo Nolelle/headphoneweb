@@ -7,16 +7,18 @@ const Footer = () => {
   return (
     <footer className="bg-[hsl(0_0%_3.9%)] text-[hsl(0_0%_98%)] py-12">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
           {/* Company Info */}
-          <div className="space-y-4">
-            <Image
-              src="/headphones_plus_icon 1.png"
-              alt="Bone+"
-              width={50}
-              height={50}
-              className="mb-4"
-            />
+          <div className="space-y-4 text-center sm:text-left">
+            <div className="flex justify-center sm:justify-start">
+              <Image
+                src="/headphones_plus_icon 1.png"
+                alt="Bone+"
+                width={50}
+                height={50}
+                className="mb-4"
+              />
+            </div>
             <div className="space-y-2">
               <p className="font-medium">Bone+ LTD.</p>
               <p className="text-sm text-[hsl(0_0%_63.9%)]">
@@ -28,14 +30,14 @@ const Footer = () => {
             </div>
             <Link
               href="/admin/login"
-              className="text-sm hover:text-[hsl(0_0%_83.1%)] transition-colors"
+              className="text-sm hover:text-[hsl(0_0%_83.1%)] transition-colors inline-block"
             >
               Admin View
             </Link>
           </div>
 
           {/* Company Links */}
-          <div className="space-y-4">
+          <div className="space-y-4 text-center sm:text-left">
             <h6 className="text-lg font-semibold">Company</h6>
             <nav className="flex flex-col space-y-2">
               <Link
@@ -66,7 +68,7 @@ const Footer = () => {
           </div>
 
           {/* Legal Links */}
-          <div className="space-y-4">
+          <div className="space-y-4 text-center sm:text-left">
             <h6 className="text-lg font-semibold">Legal</h6>
             <nav className="flex flex-col space-y-2">
               <Link
@@ -91,9 +93,9 @@ const Footer = () => {
           </div>
 
           {/* Social Links */}
-          <div className="space-y-4">
+          <div className="space-y-4 text-center sm:text-left">
             <h6 className="text-lg font-semibold">Follow Us</h6>
-            <div className="flex space-x-4">
+            <div className="flex justify-center sm:justify-start space-x-6">
               <Link
                 href="#twitter"
                 className="hover:text-[hsl(0_0%_83.1%)] transition-colors"

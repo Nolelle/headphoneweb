@@ -117,105 +117,126 @@ const ProductInfo: React.FC = () => {
 
   return (
     <div className="bg-[hsl(0_0%_3.9%)] px-4 sm:px-6 lg:px-8 py-8 lg:pt-20">
-      <h2 className="mb-4 text-4xl tracking-tight font-extrabold text-white text-center lg:text-left">
+      <h2 className="mb-6 text-3xl sm:text-4xl tracking-tight font-extrabold text-white text-center lg:text-left">
         Product Information
       </h2>
-      <div className="flex flex-col lg:flex-row text-white gap-8 lg:gap-32">
-        <div className="w-full lg:max-w-[550px] mx-auto lg:mx-0">
+      <div className="flex flex-col lg:flex-row text-white gap-10 lg:gap-16">
+        <div className="w-full lg:w-1/2 max-w-[90vw] sm:max-w-[450px] mx-auto lg:mx-0">
           <Carousel className="w-full">
             <CarouselContent className="flex">
               <CarouselItem>
-                <Image
-                  src="/h_1.png"
-                  width={500}
-                  height={500}
-                  alt="Bone+ Headphones Front View"
-                  className="mx-auto"
-                />
+                <div className="flex justify-center">
+                  <Image
+                    src="/h_1.png"
+                    width={400}
+                    height={400}
+                    alt="Bone+ Headphones Front View"
+                    className="max-w-full h-auto"
+                  />
+                </div>
               </CarouselItem>
               <CarouselItem>
-                <Image
-                  src="/h_2.png"
-                  width={500}
-                  height={500}
-                  alt="Bone+ Headphones Side View"
-                  className="mx-auto"
-                />
+                <div className="flex justify-center">
+                  <Image
+                    src="/h_2.png"
+                    width={400}
+                    height={400}
+                    alt="Bone+ Headphones Side View"
+                    className="max-w-full h-auto"
+                  />
+                </div>
               </CarouselItem>
               <CarouselItem>
-                <Image
-                  src="/h_3.png"
-                  width={500}
-                  height={500}
-                  alt="Bone+ Headphones Detail View"
-                  className="mx-auto"
-                />
+                <div className="flex justify-center">
+                  <Image
+                    src="/h_3.png"
+                    width={400}
+                    height={400}
+                    alt="Bone+ Headphones Detail View"
+                    className="max-w-full h-auto"
+                  />
+                </div>
               </CarouselItem>
               <CarouselItem>
-                <Image
-                  src="/h_4.png"
-                  width={500}
-                  height={500}
-                  alt="Bone+ Headphones Wear View"
-                  className="mx-auto"
-                />
+                <div className="flex justify-center">
+                  <Image
+                    src="/h_4.png"
+                    width={400}
+                    height={400}
+                    alt="Bone+ Headphones Wear View"
+                    className="max-w-full h-auto"
+                  />
+                </div>
               </CarouselItem>
               <CarouselItem>
-                <Image
-                  src="/h_5.png"
-                  width={500}
-                  height={500}
-                  alt="Bone+ Headphones Lifestyle View"
-                  className="mx-auto"
-                />
+                <div className="flex justify-center">
+                  <Image
+                    src="/h_5.png"
+                    width={400}
+                    height={400}
+                    alt="Bone+ Headphones Lifestyle View"
+                    className="max-w-full h-auto"
+                  />
+                </div>
               </CarouselItem>
             </CarouselContent>
-            <CarouselPrevious className="bg-black hover:bg-gradient-to-r from-[hsl(220_70%_50%)] to-[hsl(260,100%,77%)]" />
-            <CarouselNext className="bg-black hover:bg-gradient-to-r from-[hsl(220_70%_50%)] to-[hsl(260,100%,77%)]" />
+            <div className="flex justify-between mt-2">
+              <CarouselPrevious className="relative left-0 right-auto bg-black hover:bg-gradient-to-r from-[hsl(220_70%_50%)] to-[hsl(260,100%,77%)]" />
+              <CarouselNext className="relative right-0 left-auto bg-black hover:bg-gradient-to-r from-[hsl(220_70%_50%)] to-[hsl(260,100%,77%)]" />
+            </div>
           </Carousel>
         </div>
 
-        <div className="w-full mt-8 lg:mt-0">
-          <ul className="list-disc text-white mx-auto max-w-md lg:max-w-none">
-            <li className="text-3xl tracking-tight font-extrabold text-white mb-3 -ml-6 list-none text-center lg:text-left">
+        <div className="w-full lg:w-1/2 mt-8 lg:mt-0">
+          <ul className="list-disc text-white px-2 sm:px-4">
+            <li className="text-2xl sm:text-3xl tracking-tight font-extrabold text-white mb-4 list-none text-center lg:text-left">
               Features
             </li>
-            <li className="text-xl lg:text-2xl font-sans font-bold">
+            <li className="text-lg sm:text-xl md:text-2xl font-sans font-bold">
               Super Lightweight
             </li>
             <Separator className="my-2" />
-            <li className="text-xl lg:text-2xl font-sans font-bold">
+            <li className="text-lg sm:text-xl md:text-2xl font-sans font-bold">
               Comfortable fit
             </li>
             <Separator className="my-2" />
-            <li className="text-xl lg:text-2xl font-sans font-bold">
+            <li className="text-lg sm:text-xl md:text-2xl font-sans font-bold">
               Long battery life
             </li>
             <Separator className="my-2" />
-            <li className="text-xl lg:text-2xl font-sans font-bold">
+            <li className="text-lg sm:text-xl md:text-2xl font-sans font-bold">
               Noise cancellation
             </li>
             <Separator className="my-2" />
-            <li className="text-xl lg:text-2xl font-sans font-bold">
+            <li className="text-lg sm:text-xl md:text-2xl font-sans font-bold">
               Bluetooth support
             </li>
             <Separator className="my-2" />
-            <li className="text-xl lg:text-2xl font-sans font-bold">
+            <li className="text-lg sm:text-xl md:text-2xl font-sans font-bold">
               Personalised audio spectrum
             </li>
             <Separator className="my-2" />
-            <li className="text-xl lg:text-2xl font-sans font-bold">
+            <li className="text-lg sm:text-xl md:text-2xl font-sans font-bold">
               Make a different preset for different environment
             </li>
-            <div className="mt-6 text-center lg:text-left">
-              <p className="text-2xl">${product.price.toFixed(2)}</p>
+            <div className="mt-8 text-center lg:text-left">
+              <p className="text-xl sm:text-2xl font-bold">
+                ${product.price.toFixed(2)}
+              </p>
               <div className="mt-4">
                 <Button
                   onClick={handleAddToCart}
                   disabled={isAddingToCart}
-                  className="w-full sm:w-52 bg-gradient-to-r from-[hsl(220_70%_50%)] to-[hsl(260,100%,77%)] text-[hsl(0_0%_98%)] hover:opacity-80 transition-opacity rounded-xl p-3"
+                  className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-[hsl(220_70%_50%)] to-[hsl(260,100%,77%)] text-[hsl(0_0%_98%)] hover:opacity-80 transition-opacity rounded-xl"
                 >
-                  {isAddingToCart ? "Adding..." : "Add to Cart"}
+                  {isAddingToCart ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-[hsl(0_0%_98%)] border-t-transparent" />
+                      <span>Adding...</span>
+                    </div>
+                  ) : (
+                    "Add to Cart"
+                  )}
                 </Button>
               </div>
             </div>
@@ -246,44 +267,50 @@ const ProductInfo: React.FC = () => {
         </TooltipProvider>
       )}
 
-      <Accordion
-        type="single"
-        collapsible
-        className=""
-      >
-        <AccordionItem value="item-1">
-          <AccordionTrigger className="text-3xl tracking-tight font-extrabold text-white">
-            Specifications
-          </AccordionTrigger>
-          <AccordionContent>
-            <ul className="list-disc ml-6 text-white flex flex-col">
-              <li className="text-2xl font-sans font-bold">
-                Product dimensions: 19.5cm * 15.7cm / 7.6in * 6.2in
-              </li>
-              <Separator className="my-2" />
-              <li className="text-2xl font-sans font-bold">
-                Product weight: 240gms / 0.53lbs{" "}
-              </li>
-              <Separator className="my-2" />
-              <li className="text-2xl font-sans font-bold">
-                Material: Aluminum
-              </li>
-              <Separator className="my-2" />
-              <li className="text-2xl font-sans font-bold">Unit count: 1.00</li>
-              <Separator className="my-2" />
-              <li className="text-2xl font-sans font-bold">
-                Connectivity: Bluetooth Low Energy
-              </li>
-              <Separator className="my-2" />
-              <li className="text-2xl font-sans font-bold">Rechargable: Yes</li>
-              <Separator className="my-2" />
-              <li className="text-2xl font-sans font-bold">
-                Android Application: Bone+
-              </li>
-            </ul>
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
+      <div className="mt-10 px-1 sm:px-2">
+        <Accordion
+          type="single"
+          collapsible
+          className="w-full"
+        >
+          <AccordionItem value="item-1">
+            <AccordionTrigger className="text-2xl sm:text-3xl tracking-tight font-extrabold text-white py-4">
+              Specifications
+            </AccordionTrigger>
+            <AccordionContent>
+              <ul className="list-disc ml-4 sm:ml-6 text-white flex flex-col space-y-2">
+                <li className="text-lg sm:text-xl md:text-2xl font-sans font-bold">
+                  Product dimensions: 19.5cm * 15.7cm / 7.6in * 6.2in
+                </li>
+                <Separator className="my-2" />
+                <li className="text-lg sm:text-xl md:text-2xl font-sans font-bold">
+                  Product weight: 240gms / 0.53lbs
+                </li>
+                <Separator className="my-2" />
+                <li className="text-lg sm:text-xl md:text-2xl font-sans font-bold">
+                  Material: Aluminum
+                </li>
+                <Separator className="my-2" />
+                <li className="text-lg sm:text-xl md:text-2xl font-sans font-bold">
+                  Unit count: 1.00
+                </li>
+                <Separator className="my-2" />
+                <li className="text-lg sm:text-xl md:text-2xl font-sans font-bold">
+                  Connectivity: Bluetooth Low Energy
+                </li>
+                <Separator className="my-2" />
+                <li className="text-lg sm:text-xl md:text-2xl font-sans font-bold">
+                  Rechargable: Yes
+                </li>
+                <Separator className="my-2" />
+                <li className="text-lg sm:text-xl md:text-2xl font-sans font-bold">
+                  Android Application: Bone+
+                </li>
+              </ul>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      </div>
     </div>
   );
 };
