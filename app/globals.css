@@ -8,10 +8,34 @@
 
 body {
   font-family: Arial, Helvetica, sans-serif;
+  overflow-x: hidden; /* Prevent horizontal scroll on mobile */
 }
 
 html {
   scroll-behavior: smooth;
+}
+
+/* Responsive image handling */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Improve text readability on small screens */
+@media (max-width: 640px) {
+  h1 {
+    font-size: 1.75rem !important;
+    line-height: 1.2 !important;
+  }
+
+  h2 {
+    font-size: 1.5rem !important;
+    line-height: 1.2 !important;
+  }
+
+  p {
+    font-size: 1rem !important;
+  }
 }
 
 @layer base {
@@ -76,5 +100,16 @@ html {
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Improve touch targets on mobile */
+@media (max-width: 640px) {
+  button,
+  a,
+  input[type="submit"],
+  input[type="button"] {
+    min-height: 44px;
+    min-width: 44px;
   }
 }

@@ -1,8 +1,8 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ShoppingCart } from "lucide-react";
+import { Menu, ShoppingCart, X } from "lucide-react";
 import {
   NavigationMenu,
   NavigationMenuItem,
@@ -20,6 +20,7 @@ import { useCart } from "../Cart/CartContext";
 
 const Header = () => {
   const { items } = useCart();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Calculate total number of items in cart
   const cartItemCount = items.reduce((sum, item) => sum + item.quantity, 0);
@@ -29,6 +30,14 @@ const Header = () => {
     (sum, item) => sum + item.price * item.quantity,
     0
   );
+
+  const toggleMobileMenu = () => {
+    setMobileMenuOpen(!mobileMenuOpen);
+  };
+
+  const closeMobileMenu = () => {
+    setMobileMenuOpen(false);
+  };
 
   return (
     <header className="bg-[hsl(0_0%_3.9%)] border-b border-border fixed w-full z-50">
@@ -53,7 +62,7 @@ const Header = () => {
               </span>
             </Link>
 
-            {/* Main Navigation */}
+            {/* Main Navigation - Desktop */}
             <NavigationMenu className="hidden md:flex">
               <NavigationMenuList>
                 <NavigationMenuItem>
@@ -93,8 +102,9 @@ const Header = () => {
             </NavigationMenu>
           </div>
 
-          {/* Cart Dropdown */}
-          <div className="ml-auto">
+          {/* Right section with cart and mobile menu button */}
+          <div className="ml-auto flex items-center">
+            {/* Cart Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -141,9 +151,77 @@ const Header = () => {
                 </div>
               </DropdownMenuContent>
             </DropdownMenu>
+
+            {/* Mobile Menu Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="ml-2 md:hidden text-white"
+              onClick={toggleMobileMenu}
+              aria-label="Toggle mobile menu"
+            >
+              <Menu className="h-6 w-6" />
+            </Button>
           </div>
         </nav>
       </div>
+
+      {/* Mobile Navigation Menu */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-80 z-50 md:hidden">
+          <div className="h-full w-full max-w-sm bg-[hsl(0_0%_3.9%)] flex flex-col p-4 ml-auto">
+            <div className="flex justify-between items-center mb-8">
+              <Link
+                href="/#hero"
+                className="flex items-center space-x-2"
+                onClick={closeMobileMenu}
+              >
+                <Image
+                  src="/headphones_plus_icon 1.png"
+                  alt="Bone+"
+                  width={40}
+                  height={40}
+                />
+                <span className="font-semibold text-lg text-[hsl(0_0%_98%)]">
+                  Bone+
+                </span>
+              </Link>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={closeMobileMenu}
+                className="text-white"
+                aria-label="Close mobile menu"
+              >
+                <X className="h-6 w-6" />
+              </Button>
+            </div>
+            <div className="flex flex-col space-y-4">
+              <Link
+                href="/#about"
+                className="px-3 py-2 text-[hsl(0_0%_98%)] hover:text-[hsl(0_0%_83.1%)] text-lg"
+                onClick={closeMobileMenu}
+              >
+                About Us
+              </Link>
+              <Link
+                href="/#headphone"
+                className="px-3 py-2 text-[hsl(0_0%_98%)] hover:text-[hsl(0_0%_83.1%)] text-lg"
+                onClick={closeMobileMenu}
+              >
+                Headphones
+              </Link>
+              <Link
+                href="/#contact"
+                className="px-3 py-2 text-[hsl(0_0%_98%)] hover:text-[hsl(0_0%_83.1%)] text-lg"
+                onClick={closeMobileMenu}
+              >
+                Contact Us
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 };

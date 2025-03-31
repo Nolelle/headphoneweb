@@ -17,7 +17,8 @@ const arimo = Arimo({
 // Define metadata for the application
 export const metadata: Metadata = {
   title: "Bone+",
-  description: "Landing Page for Bone+ Headphones"
+  description: "Landing Page for Bone+ Headphones",
+  viewport: "width=device-width, initial-scale=1, maximum-scale=1"
 };
 
 // Root layout component that wraps the entire application
@@ -32,7 +33,7 @@ export default function RootLayout({
         {/* SafeCartProvider with error boundary for resilient cart functionality */}
         <SafeCartProvider>
           <Header />
-          {children}
+          <main className="pt-16">{children}</main>
           <Footer />
           {/* Toaster component for showing notifications */}
           <Toaster />

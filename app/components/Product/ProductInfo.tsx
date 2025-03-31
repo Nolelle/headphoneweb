@@ -117,96 +117,110 @@ const ProductInfo: React.FC = () => {
 
   return (
     <div className="bg-[hsl(0_0%_3.9%)] px-4 sm:px-6 lg:px-8 py-8 lg:pt-20">
-      <h2 className="mb-4 text-4xl tracking-tight font-extrabold text-white">
+      <h2 className="mb-4 text-4xl tracking-tight font-extrabold text-white text-center lg:text-left">
         Product Information
       </h2>
-      <div className="flex text-white gap-32">
-        <Carousel className="mx-10 w-full max-w-[550px]">
-          <CarouselContent className="flex">
-            <CarouselItem>
-              <Image
-                src="/h_1.png"
-                width={500}
-                height={500}
-                alt="Bone+ Headphones Front View"
-              />
-            </CarouselItem>
-            <CarouselItem>
-              <Image
-                src="/h_2.png"
-                width={500}
-                height={500}
-                alt="Bone+ Headphones Side View"
-              />
-            </CarouselItem>
-            <CarouselItem>
-              <Image
-                src="/h_3.png"
-                width={500}
-                height={500}
-                alt="Bone+ Headphones Detail View"
-              />
-            </CarouselItem>
-            <CarouselItem>
-              <Image
-                src="/h_4.png"
-                width={500}
-                height={500}
-                alt="Bone+ Headphones Wear View"
-              />
-            </CarouselItem>
-            <CarouselItem>
-              <Image
-                src="/h_5.png"
-                width={500}
-                height={500}
-                alt="Bone+ Headphones Lifestyle View"
-              />
-            </CarouselItem>
-          </CarouselContent>
-          <CarouselPrevious className="bg-black hover:bg-gradient-to-r from-[hsl(220_70%_50%)] to-[hsl(260,100%,77%)]" />
-          <CarouselNext className="bg-black hover:bg-gradient-to-r from-[hsl(220_70%_50%)] to-[hsl(260,100%,77%)] mr-10" />
-        </Carousel>
+      <div className="flex flex-col lg:flex-row text-white gap-8 lg:gap-32">
+        <div className="w-full lg:max-w-[550px] mx-auto lg:mx-0">
+          <Carousel className="w-full">
+            <CarouselContent className="flex">
+              <CarouselItem>
+                <Image
+                  src="/h_1.png"
+                  width={500}
+                  height={500}
+                  alt="Bone+ Headphones Front View"
+                  className="mx-auto"
+                />
+              </CarouselItem>
+              <CarouselItem>
+                <Image
+                  src="/h_2.png"
+                  width={500}
+                  height={500}
+                  alt="Bone+ Headphones Side View"
+                  className="mx-auto"
+                />
+              </CarouselItem>
+              <CarouselItem>
+                <Image
+                  src="/h_3.png"
+                  width={500}
+                  height={500}
+                  alt="Bone+ Headphones Detail View"
+                  className="mx-auto"
+                />
+              </CarouselItem>
+              <CarouselItem>
+                <Image
+                  src="/h_4.png"
+                  width={500}
+                  height={500}
+                  alt="Bone+ Headphones Wear View"
+                  className="mx-auto"
+                />
+              </CarouselItem>
+              <CarouselItem>
+                <Image
+                  src="/h_5.png"
+                  width={500}
+                  height={500}
+                  alt="Bone+ Headphones Lifestyle View"
+                  className="mx-auto"
+                />
+              </CarouselItem>
+            </CarouselContent>
+            <CarouselPrevious className="bg-black hover:bg-gradient-to-r from-[hsl(220_70%_50%)] to-[hsl(260,100%,77%)]" />
+            <CarouselNext className="bg-black hover:bg-gradient-to-r from-[hsl(220_70%_50%)] to-[hsl(260,100%,77%)]" />
+          </Carousel>
+        </div>
 
-        <ul className="list-disc text-white">
-          <li className="text-3xl tracking-tight font-extrabold text-white mb-3 -ml-6 list-none">
-            Features
-          </li>
-          <li className="text-2xl font-sans font-bold">Super Lightweight</li>
-          <Separator className="my-2" />
-          <li className="text-2xl font-sans font-bold">Comfortable fit</li>
-          <Separator className="my-2" />
-          <li className="text-2xl font-sans font-bold">Long battery life</li>
-          <Separator className="my-2" />
-          <li className="text-2xl font-sans font-bold">Noise cancellation</li>
-          <Separator className="my-2" />
-          <li className="text-2xl font-sans font-bold">Bluetooth support</li>
-          <Separator className="my-2" />
-          <li className="text-2xl font-sans font-bold">
-            Personalised audio spectrum
-          </li>
-          <Separator className="my-2" />
-          <li className="text-2xl font-sans font-bold">
-            Make a different preset for different environment
-          </li>
-          <br />
-          <li className="list-none text-2xl">${product.price.toFixed(2)}</li>
-          <br />
-          <Button
-            onClick={handleAddToCart}
-            disabled={isAddingToCart}
-            className="w-52 bg-gradient-to-r from-[hsl(220_70%_50%)] to-[hsl(260,100%,77%)] text-[hsl(0_0%_98%)] hover:opacity-80 transition-opacity rounded-xl p-3"
-          >
-            {isAddingToCart ? (
-              <div className="flex items-center gap-2">
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-[hsl(0_0%_98%)] border-t-transparent" />
-                Adding...
+        <div className="w-full mt-8 lg:mt-0">
+          <ul className="list-disc text-white mx-auto max-w-md lg:max-w-none">
+            <li className="text-3xl tracking-tight font-extrabold text-white mb-3 -ml-6 list-none text-center lg:text-left">
+              Features
+            </li>
+            <li className="text-xl lg:text-2xl font-sans font-bold">
+              Super Lightweight
+            </li>
+            <Separator className="my-2" />
+            <li className="text-xl lg:text-2xl font-sans font-bold">
+              Comfortable fit
+            </li>
+            <Separator className="my-2" />
+            <li className="text-xl lg:text-2xl font-sans font-bold">
+              Long battery life
+            </li>
+            <Separator className="my-2" />
+            <li className="text-xl lg:text-2xl font-sans font-bold">
+              Noise cancellation
+            </li>
+            <Separator className="my-2" />
+            <li className="text-xl lg:text-2xl font-sans font-bold">
+              Bluetooth support
+            </li>
+            <Separator className="my-2" />
+            <li className="text-xl lg:text-2xl font-sans font-bold">
+              Personalised audio spectrum
+            </li>
+            <Separator className="my-2" />
+            <li className="text-xl lg:text-2xl font-sans font-bold">
+              Make a different preset for different environment
+            </li>
+            <div className="mt-6 text-center lg:text-left">
+              <p className="text-2xl">${product.price.toFixed(2)}</p>
+              <div className="mt-4">
+                <Button
+                  onClick={handleAddToCart}
+                  disabled={isAddingToCart}
+                  className="w-full sm:w-52 bg-gradient-to-r from-[hsl(220_70%_50%)] to-[hsl(260,100%,77%)] text-[hsl(0_0%_98%)] hover:opacity-80 transition-opacity rounded-xl p-3"
+                >
+                  {isAddingToCart ? "Adding..." : "Add to Cart"}
+                </Button>
               </div>
-            ) : (
-              "Add to Cart"
-            )}
-          </Button>
-        </ul>
+            </div>
+          </ul>
+        </div>
       </div>
 
       {showScrollToTop && (

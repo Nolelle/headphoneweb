@@ -5,19 +5,31 @@ import AboutUs from "./components/AboutUs/AboutUs";
 
 export default function Home() {
   return (
-    <div>
-      <div id="hero">
+    <div className="flex flex-col">
+      <section
+        id="hero"
+        className="mb-8 md:mb-0"
+      >
         <MainPageHero />
-      </div>
-      <div id="about">
-        <AboutUs/>
-      </div>
-      <div id="headphone">        
-        <ProductInfo/>
-      </div>
-      <div id="contact">
+      </section>
+
+      <section
+        id="about"
+        className="mb-8 md:mb-0"
+      >
+        <AboutUs />
+      </section>
+
+      <section
+        id="headphone"
+        className="mb-8 md:mb-0"
+      >
+        <ProductInfo />
+      </section>
+
+      <section id="contact">
         <ContactForm />
-      </div>
+      </section>
     </div>
   );
 }
