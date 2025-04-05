@@ -135,7 +135,7 @@ export default function PaymentSuccessPage() {
     }, 2000 + retryCount * 1500); // Increasing delay for each retry
 
     return () => clearTimeout(timer);
-  }, [paymentIntent, retryCount]);
+  }, [paymentIntent, retryCount, verifyPayment]);
 
   // Loading state
   if (isLoading) {

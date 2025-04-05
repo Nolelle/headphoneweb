@@ -245,7 +245,7 @@ export default function AdminDashboard() {
   // Fetch messages on component mount
   useEffect(() => {
     fetchMessages();
-  }, []);
+  }, [fetchMessages]);
 
   // Function to fetch all messages from the API
   const fetchMessages = useCallback(async () => {

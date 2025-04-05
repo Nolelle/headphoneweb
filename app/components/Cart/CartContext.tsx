@@ -417,7 +417,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
     window.addEventListener("online", handleOnline);
     return () => window.removeEventListener("online", handleOnline);
-  }, [isInitialized]);
+  }, [isInitialized, sessionId, fetchWithErrorHandling, retryOperation]);
 
   // Calculate total price of items in cart
   const total = items.reduce(
