@@ -1,5 +1,11 @@
 "use client";
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback
+} from "react";
 import { v4 as uuidv4 } from "uuid";
 import { toast } from "sonner";
 import { ErrorBoundary } from "../ErrorBoundary";
@@ -96,206 +102,212 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Helper for making API requests with error handling
-  const fetchWithErrorHandling = async (
-    url: string,
-    options: RequestInit
-  ): Promise<CartResponse> => {
-    try {
-      logDebug("API Request", { url, method: options.method });
-
-      const response = await fetch(url, {
-        ...options,
-        headers: {
-          "Content-Type": "application/json",
-          ...options.headers
-        }
-      });
-
-      let responseText = "";
+  const fetchWithErrorHandling = useCallback(
+    async (url: string, options: RequestInit): Promise<CartResponse> => {
       try {
-        responseText = await response.text();
-      } catch (textError) {
-        console.error("Error reading response text:", textError);
-        // Return empty results if we can't even read the response
-        return { items: [] };
-      }
+        logDebug("API Request", { url, method: options.method });
 
-      logDebug("API Response", {
-        url,
-        status: response.status,
-        responseLength: responseText?.length || 0,
-        responsePreview: responseText?.substring(0, 100)
-      });
+        const response = await fetch(url, {
+          ...options,
+          headers: {
+            "Content-Type": "application/json",
+            ...options.headers
+          }
+        });
 
-      // Enhanced validation: check response content type before attempting to parse
-      const contentType = response.headers.get("content-type");
-      if (contentType && !contentType.includes("application/json")) {
-        console.warn("Response is not JSON format:", contentType);
-        return { items: [] }; // Return empty cart for non-JSON responses
-      }
-
-      // Check for empty response
-      if (!responseText || responseText.trim() === "") {
-        console.warn("Empty response received from server");
-        return { items: [] };
-      }
-
-      let data: CartResponse;
-      try {
-        // Simple sanity check before parsing - must start with { and end with }
-        if (
-          !responseText.trim().startsWith("{") ||
-          !responseText.trim().endsWith("}")
-        ) {
-          console.warn("Response doesn't appear to be JSON object format");
+        let responseText = "";
+        try {
+          responseText = await response.text();
+        } catch (textError) {
+          console.error("Error reading response text:", textError);
+          // Return empty results if we can't even read the response
           return { items: [] };
         }
 
-        data = JSON.parse(responseText);
-
-        // Ensure data.items is always an array
-        if (!data.items) {
-          data.items = [];
-        }
-      } catch (parseError) {
-        console.error("JSON Parse Error:", {
-          responseText, // This might be truncated in console
+        logDebug("API Response", {
+          url,
           status: response.status,
-          url: response.url,
-          contentType: response.headers.get("content-type"),
-          parseError:
-            parseError instanceof Error
-              ? parseError.message
-              : String(parseError)
+          responseLength: responseText?.length || 0,
+          responsePreview: responseText?.substring(0, 100)
         });
 
-        // Add detailed logging of the full response
-        console.log("Full response causing parse error:", responseText);
+        // Enhanced validation: check response content type before attempting to parse
+        const contentType = response.headers.get("content-type");
+        if (contentType && !contentType.includes("application/json")) {
+          console.warn("Response is not JSON format:", contentType);
+          return { items: [] }; // Return empty cart for non-JSON responses
+        }
 
-        // Log more details about response characteristics
-        console.log("Response analysis:", {
-          length: responseText?.length || 0,
-          firstChar: responseText?.[0] || "none",
-          lastChar: responseText?.[responseText.length - 1] || "none",
-          containsHTML:
-            responseText?.includes("<!DOCTYPE") ||
-            responseText?.includes("<html"),
-          containsBOM: responseText?.charCodeAt(0) === 0xfeff,
-          isEmptyOrWhitespace: !responseText || /^\s*$/.test(responseText)
-        });
+        // Check for empty response
+        if (!responseText || responseText.trim() === "") {
+          console.warn("Empty response received from server");
+          return { items: [] };
+        }
 
-        // Recovery mechanism - try to clean up the response text
-        if (responseText) {
-          try {
-            // Check if it's an HTML error page
-            if (
-              responseText.includes("<!DOCTYPE html>") ||
-              responseText.includes("<html>")
-            ) {
-              console.warn("Received HTML instead of JSON response");
-              return { items: [] };
-            }
-
-            // Try to extract a valid JSON object if there's additional text
-            const jsonMatch = responseText.match(/\{.*\}/s);
-            if (jsonMatch) {
-              const extractedJson = jsonMatch[0];
-              console.log(
-                "Attempting to parse extracted JSON:",
-                extractedJson.substring(0, 100)
-              );
-              data = JSON.parse(extractedJson);
-              // Ensure items property exists
-              if (!data.items) {
-                data.items = [];
-              }
-              return data;
-            }
-          } catch (secondaryError) {
-            console.error("Recovery attempt failed:", secondaryError);
+        let data: CartResponse;
+        try {
+          // Simple sanity check before parsing - must start with { and end with }
+          if (
+            !responseText.trim().startsWith("{") ||
+            !responseText.trim().endsWith("}")
+          ) {
+            console.warn("Response doesn't appear to be JSON object format");
+            return { items: [] };
           }
+
+          data = JSON.parse(responseText);
+
+          // Ensure data.items is always an array
+          if (!data.items) {
+            data.items = [];
+          }
+        } catch (parseError) {
+          console.error("JSON Parse Error:", {
+            responseText, // This might be truncated in console
+            status: response.status,
+            url: response.url,
+            contentType: response.headers.get("content-type"),
+            parseError:
+              parseError instanceof Error
+                ? parseError.message
+                : String(parseError)
+          });
+
+          // Add detailed logging of the full response
+          console.log("Full response causing parse error:", responseText);
+
+          // Log more details about response characteristics
+          console.log("Response analysis:", {
+            length: responseText?.length || 0,
+            firstChar: responseText?.[0] || "none",
+            lastChar: responseText?.[responseText.length - 1] || "none",
+            containsHTML:
+              responseText?.includes("<!DOCTYPE") ||
+              responseText?.includes("<html"),
+            containsBOM: responseText?.charCodeAt(0) === 0xfeff,
+            isEmptyOrWhitespace: !responseText || /^\s*$/.test(responseText)
+          });
+
+          // Recovery mechanism - try to clean up the response text
+          if (responseText) {
+            try {
+              // Check if it's an HTML error page
+              if (
+                responseText.includes("<!DOCTYPE html>") ||
+                responseText.includes("<html>")
+              ) {
+                console.warn("Received HTML instead of JSON response");
+                return { items: [] };
+              }
+
+              // Try to extract a valid JSON object if there's additional text
+              const jsonMatch = responseText.match(/\{.*\}/s);
+              if (jsonMatch) {
+                const extractedJson = jsonMatch[0];
+                console.log(
+                  "Attempting to parse extracted JSON:",
+                  extractedJson.substring(0, 100)
+                );
+                data = JSON.parse(extractedJson);
+                // Ensure items property exists
+                if (!data.items) {
+                  data.items = [];
+                }
+                return data;
+              }
+            } catch (secondaryError) {
+              console.error("Recovery attempt failed:", secondaryError);
+            }
+          }
+
+          // If all recovery attempts fail, return empty cart
+          console.warn("Using fallback empty response");
+          return { items: [] };
         }
 
-        // If all recovery attempts fail, return empty cart
-        console.warn("Using fallback empty response");
-        return { items: [] };
-      }
-
-      if (!response.ok) {
-        // If server returned an error but with valid JSON, ensure items exists
-        if (!data.items) {
-          data.items = [];
+        if (!response.ok) {
+          // If server returned an error but with valid JSON, ensure items exists
+          if (!data.items) {
+            data.items = [];
+          }
+          throw new Error(data?.error || `Server error: ${response.status}`);
         }
-        throw new Error(data?.error || `Server error: ${response.status}`);
-      }
 
-      return data;
-    } catch (err) {
-      console.error("API Error:", {
-        url,
-        error: err,
-        method: options.method,
-        online: typeof navigator !== "undefined" ? navigator.onLine : "unknown"
-      });
-      throw new Error(err instanceof Error ? err.message : "Operation failed");
-    }
-  };
-
-  // Helper for retrying failed operations
-  const retryOperation = async <T,>(
-    operation: () => Promise<T>,
-    retries = 3,
-    delay = 300
-  ): Promise<T> => {
-    let lastError;
-    for (let attempt = 1; attempt <= retries; attempt++) {
-      try {
-        // Add timeout to prevent hanging requests
-        const timeoutPromise = new Promise<never>((_, reject) => {
-          setTimeout(
-            () => {
-              reject(
-                new Error(
-                  `Operation timed out after ${
-                    attempt === 1 ? 5000 : attempt * 3000
-                  }ms`
-                )
-              );
-            },
-            attempt === 1 ? 5000 : attempt * 3000
-          ); // Increase timeout for subsequent attempts
-        });
-
-        // Race the operation against the timeout
-        const result = await Promise.race([operation(), timeoutPromise]);
-        return result as T;
-      } catch (error) {
-        lastError = error;
-        logDebug(`Attempt ${attempt} failed`, error);
-
-        // Collect more diagnostic information
-        console.warn(`Retry attempt ${attempt}/${retries} failed:`, {
-          error: error instanceof Error ? error.message : String(error),
-          timestamp: new Date().toISOString(),
-          isOnline:
+        return data;
+      } catch (err) {
+        console.error("API Error:", {
+          url,
+          error: err,
+          method: options.method,
+          online:
             typeof navigator !== "undefined" ? navigator.onLine : "unknown"
         });
+        throw new Error(
+          err instanceof Error ? err.message : "Operation failed"
+        );
+      }
+    },
+    []
+  );
 
-        if (attempt < retries) {
-          // Calculate backoff with jitter to prevent thundering herd
-          const jitter = Math.random() * 300;
-          const backoff = Math.min(
-            delay * Math.pow(1.5, attempt - 1) + jitter,
-            10000
-          );
+  // Helper for retrying failed operations
+  const retryOperation = useCallback(
+    async <T,>(
+      operation: () => Promise<T>,
+      retries = 3,
+      delay = 300
+    ): Promise<T> => {
+      let lastError;
+      for (let attempt = 1; attempt <= retries; attempt++) {
+        try {
+          // Add timeout to prevent hanging requests
+          const timeoutPromise = new Promise<never>((_, reject) => {
+            setTimeout(
+              () => {
+                reject(
+                  new Error(
+                    `Operation timed out after ${
+                      attempt === 1 ? 5000 : attempt * 3000
+                    }ms`
+                  )
+                );
+              },
+              attempt === 1 ? 5000 : attempt * 3000
+            ); // Increase timeout for subsequent attempts
+          });
 
-          logDebug(`Retrying in ${Math.round(backoff)}ms...`);
-          await new Promise((resolve) => setTimeout(resolve, backoff));
+          // Race the operation against the timeout
+          const result = await Promise.race([operation(), timeoutPromise]);
+          return result as T;
+        } catch (error) {
+          lastError = error;
+          logDebug(`Attempt ${attempt} failed`, error);
+
+          // Collect more diagnostic information
+          console.warn(`Retry attempt ${attempt}/${retries} failed:`, {
+            error: error instanceof Error ? error.message : String(error),
+            timestamp: new Date().toISOString(),
+            isOnline:
+              typeof navigator !== "undefined" ? navigator.onLine : "unknown"
+          });
+
+          if (attempt < retries) {
+            // Calculate backoff with jitter to prevent thundering herd
+            const jitter = Math.random() * 300;
+            const backoff = Math.min(
+              delay * Math.pow(1.5, attempt - 1) + jitter,
+              10000
+            );
+
+            logDebug(`Retrying in ${Math.round(backoff)}ms...`);
+            await new Promise((resolve) => setTimeout(resolve, backoff));
+          }
         }
       }
-    }
-    throw lastError;
-  };
+      throw lastError;
+    },
+    []
+  );
 
   // Initialize cart and load existing items
   useEffect(() => {

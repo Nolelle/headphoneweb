@@ -58,19 +58,19 @@ const MessageResponseForm = memo(
     }, [value]);
 
     // Create a debounced update function
-    const debouncedUpdate = useCallback(
-      debounce((id: number, val: string) => {
+    const debouncedUpdate = useCallback(() => {
+      const debouncedFn = debounce((id: number, val: string) => {
         onChange(id, val);
-      }, 100),
-      [onChange]
-    );
+      }, 100);
+      return debouncedFn;
+    }, [onChange]);
 
     const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       const newValue = e.target.value;
       // Update local state immediately for responsive UI
       setLocalValue(newValue);
       // Debounce the state update to the parent
-      debouncedUpdate(messageId, newValue);
+      debouncedUpdate()(messageId, newValue);
     };
 
     return (
@@ -242,11 +242,6 @@ export default function AdminDashboard() {
     {}
   );
 
-  // Fetch messages on component mount
-  useEffect(() => {
-    fetchMessages();
-  }, [fetchMessages]);
-
   // Function to fetch all messages from the API
   const fetchMessages = useCallback(async () => {
     try {
@@ -262,6 +257,11 @@ export default function AdminDashboard() {
       toast.error("Failed to load messages");
     }
   }, []);
+
+  // Fetch messages on component mount
+  useEffect(() => {
+    fetchMessages();
+  }, [fetchMessages]);
 
   // Handle admin logout
   const handleLogout = useCallback(async () => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -58,7 +58,7 @@ export default function PaymentSuccessPage() {
   const paymentIntent = searchParams.get("payment_intent");
 
   // Function to verify payment with retries
-  const verifyPayment = async () => {
+  const verifyPayment = useCallback(async () => {
     if (verificationInProgress) return;
 
     try {
@@ -119,7 +119,7 @@ export default function PaymentSuccessPage() {
       setIsLoading(false);
       setVerificationInProgress(false);
     }
-  };
+  }, [clearCart, paymentIntent, retryCount, verificationInProgress]);
 
   // Manual retry function for user-initiated retries
   const handleRetry = () => {
