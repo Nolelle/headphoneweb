@@ -5,7 +5,8 @@ import {
   CarouselItem,
   CarouselContent,
   CarouselNext,
-  CarouselPrevious
+  CarouselPrevious,
+  type CarouselApi
 } from "@/app/components/ui/carousel";
 import {
   Accordion,
@@ -38,6 +39,16 @@ const ProductInfo: React.FC = () => {
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const { addItem } = useCart();
   const [showScrollToTop, setShowScrollToTop] = useState(false);
+  const [activeSlide, setActiveSlide] = useState(0);
+  const [carouselApi, setCarouselApi] = useState<CarouselApi | null>(null);
+
+  useEffect(() => {
+    if (carouselApi) {
+      carouselApi.on("select", () => {
+        setActiveSlide(carouselApi.selectedScrollSnap());
+      });
+    }
+  }, [carouselApi]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -106,6 +117,12 @@ const ProductInfo: React.FC = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const handleThumbnailClick = (index: number) => {
+    if (carouselApi) {
+      carouselApi.scrollTo(index);
+    }
+  };
+
   return (
     <div
       className="bg-[hsl(0_0%_3.9%)] w-full"
@@ -116,7 +133,10 @@ const ProductInfo: React.FC = () => {
           {/* Left Column - Product Images */}
           <div className="w-full lg:w-1/2">
             <div className="sticky top-20">
-              <Carousel className="w-full max-w-xl mx-auto">
+              <Carousel
+                className="w-full max-w-xl mx-auto"
+                setApi={setCarouselApi}
+              >
                 <CarouselContent>
                   {[1, 2, 3, 4, 5].map((num) => (
                     <CarouselItem key={num}>
@@ -147,10 +167,15 @@ const ProductInfo: React.FC = () => {
               </Carousel>
 
               <div className="flex justify-center mt-6 gap-2 flex-wrap">
-                {[1, 2, 3, 4, 5].map((num) => (
+                {[1, 2, 3, 4, 5].map((num, index) => (
                   <div
                     key={num}
-                    className="w-16 h-16 rounded-md bg-[hsl(0_0%_5%)] p-1 cursor-pointer hover:ring-2 hover:ring-[hsl(220_70%_50%)] transition-all"
+                    className={`w-16 h-16 rounded-md bg-[hsl(0_0%_5%)] p-1 cursor-pointer hover:ring-2 hover:ring-[hsl(220_70%_50%)] transition-all ${
+                      activeSlide === index
+                        ? "ring-2 ring-[hsl(220_70%_50%)]"
+                        : ""
+                    }`}
+                    onClick={() => handleThumbnailClick(index)}
                   >
                     <Image
                       src={`/h_${num}.png`}
