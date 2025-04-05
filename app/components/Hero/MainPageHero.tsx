@@ -7,9 +7,9 @@ const MainPageHero: React.FC = () => {
   return (
     <section
       id="hero"
-      className="py-16 md:py-0 min-h-[90vh] md:min-h-screen bg-[hsl(0_0%_3.9%)] flex items-center justify-center px-4 sm:px-6 lg:px-8"
+      className="py-16 md:py-0 min-h-[90vh] md:min-h-screen bg-[hsl(0_0%_3.9%)] flex items-center justify-center px-4 sm:px-6 lg:px-8 w-full"
     >
-      <div className="container mx-auto">
+      <div className="container mx-auto max-w-[1400px]">
         <div className="flex flex-col lg:flex-row-reverse items-center justify-between gap-8 md:gap-12">
           {/* Image Container */}
           <div className="w-full sm:w-3/4 lg:w-1/2 relative mt-8 lg:mt-0">
