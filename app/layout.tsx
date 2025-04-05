@@ -33,7 +33,9 @@ export default function RootLayout({
         {/* SafeCartProvider with error boundary for resilient cart functionality */}
         <SafeCartProvider>
           <Header />
-          <main className="pt-16">{children}</main>
+          <main className="pt-16 flex flex-col overflow-hidden">
+            {children}
+          </main>
           <Footer />
           {/* Toaster component for showing notifications */}
           <Toaster />

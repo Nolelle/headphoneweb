@@ -9,10 +9,15 @@
 body {
   font-family: Arial, Helvetica, sans-serif;
   overflow-x: hidden; /* Prevent horizontal scroll on mobile */
+  overflow-y: auto; /* Allow vertical scrolling but control it */
+  min-height: 100vh; /* Ensure full height */
+  display: flex;
+  flex-direction: column;
 }
 
 html {
   scroll-behavior: smooth;
+  overflow-x: hidden; /* Additional overflow control */
 }
 
 /* Responsive image handling */
@@ -36,6 +41,11 @@ img {
   p {
     font-size: 1rem !important;
   }
+}
+
+/* Section styling to ensure no gaps between sections */
+section {
+  width: 100%;
 }
 
 @layer base {

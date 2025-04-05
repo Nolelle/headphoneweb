@@ -6,24 +6,15 @@ import AboutUs from "./components/AboutUs/AboutUs";
 export default function Home() {
   return (
     <div className="flex flex-col">
-      <section
-        id="hero"
-        className="mb-8 md:mb-0"
-      >
+      <section id="hero">
         <MainPageHero />
       </section>
 
-      <section
-        id="about"
-        className="mb-8 md:mb-0"
-      >
+      <section id="about">
         <AboutUs />
       </section>
 
-      <section
-        id="headphone"
-        className="mb-8 md:mb-0"
-      >
+      <section id="headphone">
         <ProductInfo />
       </section>
 
