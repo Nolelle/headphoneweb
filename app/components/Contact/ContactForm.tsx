@@ -91,8 +91,8 @@ const ContactForm: React.FC = () => {
   };
 
   return (
-    <section className="bg-[hsl(0_0%_3.9%)] text-[hsl(0_0%_98%)] w-full">
-      <div className="py-8 lg:py-20 px-4 mx-auto max-w-[1400px] container">
+    <section className="bg-[hsl(0_0%_3.9%)] text-[hsl(0_0%_98%)] w-full flex justify-center">
+      <div className="container max-w-[1400px] py-8 lg:py-20 px-4">
         <h2 className="mb-4 text-4xl font-extrabold text-center text-[hsl(0_0%_98%)]">
           Contact Us
         </h2>

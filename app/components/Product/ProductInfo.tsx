@@ -36,12 +36,10 @@ interface Product {
 }
 
 const ProductInfo: React.FC = () => {
-  // State management for adding to cart and scroll to top
   const [isAddingToCart, setIsAddingToCart] = useState(false);
-  const { addItem } = useCart(); // Remove unused 'items' variable
-
-  // Scroll to top functionality
+  const { addItem } = useCart();
   const [showScrollToTop, setShowScrollToTop] = useState(false);
+
   useEffect(() => {
     const handleScroll = () => {
       setShowScrollToTop(window.pageYOffset > 300);
@@ -50,7 +48,6 @@ const ProductInfo: React.FC = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Product details hardcoded for now
   const product: Product = {
     product_id: 1,
     name: "Bone+ Headphone",
@@ -59,7 +56,6 @@ const ProductInfo: React.FC = () => {
     image_url: "/h_1.png"
   };
 
-  // Handler for adding item to cart with robust error handling
   const handleAddToCart = async () => {
     if (isAddingToCart) return;
 
@@ -77,7 +73,6 @@ const ProductInfo: React.FC = () => {
         })
       });
 
-      // More robust response handling
       const responseText = await stockResponse.text();
       console.log("Stock check raw response:", responseText);
 
@@ -96,9 +91,7 @@ const ProductInfo: React.FC = () => {
         throw new Error(stockData.error || "Stock check failed");
       }
 
-      // Proceed with cart addition
       await addItem(product.product_id, 1);
-
       toast.success("Added to cart");
     } catch (error) {
       console.error("Add to cart error:", error);
@@ -110,209 +103,252 @@ const ProductInfo: React.FC = () => {
     }
   };
 
-  // Scroll to top functionality
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
-    <div className="bg-[hsl(0_0%_3.9%)] px-3 sm:px-6 lg:px-8 py-6 lg:pt-20 w-full">
-      <div className="container mx-auto max-w-[1400px]">
-        <h2 className="mb-4 sm:mb-6 text-2xl sm:text-3xl md:text-4xl tracking-tight font-extrabold text-white text-center lg:text-left">
-          Product Information
-        </h2>
-        <div className="flex flex-col lg:flex-row text-white gap-6 sm:gap-8 lg:gap-16">
-          <div className="w-full lg:w-1/2 max-w-[95vw] xs:max-w-[90vw] sm:max-w-[450px] mx-auto lg:mx-0">
-            <Carousel className="w-full">
-              <CarouselContent className="flex">
-                <CarouselItem>
-                  <div className="flex justify-center">
+    <div
+      className="bg-[hsl(0_0%_3.9%)] w-full"
+      id="headphone"
+    >
+      <div className="container mx-auto max-w-6xl px-4 py-12 lg:py-16 pt-32 lg:pt-36">
+        <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
+          {/* Left Column - Product Images */}
+          <div className="w-full lg:w-1/2">
+            <div className="sticky top-20">
+              <Carousel className="w-full max-w-xl mx-auto">
+                <CarouselContent>
+                  {[1, 2, 3, 4, 5].map((num) => (
+                    <CarouselItem key={num}>
+                      <div className="p-1">
+                        <div className="flex items-center justify-center bg-[hsl(0_0%_5%)] rounded-lg p-2 h-[400px] sm:h-[480px] md:h-[520px]">
+                          <Image
+                            src={`/h_${num}.png`}
+                            width={500}
+                            height={500}
+                            alt={`Bone+ Headphones View ${num}`}
+                            className="max-h-full w-auto object-contain"
+                          />
+                        </div>
+                      </div>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                <div className="flex justify-between absolute top-1/2 -translate-y-1/2 left-0 right-0 px-2">
+                  <CarouselPrevious
+                    className="relative left-0 right-auto bg-black hover:bg-gradient-to-r from-[hsl(220_70%_50%)] to-[hsl(260,100%,77%)] opacity-100 always-visible"
+                    variant="outline"
+                  />
+                  <CarouselNext
+                    className="relative right-0 left-auto bg-black hover:bg-gradient-to-r from-[hsl(220_70%_50%)] to-[hsl(260,100%,77%)] opacity-100 always-visible"
+                    variant="outline"
+                  />
+                </div>
+              </Carousel>
+
+              <div className="flex justify-center mt-6 gap-2 flex-wrap">
+                {[1, 2, 3, 4, 5].map((num) => (
+                  <div
+                    key={num}
+                    className="w-16 h-16 rounded-md bg-[hsl(0_0%_5%)] p-1 cursor-pointer hover:ring-2 hover:ring-[hsl(220_70%_50%)] transition-all"
+                  >
                     <Image
-                      src="/h_1.png"
-                      width={400}
-                      height={400}
-                      alt="Bone+ Headphones Front View"
-                      className="max-w-full h-auto object-contain"
+                      src={`/h_${num}.png`}
+                      width={60}
+                      height={60}
+                      alt={`Thumbnail ${num}`}
+                      className="w-full h-full object-contain"
                     />
                   </div>
-                </CarouselItem>
-                <CarouselItem>
-                  <div className="flex justify-center">
-                    <Image
-                      src="/h_2.png"
-                      width={400}
-                      height={400}
-                      alt="Bone+ Headphones Side View"
-                      className="max-w-full h-auto object-contain"
-                    />
-                  </div>
-                </CarouselItem>
-                <CarouselItem>
-                  <div className="flex justify-center">
-                    <Image
-                      src="/h_3.png"
-                      width={400}
-                      height={400}
-                      alt="Bone+ Headphones Detail View"
-                      className="max-w-full h-auto object-contain"
-                    />
-                  </div>
-                </CarouselItem>
-                <CarouselItem>
-                  <div className="flex justify-center">
-                    <Image
-                      src="/h_4.png"
-                      width={400}
-                      height={400}
-                      alt="Bone+ Headphones Wear View"
-                      className="max-w-full h-auto object-contain"
-                    />
-                  </div>
-                </CarouselItem>
-                <CarouselItem>
-                  <div className="flex justify-center">
-                    <Image
-                      src="/h_5.png"
-                      width={400}
-                      height={400}
-                      alt="Bone+ Headphones Lifestyle View"
-                      className="max-w-full h-auto object-contain"
-                    />
-                  </div>
-                </CarouselItem>
-              </CarouselContent>
-              <div className="flex justify-between mt-2">
-                <CarouselPrevious className="relative left-0 right-auto bg-black hover:bg-gradient-to-r from-[hsl(220_70%_50%)] to-[hsl(260,100%,77%)]" />
-                <CarouselNext className="relative right-0 left-auto bg-black hover:bg-gradient-to-r from-[hsl(220_70%_50%)] to-[hsl(260,100%,77%)]" />
+                ))}
               </div>
-            </Carousel>
+            </div>
           </div>
 
-          <div className="w-full lg:w-1/2 mt-6 lg:mt-0">
-            <ul className="list-disc text-white px-1 sm:px-4">
-              <li className="text-xl sm:text-2xl md:text-3xl tracking-tight font-extrabold text-white mb-3 sm:mb-4 list-none text-center lg:text-left">
-                Features
-              </li>
-              <li className="text-base sm:text-lg md:text-xl font-sans font-bold">
-                Super Lightweight
-              </li>
-              <Separator className="my-1.5 sm:my-2" />
-              <li className="text-base sm:text-lg md:text-xl font-sans font-bold">
-                Comfortable fit
-              </li>
-              <Separator className="my-1.5 sm:my-2" />
-              <li className="text-base sm:text-lg md:text-xl font-sans font-bold">
-                Long battery life
-              </li>
-              <Separator className="my-1.5 sm:my-2" />
-              <li className="text-base sm:text-lg md:text-xl font-sans font-bold">
-                Noise cancellation
-              </li>
-              <Separator className="my-1.5 sm:my-2" />
-              <li className="text-base sm:text-lg md:text-xl font-sans font-bold">
-                Bluetooth support
-              </li>
-              <Separator className="my-1.5 sm:my-2" />
-              <li className="text-base sm:text-lg md:text-xl font-sans font-bold">
-                Personalised audio spectrum
-              </li>
-              <Separator className="my-1.5 sm:my-2" />
-              <li className="text-base sm:text-lg md:text-xl font-sans font-bold">
-                Make a different preset for different environment
-              </li>
-              <div className="mt-6 sm:mt-8 text-center lg:text-left">
-                <p className="text-lg sm:text-xl md:text-2xl font-bold">
+          {/* Right Column - Product Details */}
+          <div className="w-full lg:w-1/2">
+            <div className="lg:pl-8">
+              <h1 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+                {product.name}
+              </h1>
+
+              <div className="mb-6">
+                <p className="text-2xl font-bold text-white">
                   ${product.price.toFixed(2)}
                 </p>
-                <div className="mt-3 sm:mt-4">
-                  <Button
-                    onClick={handleAddToCart}
-                    disabled={isAddingToCart}
-                    className="w-full sm:w-auto px-6 sm:px-8 py-2.5 sm:py-3 bg-gradient-to-r from-[hsl(220_70%_50%)] to-[hsl(260,100%,77%)] text-[hsl(0_0%_98%)] hover:opacity-80 transition-opacity rounded-xl"
-                  >
-                    {isAddingToCart ? (
-                      <div className="flex items-center justify-center gap-2">
-                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-[hsl(0_0%_98%)] border-t-transparent" />
-                        <span>Adding...</span>
-                      </div>
-                    ) : (
-                      "Add to Cart"
-                    )}
-                  </Button>
-                </div>
+                <p className="text-[hsl(0_0%_63.9%)] mt-1">
+                  Free shipping on all continental US orders
+                </p>
               </div>
-            </ul>
-          </div>
-        </div>
 
-        {showScrollToTop && (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
+              <div className="mb-8">
                 <Button
-                  variant="secondary"
-                  size="icon"
-                  className="fixed bottom-4 right-4 z-50 rounded-full bg-[hsl(0_0%_14.9%)] text-[hsl(0_0%_98%)] hover:bg-[hsl(0_0%_83.1%)] hover:text-[hsl(0_0%_3.9%)]"
-                  onClick={scrollToTop}
+                  onClick={handleAddToCart}
+                  disabled={isAddingToCart}
+                  className="w-full py-6 bg-gradient-to-r from-[hsl(220_70%_50%)] to-[hsl(260,100%,77%)] text-[hsl(0_0%_98%)] hover:opacity-90 transition-opacity rounded-xl text-lg font-medium"
                 >
-                  <ChevronUp className="h-4 w-4" />
+                  {isAddingToCart ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="h-5 w-5 animate-spin rounded-full border-2 border-[hsl(0_0%_98%)] border-t-transparent" />
+                      <span>Adding to Cart...</span>
+                    </div>
+                  ) : (
+                    "Add to Cart"
+                  )}
                 </Button>
-              </TooltipTrigger>
-              <TooltipContent
-                side="top"
-                align="center"
-              >
-                <p>Scroll to top</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        )}
+              </div>
 
-        <div className="mt-8 sm:mt-10 px-1 sm:px-2">
-          <Accordion
-            type="single"
-            collapsible
-            className="w-full"
-          >
-            <AccordionItem value="item-1">
-              <AccordionTrigger className="text-xl sm:text-2xl md:text-3xl tracking-tight font-extrabold text-white py-3 sm:py-4">
-                Specifications
-              </AccordionTrigger>
-              <AccordionContent>
-                <ul className="list-disc ml-3 sm:ml-6 text-white flex flex-col space-y-1.5 sm:space-y-2">
-                  <li className="text-base sm:text-lg md:text-xl font-sans font-bold">
-                    Product dimensions: 19.5cm * 15.7cm / 7.6in * 6.2in
+              <div className="mb-8">
+                <h2 className="text-xl font-semibold text-white mb-4">
+                  Features
+                </h2>
+                <ul className="space-y-3 text-[hsl(0_0%_83.1%)]">
+                  <li className="flex items-start">
+                    <span className="text-[hsl(220_70%_50%)] mr-2">•</span>
+                    Super Lightweight Design
                   </li>
-                  <Separator className="my-1.5 sm:my-2" />
-                  <li className="text-base sm:text-lg md:text-xl font-sans font-bold">
-                    Product weight: 240gms / 0.53lbs
+                  <li className="flex items-start">
+                    <span className="text-[hsl(220_70%_50%)] mr-2">•</span>
+                    Ergonomic Comfortable Fit
                   </li>
-                  <Separator className="my-1.5 sm:my-2" />
-                  <li className="text-base sm:text-lg md:text-xl font-sans font-bold">
-                    Material: Aluminum
+                  <li className="flex items-start">
+                    <span className="text-[hsl(220_70%_50%)] mr-2">•</span>
+                    Extended Battery Life up to 24 Hours
                   </li>
-                  <Separator className="my-1.5 sm:my-2" />
-                  <li className="text-base sm:text-lg md:text-xl font-sans font-bold">
-                    Unit count: 1.00
+                  <li className="flex items-start">
+                    <span className="text-[hsl(220_70%_50%)] mr-2">•</span>
+                    Advanced Noise Cancellation Technology
                   </li>
-                  <Separator className="my-1.5 sm:my-2" />
-                  <li className="text-base sm:text-lg md:text-xl font-sans font-bold">
-                    Connectivity: Bluetooth Low Energy
+                  <li className="flex items-start">
+                    <span className="text-[hsl(220_70%_50%)] mr-2">•</span>
+                    Bluetooth 5.0 Connectivity
                   </li>
-                  <Separator className="my-1.5 sm:my-2" />
-                  <li className="text-base sm:text-lg md:text-xl font-sans font-bold">
-                    Rechargable: Yes
+                  <li className="flex items-start">
+                    <span className="text-[hsl(220_70%_50%)] mr-2">•</span>
+                    Personalized Audio Spectrum Adjustment
                   </li>
-                  <Separator className="my-1.5 sm:my-2" />
-                  <li className="text-base sm:text-lg md:text-xl font-sans font-bold">
-                    Android Application: Bone+
+                  <li className="flex items-start">
+                    <span className="text-[hsl(220_70%_50%)] mr-2">•</span>
+                    Multiple Environment Sound Presets
                   </li>
                 </ul>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
+              </div>
+
+              <Accordion
+                type="single"
+                collapsible
+                className="w-full"
+              >
+                <AccordionItem
+                  value="specifications"
+                  className="border-b border-[hsl(0_0%_14.9%)]"
+                >
+                  <AccordionTrigger className="text-white py-4">
+                    <span className="text-xl font-semibold">
+                      Specifications
+                    </span>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <div className="py-2 space-y-3 text-[hsl(0_0%_83.1%)]">
+                      <p className="flex justify-between">
+                        <span className="text-[hsl(0_0%_63.9%)]">
+                          Dimensions:
+                        </span>
+                        <span>19.5cm × 15.7cm (7.6in × 6.2in)</span>
+                      </p>
+                      <p className="flex justify-between">
+                        <span className="text-[hsl(0_0%_63.9%)]">Weight:</span>
+                        <span>240g (0.53lbs)</span>
+                      </p>
+                      <p className="flex justify-between">
+                        <span className="text-[hsl(0_0%_63.9%)]">
+                          Material:
+                        </span>
+                        <span>Aluminum & Premium Leather</span>
+                      </p>
+                      <p className="flex justify-between">
+                        <span className="text-[hsl(0_0%_63.9%)]">
+                          Connectivity:
+                        </span>
+                        <span>Bluetooth Low Energy</span>
+                      </p>
+                      <p className="flex justify-between">
+                        <span className="text-[hsl(0_0%_63.9%)]">
+                          Battery Life:
+                        </span>
+                        <span>Up to 24 hours</span>
+                      </p>
+                      <p className="flex justify-between">
+                        <span className="text-[hsl(0_0%_63.9%)]">
+                          Rechargeable:
+                        </span>
+                        <span>Yes, USB-C</span>
+                      </p>
+                      <p className="flex justify-between">
+                        <span className="text-[hsl(0_0%_63.9%)]">
+                          Compatibility:
+                        </span>
+                        <span>iOS & Android with Bone+ App</span>
+                      </p>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem
+                  value="delivery"
+                  className="border-b border-[hsl(0_0%_14.9%)]"
+                >
+                  <AccordionTrigger className="text-white py-4">
+                    <span className="text-xl font-semibold">
+                      Shipping & Returns
+                    </span>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <div className="py-2 space-y-4 text-[hsl(0_0%_83.1%)]">
+                      <p>
+                        Free standard shipping on all orders within the
+                        continental United States.
+                      </p>
+                      <p>
+                        Orders typically ship within 1-2 business days. Delivery
+                        times vary based on location.
+                      </p>
+                      <p>
+                        30-day return policy on all unused items in original
+                        packaging.
+                      </p>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </div>
+          </div>
         </div>
       </div>
+
+      {showScrollToTop && (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="secondary"
+                size="icon"
+                className="fixed bottom-4 right-4 z-50 rounded-full bg-[hsl(0_0%_14.9%)] text-[hsl(0_0%_98%)] hover:bg-[hsl(0_0%_83.1%)] hover:text-[hsl(0_0%_3.9%)]"
+                onClick={scrollToTop}
+              >
+                <ChevronUp className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent
+              side="top"
+              align="center"
+            >
+              <p>Scroll to top</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      )}
     </div>
   );
 };
