@@ -10,8 +10,8 @@ describe("AdminDashboard", () => {
       email: "john@example.com",
       message: "Test message",
       message_date: "2023-01-01T12:00:00Z",
-      status: "UNREAD",
-    },
+      status: "UNREAD"
+    }
   ];
 
   beforeEach(() => {
@@ -21,7 +21,7 @@ describe("AdminDashboard", () => {
   it("fetches and displays messages", async () => {
     jest.spyOn(global, "fetch").mockResolvedValueOnce({
       ok: true,
-      json: jest.fn().mockResolvedValue(mockMessages),
+      json: jest.fn().mockResolvedValue(mockMessages)
     });
 
     render(<AdminDashboard />);
@@ -40,11 +40,16 @@ describe("AdminDashboard", () => {
       .spyOn(global, "fetch")
       .mockResolvedValueOnce({
         ok: true,
-        json: jest.fn().mockResolvedValue(mockMessages),
+        json: jest.fn().mockResolvedValue(mockMessages)
       })
       .mockResolvedValueOnce({
         ok: true,
-        json: jest.fn().mockResolvedValue({ status: "READ", updated_at: "2023-01-02T12:00:00Z" }),
+        json: jest
+          .fn()
+          .mockResolvedValue({
+            status: "READ",
+            updated_at: "2023-01-02T12:00:00Z"
+          })
       });
 
     render(<AdminDashboard />);
@@ -60,7 +65,7 @@ describe("AdminDashboard", () => {
       expect.objectContaining({
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "READ" }),
+        body: JSON.stringify({ status: "READ" })
       })
     );
   });
@@ -70,15 +75,19 @@ describe("AdminDashboard", () => {
       .spyOn(global, "fetch")
       .mockResolvedValueOnce({
         ok: true,
-        json: jest.fn().mockResolvedValue(mockMessages),
+        json: jest.fn().mockResolvedValue(mockMessages)
       })
       .mockResolvedValueOnce({
         ok: true,
         json: jest.fn().mockResolvedValue({
-          admin_response: "Test response",
-          status: "RESPONDED",
-          responded_at: "2023-01-02T12:00:00Z",
-        }),
+          success: true,
+          message: {
+            admin_response: "Test response",
+            status: "RESPONDED",
+            responded_at: "2023-01-02T12:00:00Z"
+          },
+          emailSent: true
+        })
       });
 
     render(<AdminDashboard />);
@@ -87,7 +96,10 @@ describe("AdminDashboard", () => {
       expect(screen.getByTestId("response-textarea")).toBeInTheDocument();
     });
 
-    await userEvent.type(screen.getByTestId("response-textarea"), "Test response");
+    await userEvent.type(
+      screen.getByTestId("response-textarea"),
+      "Test response"
+    );
     await userEvent.click(screen.getByText("Send Response"));
 
     expect(global.fetch).toHaveBeenCalledWith(
@@ -95,7 +107,7 @@ describe("AdminDashboard", () => {
       expect.objectContaining({
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ response: "Test response" }),
+        body: JSON.stringify({ response: "Test response" })
       })
     );
   });

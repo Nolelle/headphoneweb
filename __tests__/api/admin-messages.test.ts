@@ -123,10 +123,23 @@ describe("AdminAPI Message Management", () => {
         status: "READ"
       };
 
-      // Setup mock
-      mockPool.query.mockResolvedValueOnce({
-        rows: [updatedMessage],
-        rowCount: 1
+      // Set up mock for the connected client
+      const clientMock = mockPool.connect();
+
+      // Mock query response for status update
+      clientMock.query.mockImplementation((query, params) => {
+        if (query === "BEGIN" || query === "COMMIT") {
+          return Promise.resolve({ rows: [] });
+        }
+
+        if (query.includes("UPDATE")) {
+          return Promise.resolve({
+            rows: [updatedMessage],
+            rowCount: 1
+          });
+        }
+
+        return Promise.resolve({ rows: [] });
       });
 
       // Create test request
@@ -142,23 +155,48 @@ describe("AdminAPI Message Management", () => {
       );
 
       // Call the handler
-      await PATCH(req, { params: { id: "1" } });
+      await PATCH(req, { params: Promise.resolve({ id: "1" }) });
 
-      // Check query was made with correct parameters
-      expect(mockPool.query).toHaveBeenCalledWith(
+      // Verify transaction was started
+      expect(clientMock.query).toHaveBeenCalledWith("BEGIN");
+
+      // Check update query was made with correct parameters
+      expect(clientMock.query).toHaveBeenCalledWith(
         expect.stringContaining("UPDATE"),
         ["READ", "1"]
       );
 
-      // Check response
-      expect(mockNextResponse.json).toHaveBeenCalledWith(updatedMessage);
+      // Verify transaction was committed
+      expect(clientMock.query).toHaveBeenCalledWith("COMMIT");
+
+      // Verify client was released
+      expect(clientMock.release).toHaveBeenCalled();
+
+      // Check response matches API implementation
+      expect(mockNextResponse.json).toHaveBeenCalledWith({
+        success: true,
+        message: updatedMessage
+      });
     });
 
     it("returns 404 for non-existent message", async () => {
-      // Setup mock to return empty result
-      mockPool.query.mockResolvedValueOnce({
-        rows: [],
-        rowCount: 0
+      // Set up mock for the connected client
+      const clientMock = mockPool.connect();
+
+      // Mock query responses
+      clientMock.query.mockImplementation((query, params) => {
+        if (query === "BEGIN" || query === "ROLLBACK") {
+          return Promise.resolve({ rows: [] });
+        }
+
+        if (query.includes("UPDATE")) {
+          return Promise.resolve({
+            rows: [],
+            rowCount: 0
+          });
+        }
+
+        return Promise.resolve({ rows: [] });
       });
 
       // Create test request
@@ -174,18 +212,40 @@ describe("AdminAPI Message Management", () => {
       );
 
       // Call the handler
-      await PATCH(req, { params: { id: "999" } });
+      await PATCH(req, { params: Promise.resolve({ id: "999" }) });
 
-      // Check error response - updated to match actual implementation
+      // Verify transaction was started
+      expect(clientMock.query).toHaveBeenCalledWith("BEGIN");
+
+      // Verify transaction was rolled back
+      expect(clientMock.query).toHaveBeenCalledWith("ROLLBACK");
+
+      // Verify client was released
+      expect(clientMock.release).toHaveBeenCalled();
+
+      // Check error response
       expect(mockNextResponse.json).toHaveBeenCalledWith(
-        { error: "Failed to update message status" },
-        { status: 500 }
+        { error: "Message not found" },
+        { status: 404 }
       );
     });
 
     it("handles database errors", async () => {
-      // Setup mock to throw error
-      mockPool.query.mockRejectedValueOnce(new Error("Database error"));
+      // Set up mock for the connected client
+      const clientMock = mockPool.connect();
+
+      // Mock query to throw error on UPDATE
+      clientMock.query.mockImplementation((query) => {
+        if (query === "BEGIN" || query === "ROLLBACK") {
+          return Promise.resolve({ rows: [] });
+        }
+
+        if (query.includes("UPDATE")) {
+          return Promise.reject(new Error("Database error"));
+        }
+
+        return Promise.resolve({ rows: [] });
+      });
 
       // Create test request
       const req = new Request(
@@ -200,11 +260,23 @@ describe("AdminAPI Message Management", () => {
       );
 
       // Call the handler
-      await PATCH(req, { params: { id: "1" } });
+      await PATCH(req, { params: Promise.resolve({ id: "1" }) });
+
+      // Verify transaction was started
+      expect(clientMock.query).toHaveBeenCalledWith("BEGIN");
+
+      // Verify transaction was rolled back
+      expect(clientMock.query).toHaveBeenCalledWith("ROLLBACK");
+
+      // Verify client was released
+      expect(clientMock.release).toHaveBeenCalled();
 
       // Check error response
       expect(mockNextResponse.json).toHaveBeenCalledWith(
-        { error: "Failed to update message status" },
+        {
+          error: "Failed to update message status",
+          details: "Database error"
+        },
         { status: 500 }
       );
     });
@@ -216,37 +288,44 @@ describe("AdminAPI Message Management", () => {
       const messageId = "1";
       const response = "Thank you for your message. Here's our response.";
       const email = "customer@example.com";
+      const name = "Customer Name";
+      const originalMessage = "This is my original message";
+
+      const updatedMessage = {
+        message_id: 1,
+        email,
+        name,
+        message: originalMessage,
+        status: "RESPONDED",
+        admin_response: response
+      };
 
       // Set up mock for the connected client
       const clientMock = mockPool.connect();
 
-      // Mock first query to get email
-      clientMock.query.mockResolvedValueOnce({
-        rows: [{ email }],
-        rowCount: 1
-      });
-
-      // Mock second query to update message
-      clientMock.query.mockResolvedValueOnce({
-        rows: [
-          {
-            success: true,
-            emailId: undefined,
-            developmentMode: false
-          }
-        ],
-        rowCount: 1
-      });
-
-      // Mock the COMMIT query
-      clientMock.query.mockResolvedValueOnce({
-        rows: [],
-        rowCount: 0
+      // Mock queries in sequence
+      clientMock.query.mockImplementation((query, params) => {
+        if (query === "BEGIN") {
+          return Promise.resolve({ rows: [] });
+        } else if (query.includes("SELECT * FROM contact_message")) {
+          return Promise.resolve({
+            rows: [{ email, name, message: originalMessage }],
+            rowCount: 1
+          });
+        } else if (query.includes("UPDATE contact_message")) {
+          return Promise.resolve({
+            rows: [updatedMessage],
+            rowCount: 1
+          });
+        } else if (query === "COMMIT") {
+          return Promise.resolve({ rows: [] });
+        }
+        return Promise.resolve({ rows: [] });
       });
 
       // Create test request
       const req = new Request(
-        "http://localhost:3000/api/admin/messages/1/respond",
+        `http://localhost:3000/api/admin/messages/${messageId}/respond`,
         {
           method: "POST",
           headers: {
@@ -257,14 +336,14 @@ describe("AdminAPI Message Management", () => {
       );
 
       // Call the handler
-      await POST(req, { params: { id: messageId } });
+      await POST(req, { params: Promise.resolve({ id: messageId }) });
 
       // Check transaction was started
       expect(clientMock.query).toHaveBeenCalledWith("BEGIN");
 
-      // Check email was retrieved
+      // Check message was retrieved
       expect(clientMock.query).toHaveBeenCalledWith(
-        expect.stringContaining("SELECT email"),
+        expect.stringContaining("SELECT * FROM contact_message"),
         [messageId]
       );
 
@@ -280,11 +359,11 @@ describe("AdminAPI Message Management", () => {
       // Check client was released
       expect(clientMock.release).toHaveBeenCalled();
 
-      // Check response - updated to match actual API response
+      // Check response format matches actual implementation
       expect(mockNextResponse.json).toHaveBeenCalledWith({
         success: true,
-        emailId: undefined,
-        developmentMode: false
+        message: updatedMessage,
+        emailSent: false
       });
     });
 
@@ -292,16 +371,19 @@ describe("AdminAPI Message Management", () => {
       // Set up mock for the connected client
       const clientMock = mockPool.connect();
 
-      // Mock first query to return no rows (message not found)
-      clientMock.query.mockResolvedValueOnce({
-        rows: [],
-        rowCount: 0
-      });
-
-      // Mock the ROLLBACK query
-      clientMock.query.mockResolvedValueOnce({
-        rows: [],
-        rowCount: 0
+      // Mock queries for non-existent message
+      clientMock.query.mockImplementation((query) => {
+        if (query === "BEGIN") {
+          return Promise.resolve({ rows: [] });
+        } else if (query.includes("SELECT * FROM contact_message")) {
+          return Promise.resolve({
+            rows: [],
+            rowCount: 0
+          });
+        } else if (query === "ROLLBACK") {
+          return Promise.resolve({ rows: [] });
+        }
+        return Promise.resolve({ rows: [] });
       });
 
       // Create test request
@@ -317,10 +399,16 @@ describe("AdminAPI Message Management", () => {
       );
 
       // Call the handler
-      await POST(req, { params: { id: "999" } });
+      await POST(req, { params: Promise.resolve({ id: "999" }) });
 
       // Check transaction was started
       expect(clientMock.query).toHaveBeenCalledWith("BEGIN");
+
+      // Check message was not found
+      expect(clientMock.query).toHaveBeenCalledWith(
+        expect.stringContaining("SELECT * FROM contact_message"),
+        ["999"]
+      );
 
       // Check transaction was rolled back
       expect(clientMock.query).toHaveBeenCalledWith("ROLLBACK");
@@ -328,10 +416,10 @@ describe("AdminAPI Message Management", () => {
       // Check client was released
       expect(clientMock.release).toHaveBeenCalled();
 
-      // Check error response - updated to match actual API error format
+      // Check error response matches actual implementation
       expect(mockNextResponse.json).toHaveBeenCalledWith(
-        { error: "Message not found", details: undefined },
-        { status: 500 }
+        { error: "Message not found" },
+        { status: 404 }
       );
     });
 
@@ -339,19 +427,21 @@ describe("AdminAPI Message Management", () => {
       // Set up mock for the connected client
       const clientMock = mockPool.connect();
 
-      // Mock first query to succeed
-      clientMock.query.mockResolvedValueOnce({
-        rows: [{ email: "customer@example.com" }],
-        rowCount: 1
-      });
-
-      // Mock second query to throw error
-      clientMock.query.mockRejectedValueOnce(new Error("Database error"));
-
-      // Mock the ROLLBACK query
-      clientMock.query.mockResolvedValueOnce({
-        rows: [],
-        rowCount: 0
+      // Mock query implementation for database error
+      clientMock.query.mockImplementation((query, params) => {
+        if (query === "BEGIN") {
+          return Promise.resolve({ rows: [] });
+        } else if (query.includes("SELECT * FROM contact_message")) {
+          return Promise.resolve({
+            rows: [{ email: "customer@example.com" }],
+            rowCount: 1
+          });
+        } else if (query.includes("UPDATE contact_message")) {
+          return Promise.reject(new Error("Database error"));
+        } else if (query === "ROLLBACK") {
+          return Promise.resolve({ rows: [] });
+        }
+        return Promise.resolve({ rows: [] });
       });
 
       // Create test request
@@ -367,7 +457,7 @@ describe("AdminAPI Message Management", () => {
       );
 
       // Call the handler
-      await POST(req, { params: { id: "1" } });
+      await POST(req, { params: Promise.resolve({ id: "1" }) });
 
       // Check transaction was started
       expect(clientMock.query).toHaveBeenCalledWith("BEGIN");
@@ -378,9 +468,12 @@ describe("AdminAPI Message Management", () => {
       // Check client was released
       expect(clientMock.release).toHaveBeenCalled();
 
-      // Check error response - updated to match actual API error format
+      // Check error response matches actual implementation
       expect(mockNextResponse.json).toHaveBeenCalledWith(
-        { error: "Database error", details: undefined },
+        {
+          error: "Failed to process the response",
+          details: "Database error"
+        },
         { status: 500 }
       );
     });

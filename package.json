@@ -10,6 +10,7 @@
     "generate-hash": "ts-node --project tsconfig.json -r tsconfig-paths/register db/scripts/generate-admin-hash.ts",
     "test": "dotenv -e .env.test -- jest",
     "test:watch": "dotenv -e .env.test -- jest --watch",
+    "test:verbose": "dotenv -e .env.test -- jest --verbose",
     "cypress:open": "dotenv -e .env.test -- cypress open",
     "cypress:run": "dotenv -e .env.test -- cypress run",
     "cypress:contact": "dotenv -e .env.test -- cypress run --spec 'cypress/e2e/contact/**/*'",
