@@ -5,7 +5,15 @@ import { NextResponse } from "next/server";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, email, message } = body;
+    let { name, email, message } = body;
+
+    // Sanitize inputs by trimming whitespace
+    name = name ? name.trim() : name;
+    email = email ? email.trim() : email;
+    message = message ? message.trim() : message;
+
+    // Convert email to lowercase for normalization
+    email = email ? email.toLowerCase() : email;
 
     // Validate required fields
     if (!email || !message) {

@@ -1,5 +1,11 @@
 import React from "react";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  act
+} from "@testing-library/react";
 import PasswordProtectionPage from "@/app/enter-password/page";
 
 // Mock fetch globally
@@ -12,8 +18,12 @@ describe("PasswordProtectionPage", () => {
 
   test("renders input field and submit button", () => {
     render(<PasswordProtectionPage />);
-    expect(screen.getByPlaceholderText("Enter site password")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /enter site/i })).toBeInTheDocument();
+    expect(
+      screen.getByPlaceholderText("Enter site password")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /enter site/i })
+    ).toBeInTheDocument();
   });
 
   test("allows user to type password", () => {
@@ -27,10 +37,13 @@ describe("PasswordProtectionPage", () => {
     fetch.mockResolvedValueOnce({ ok: false });
 
     render(<PasswordProtectionPage />);
-    fireEvent.change(screen.getByPlaceholderText("Enter site password"), {
-      target: { value: "wrongpassword" },
+
+    await act(async () => {
+      fireEvent.change(screen.getByPlaceholderText("Enter site password"), {
+        target: { value: "wrongpassword" }
+      });
+      fireEvent.click(screen.getByRole("button", { name: /enter site/i }));
     });
-    fireEvent.click(screen.getByRole("button", { name: /enter site/i }));
 
     await waitFor(() => {
       expect(screen.getByText("Invalid password")).toBeInTheDocument();
@@ -39,29 +52,48 @@ describe("PasswordProtectionPage", () => {
 
   test("redirects on successful password verification", async () => {
     delete window.location;
-    window.location = { href: "" };
+    window.location = { href: "", search: "" };
 
     fetch.mockResolvedValueOnce({ ok: true });
 
     render(<PasswordProtectionPage />);
-    fireEvent.change(screen.getByPlaceholderText("Enter site password"), {
-      target: { value: "correctpassword" },
+
+    await act(async () => {
+      fireEvent.change(screen.getByPlaceholderText("Enter site password"), {
+        target: { value: "correctpassword" }
+      });
+      fireEvent.click(screen.getByRole("button", { name: /enter site/i }));
     });
-    fireEvent.click(screen.getByRole("button", { name: /enter site/i }));
 
     await waitFor(() => {
-      expect(window.location.href).toBe("");
+      expect(window.location.href).toBe("/");
     });
   });
 
   test("shows loading state while verifying", async () => {
-    fetch.mockResolvedValueOnce({ ok: false });
-    render(<PasswordProtectionPage />);
-    fireEvent.change(screen.getByPlaceholderText("Enter site password"), {
-      target: { value: "testing" },
+    // Create a promise we can resolve manually
+    let resolvePromise;
+    const fetchPromise = new Promise((resolve) => {
+      resolvePromise = resolve;
     });
-    fireEvent.click(screen.getByRole("button", { name: /enter site/i }));
-    
+
+    fetch.mockReturnValueOnce(fetchPromise);
+
+    render(<PasswordProtectionPage />);
+
+    act(() => {
+      fireEvent.change(screen.getByPlaceholderText("Enter site password"), {
+        target: { value: "testing" }
+      });
+      fireEvent.click(screen.getByRole("button", { name: /enter site/i }));
+    });
+
+    // Verify loading state appears before fetch resolves
     expect(screen.getByText("Verifying...")).toBeInTheDocument();
+
+    // Now resolve the fetch promise to complete the test
+    await act(async () => {
+      resolvePromise({ ok: false });
+    });
   });
 });

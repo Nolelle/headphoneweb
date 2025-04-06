@@ -32,8 +32,9 @@ export default function PasswordProtectionPage() {
 
       if (response.ok) {
         // Redirect to the originally requested URL or home page
-        window.location.href = window.location.search.includes("from=")
-          ? decodeURIComponent(window.location.search.split("from=")[1])
+        const searchParams = window.location.search || "";
+        window.location.href = searchParams.includes("from=")
+          ? decodeURIComponent(searchParams.split("from=")[1])
           : "/";
       } else {
         setError("Invalid password");
