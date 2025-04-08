@@ -128,6 +128,7 @@ const Cart = () => {
                             loadingItems[item.cart_item_id]
                           }
                           className="h-8 w-8 bg-transparent border-[hsl(0_0%_14.9%)] hover:bg-[hsl(0_0%_14.9%)] hover:text-[hsl(0_0%_98%)]"
+                          aria-label="decrease-quantity"
                         >
                           {loadingItems[item.cart_item_id] ? (
                             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[hsl(0_0%_98%)]" />
@@ -157,6 +158,7 @@ const Cart = () => {
                             loadingItems[item.cart_item_id]
                           }
                           className="h-8 w-8 bg-transparent border-[hsl(0_0%_14.9%)] hover:bg-[hsl(0_0%_14.9%)] hover:text-[hsl(0_0%_98%)]"
+                          aria-label="increase-quantity"
                         >
                           {loadingItems[item.cart_item_id] ? (
                             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[hsl(0_0%_98%)]" />
