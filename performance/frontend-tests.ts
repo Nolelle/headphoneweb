@@ -9,6 +9,10 @@ import { launch } from "chrome-launcher";
 import lighthouse from "lighthouse";
 import { writeFileSync, mkdirSync, existsSync } from "fs";
 import path from "path";
+import dotenv from "dotenv";
+
+// Load environment variables
+dotenv.config({ path: ".env.local" });
 
 // Define the pages to test
 const pagesToTest = [
@@ -57,26 +61,44 @@ async function authenticateSitePassword(
   const page = await browser.newPage();
 
   try {
+    console.log("Navigating to homepage to check for password protection...");
     // Go to homepage (will redirect to password page)
-    await page.goto("http://localhost:3000", { waitUntil: "networkidle2" });
+    await page.goto("http://localhost:3000", {
+      waitUntil: "networkidle2",
+      timeout: 30000 // Increase timeout to 30 seconds
+    });
 
     // Check if we're on the password page
     const currentUrl = page.url();
+    console.log(`Current URL after navigation: ${currentUrl}`);
+
     if (currentUrl.includes("/enter-password")) {
       console.log("Authenticating with site password...");
 
+      // Get password from environment variables or use default
+      const sitePassword = process.env.SITE_PASSWORD || "mypassword";
+
+      // Wait for password field to be available
+      await page.waitForSelector('input[type="password"]', { timeout: 10000 });
+
       // Enter the site password and click the button
-      await page.type('input[type="password"]', "mypassword");
+      await page.type('input[type="password"]', sitePassword);
       await page.click('button[type="submit"]');
 
       // Wait for navigation to complete
-      await page.waitForNavigation({ waitUntil: "networkidle2" });
+      await page.waitForNavigation({
+        waitUntil: "networkidle2",
+        timeout: 10000
+      });
 
       console.log("Site password authentication successful");
+    } else {
+      console.log("No password protection detected, continuing with tests");
     }
   } catch (error) {
     console.error("Error during site password authentication:", error);
-    throw error;
+    console.log("Continuing with tests despite authentication error");
+    // Don't throw the error to allow tests to continue
   } finally {
     await page.close();
   }

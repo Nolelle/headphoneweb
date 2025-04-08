@@ -8,14 +8,21 @@ import { Pool } from "pg";
 import { performance } from "perf_hooks";
 import { writeFileSync, mkdirSync, existsSync } from "fs";
 import path from "path";
+import dotenv from "dotenv";
 
-// Database connection pool based on your application settings
+// Load environment variables
+dotenv.config({ path: ".env.local" });
+
+// Database connection pool based on environment settings
 const pool = new Pool({
   user: process.env.DB_USER || "myuser",
   host: process.env.DB_HOST || "localhost",
   database: process.env.DB_NAME || "headphoneweb",
   password: process.env.DB_PASSWORD || "mypassword",
-  port: parseInt(process.env.DB_PORT || "5432", 10)
+  port: parseInt(process.env.DB_PORT || "5432", 10),
+  // Add connection timeout and idle timeout for better performance test reliability
+  connectionTimeoutMillis: 5000,
+  idleTimeoutMillis: 30000
 });
 
 /**
@@ -28,26 +35,6 @@ interface DBTestCase {
   execute: (setupData?: Record<string, unknown>) => Promise<void>;
   tearDown?: (setupData?: Record<string, unknown>) => Promise<void>;
   iterations: number;
-}
-
-/**
- * Generates random test data for orders
- */
-function generateOrderTestData(count: number = 1) {
-  const items = [];
-  for (let i = 0; i < count; i++) {
-    // Create a more unique ID using high precision timestamp and random value
-    const uniqueId = `${Date.now()}_${Math.random()
-      .toString(36)
-      .substring(2, 10)}_${i}`;
-    items.push({
-      payment_intent_id: `pi_test_${uniqueId}`,
-      email: `perf_test_${uniqueId}@example.com`,
-      total_price: 199.99,
-      status: "pending"
-    });
-  }
-  return items;
 }
 
 /**

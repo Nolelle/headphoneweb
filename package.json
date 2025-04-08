@@ -17,6 +17,7 @@
     "test:e2e": "dotenv -e .env.test -- start-server-and-test dev http://localhost:3000 cypress:run",
     "reset-test-db": "./scripts/reset-test-db.sh",
     "test:reset": "npm run reset-test-db && npm test",
+    "perf:check-prereqs": "./performance/check-prerequisites.sh",
     "perf": "ts-node --project performance/tsconfig.json performance/index.ts",
     "perf:load": "ts-node --project performance/tsconfig.json performance/index.ts load",
     "perf:frontend": "ts-node --project performance/tsconfig.json performance/index.ts frontend",
@@ -24,8 +25,8 @@
     "perf:endurance": "ts-node --project performance/tsconfig.json performance/index.ts endurance",
     "perf:spike": "ts-node --project performance/tsconfig.json performance/index.ts spike",
     "perf:spike:quick": "ts-node --project performance/tsconfig.json performance/index.ts spike quick",
-    "perf:dev": "NODE_ENV=development ts-node --project performance/tsconfig.json performance/index.ts",
-    "perf:prod": "NODE_ENV=production ts-node --project performance/tsconfig.json performance/index.ts",
+    "perf:dev": "NODE_ENV=development dotenv -e .env.local -- ts-node --project performance/tsconfig.json performance/index.ts",
+    "perf:prod": "NODE_ENV=production dotenv -e .env.local -- ts-node --project performance/tsconfig.json performance/index.ts",
     "perf:check": "tsc --project performance/tsconfig.json --noEmit"
   },
   "dependencies": {
