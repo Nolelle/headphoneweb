@@ -89,6 +89,7 @@ const MessageResponseForm = memo(
           onClick={() => onSubmit(messageId)}
           disabled={isLoading || !localValue?.trim()}
           className="bg-[hsl(220_70%_50%)] text-[hsl(0_0%_98%)] hover:bg-[hsl(220_70%_45%)]"
+          data-testid="send-response-button"
         >
           {isLoading ? (
             <div className="flex items-center gap-2">
@@ -361,44 +362,27 @@ export default function AdminDashboard() {
     []
   );
 
-  // Handle sending a response to a message
+  // Handle sending responses to messages
   const handleSendResponse = useCallback(
     async (messageId: number) => {
-      const response = responses[messageId];
-      if (!response?.trim()) {
-        toast.error("Please enter a response");
-        return;
-      }
-
       try {
-        // Set this specific message to loading state
         setLoadingItems((prev) => ({ ...prev, [messageId]: true }));
 
-        console.log(
-          "Sending response to message:",
-          messageId,
-          "Length:",
-          response.length
+        const response = await fetch(
+          `/api/admin/messages/${messageId}/respond`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ response: responses[messageId] })
+          }
         );
 
-        const res = await fetch(`/api/admin/messages/${messageId}/respond`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ response })
-        });
-
-        console.log("Response status:", res.status);
-
-        if (!res.ok) {
-          const errorData = await res.json();
-          throw new Error(errorData.error || "Failed to send response");
-        }
-
-        try {
-          const data = await res.json();
-          console.log("Response data:", data);
+        // Reset response value after sending
+        if (response.ok) {
+          // Parse the response data
+          const data = await response.json();
 
           // Update local state with the new response
           setMessages((prev) =>
@@ -406,7 +390,7 @@ export default function AdminDashboard() {
               msg.message_id === messageId
                 ? {
                     ...msg,
-                    admin_response: response,
+                    admin_response: responses[messageId],
                     status: "RESPONDED",
                     responded_at: new Date().toISOString()
                   }
@@ -438,13 +422,9 @@ export default function AdminDashboard() {
 
           // Reload messages instead of updating local state to ensure consistency
           fetchMessages();
-        } catch (parseError) {
-          console.error("Error parsing response:", parseError);
-          // If we can't parse the response but got a 200 OK, still treat as success
-          toast.success(
-            "Response sent successfully, but could not parse server response"
-          );
-          fetchMessages();
+        } else {
+          console.error("Response error:", response.statusText);
+          toast.error("Failed to send response");
         }
       } catch (error) {
         console.error("Error:", error);

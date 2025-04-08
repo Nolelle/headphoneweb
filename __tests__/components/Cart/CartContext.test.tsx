@@ -391,10 +391,17 @@ describe("CartContext Provider", () => {
         quantity: 1,
         price: 100,
         name: "Product 1"
+      },
+      {
+        cart_item_id: "2",
+        product_id: 2,
+        quantity: 1,
+        price: 100,
+        name: "Product 2"
       }
     ];
 
-    // Setup initial fetch to return the cart with one item
+    // Setup initial fetch to return the cart with two items
     (global.fetch as jest.Mock).mockImplementationOnce(() => {
       return Promise.resolve({
         ok: true,
@@ -408,10 +415,10 @@ describe("CartContext Provider", () => {
 
     const { result } = renderHook(() => useCart(), { wrapper });
 
-    // Wait for the initial cart to load with our item
+    // Wait for the initial cart to load with our items
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
-      expect(result.current.items.length).toBe(1);
+      expect(result.current.items.length).toBe(2);
     });
 
     // Mock the removal API call to resolve after a delay
@@ -427,8 +434,9 @@ describe("CartContext Provider", () => {
         status: 200,
         statusText: "OK",
         headers: new Headers(),
-        json: () => Promise.resolve({ items: [] }), // Empty cart after removal
-        text: () => Promise.resolve(JSON.stringify({ items: [] }))
+        json: () => Promise.resolve({ items: [initialItems[1]] }), // Cart with second item remaining
+        text: () =>
+          Promise.resolve(JSON.stringify({ items: [initialItems[1]] }))
       }));
     });
 
@@ -440,8 +448,8 @@ describe("CartContext Provider", () => {
       await new Promise((r) => setTimeout(r, 50));
     });
 
-    // Check for optimistic update - the item should already be removed
-    expect(result.current.items.length).toBe(0);
+    // Check for optimistic update - should have the second item left
+    expect(result.current.items.length).toBe(1);
 
     // Now resolve the server response
     await act(async () => {
@@ -449,8 +457,9 @@ describe("CartContext Provider", () => {
       await new Promise((r) => setTimeout(r, 50)); // Allow time for the response to be processed
     });
 
-    // Final state should still have no items
-    expect(result.current.items.length).toBe(0);
+    // Final state should still have one item
+    expect(result.current.items.length).toBe(1);
+    expect(result.current.items[0].cart_item_id).toBe("2");
   });
 
   it("correctly calculates cart subtotal and quantity", async () => {

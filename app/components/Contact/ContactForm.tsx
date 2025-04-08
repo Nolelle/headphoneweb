@@ -165,6 +165,9 @@ const ContactForm: React.FC = () => {
               type="submit"
               className="w-full bg-[hsl(220_70%_50%)] text-[hsl(0_0%_98%)] hover:bg-[hsl(220_70%_45%)]"
               disabled={status === "loading"}
+              data-testid={
+                status === "loading" ? "sending-button" : "send-button"
+              }
             >
               {status === "loading" ? "Sending..." : "Send message"}
             </Button>

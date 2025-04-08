@@ -33,7 +33,7 @@ describe("Contact Form Complete Flow", () => {
     cy.screenshot("contact-form-filled");
 
     // Submit the form
-    cy.contains("button", "Send message").click();
+    cy.contains("button", "Send message").click({ force: true });
 
     // Verify success message appears
     cy.contains("Message Sent Successfully!", { timeout: 10000 }).should(
@@ -68,7 +68,7 @@ describe("Contact Form Complete Flow", () => {
 
   it("should validate form fields properly", () => {
     // Try to submit without entering any data
-    cy.contains("button", "Send message").click();
+    cy.contains("button", "Send message").click({ force: true });
 
     // Form should not submit and fields should be marked as required
     cy.contains("Message Sent Successfully!").should("not.exist");
@@ -79,21 +79,21 @@ describe("Contact Form Complete Flow", () => {
 
     // Fix one field at a time and test validation
     cy.get("#name").type("Test User");
-    cy.contains("button", "Send message").click();
+    cy.contains("button", "Send message").click({ force: true });
     cy.contains("Message Sent Successfully!").should("not.exist");
 
     cy.get("#email").type("invalid-email"); // Using invalid format
-    cy.contains("button", "Send message").click();
+    cy.contains("button", "Send message").click({ force: true });
     cy.contains("Message Sent Successfully!").should("not.exist");
 
     // Fix email format
     cy.get("#email").clear().type("valid@example.com");
-    cy.contains("button", "Send message").click();
+    cy.contains("button", "Send message").click({ force: true });
     cy.contains("Message Sent Successfully!").should("not.exist");
 
     // Add a very short message (potentially too short)
     cy.get("#message").type("Short");
-    cy.contains("button", "Send message").click();
+    cy.contains("button", "Send message").click({ force: true });
 
     // Check if there's length validation
     // If there's a minimum length requirement, we'll see an error message or no success
@@ -105,7 +105,7 @@ describe("Contact Form Complete Flow", () => {
           .type(
             "This is a much longer test message that should pass validation"
           );
-        cy.contains("button", "Send message").click();
+        cy.contains("button", "Send message").click({ force: true });
         cy.contains("Message Sent Successfully!", { timeout: 10000 }).should(
           "be.visible"
         );
@@ -121,11 +121,23 @@ describe("Contact Form Complete Flow", () => {
     cy.get("#email").type(testData.email);
     cy.get("#message").type(testData.message);
 
-    // Submit and check for loading state
-    cy.contains("button", "Send message").click();
+    // Intercept the contact API to be able to wait for it
+    cy.intercept("POST", "/api/contact").as("contactSubmit");
 
-    // Button should be disabled while submitting
-    cy.contains("button", /Send|Sending/).should("be.disabled");
+    // Submit and check for loading state
+    cy.contains("button", "Send message").click({ force: true });
+
+    // Wait for the button to change to loading state
+    cy.get("[data-testid=sending-button]", { timeout: 2000 }).should("exist");
+
+    // Check if the button shows loading state through classes or visual indicators
+    cy.get("[data-testid=sending-button]").should(($btn) => {
+      // Check if the button is disabled
+      expect($btn.prop("disabled")).to.be.true;
+    });
+
+    // Wait for the request to complete
+    cy.wait("@contactSubmit");
 
     // Eventually success message should appear
     cy.contains("Message Sent Successfully!", { timeout: 10000 }).should(

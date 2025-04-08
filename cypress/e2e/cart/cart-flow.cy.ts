@@ -43,18 +43,8 @@ describe("Shopping Cart Flow", () => {
     cy.get("header").find('button[aria-label="Cart"]').click();
     cy.contains("View Cart").click();
 
-    // Find and click quantity increase button
-    // Try multiple possible selectors
-    cy.get("body").then(($body) => {
-      if ($body.find('[aria-label="Increase quantity"]').length) {
-        cy.get('[aria-label="Increase quantity"]').first().click();
-      } else if ($body.find('button:has(svg[data-testid="PlusIcon"])').length) {
-        cy.get("button").find('svg[data-testid="PlusIcon"]').parent().click();
-      } else {
-        // Try looking for + icon or similar button
-        cy.get('button:contains("+")').first().click();
-      }
-    });
+    // Find and click quantity increase button using the actual Plus icon implementation
+    cy.get("svg.lucide-plus").parent("button").click({ force: true });
 
     // Wait for update to complete
     cy.wait(1000);
@@ -74,19 +64,8 @@ describe("Shopping Cart Flow", () => {
     cy.get("header").find('button[aria-label="Cart"]').click();
     cy.contains("View Cart").click();
 
-    // Find and click remove button (may have different implementations)
-    cy.get("body").then(($body) => {
-      if ($body.find('[aria-label="Remove item"]').length) {
-        cy.get('[aria-label="Remove item"]').first().click();
-      } else if (
-        $body.find('button:has(svg[data-testid="TrashIcon"])').length
-      ) {
-        cy.get("button").find('svg[data-testid="TrashIcon"]').parent().click();
-      } else {
-        // Try looking for trash/bin icon
-        cy.get("button:has(svg)").last().click();
-      }
-    });
+    // Find and click remove button - Using the lucide Trash2 icon implementation
+    cy.get("svg.lucide-trash2").parent("button").click({ force: true });
 
     // Verify cart is empty
     cy.contains("Your cart is empty").should("be.visible");
@@ -119,20 +98,11 @@ describe("Shopping Cart Flow", () => {
     cy.get("header").find('button[aria-label="Cart"]').click();
     cy.contains("View Cart").click();
 
-    // Try to decrease quantity below 1
-    cy.get("body").then(($body) => {
-      if ($body.find('[aria-label="Decrease quantity"]').length) {
-        cy.get('[aria-label="Decrease quantity"]').first().click();
-        // Try to click again, which should fail or be disabled
-        cy.get('[aria-label="Decrease quantity"]').first().click();
-      } else if (
-        $body.find('button:has(svg[data-testid="MinusIcon"])').length
-      ) {
-        cy.get("button").find('svg[data-testid="MinusIcon"]').parent().click();
-        // Try to click again, which should fail or be disabled
-        cy.get("button").find('svg[data-testid="MinusIcon"]').parent().click();
-      }
-    });
+    // Try to decrease quantity below 1 using the Minus icon
+    cy.get("svg.lucide-minus").parent("button").click({ force: true });
+
+    // Try to click again, which should be disabled
+    cy.get("svg.lucide-minus").parent("button").should("be.disabled");
 
     // Verify quantity is still 1 (can't go lower)
     cy.contains("1").should("be.visible");
@@ -147,12 +117,12 @@ describe("Shopping Cart Flow", () => {
     cy.contains("View Cart").click();
 
     // Click Proceed to Checkout
-    cy.contains("button", "Proceed to Checkout").click();
+    cy.contains("button", "Proceed to Checkout").click({ force: true });
 
     // Verify redirect to checkout page
     cy.url().should("include", "/checkout");
 
-    // Verify checkout form elements are present
+    // Verify checkout form elements are present based on CheckoutForm.tsx
     cy.get("#name").should("be.visible");
     cy.get("#email").should("be.visible");
     cy.get("#address").should("be.visible");

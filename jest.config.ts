@@ -34,7 +34,10 @@ const config: Config = {
     "<rootDir>/__tests__/polyfills.ts",
     "<rootDir>/jest.setup.env.js" // Create this file
   ], // Polyfills before environment
-  setupFilesAfterEnv: ["<rootDir>/__tests__/setup.ts"], // Mocks and test utils after environment
+  setupFilesAfterEnv: [
+    "<rootDir>/__tests__/setup.ts",
+    "<rootDir>/setupTests.ts"
+  ], // Mocks and test utils after environment
   transform: {
     "^.+\\.(js|jsx|ts|tsx)$": ["babel-jest", { presets: ["next/babel"] }]
   },

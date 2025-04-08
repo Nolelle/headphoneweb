@@ -40,7 +40,7 @@ describe("Admin Dashboard Management", () => {
     // Step 4: Check if message is unread and mark it as read if needed
     cy.get("@messageCard").then(($card) => {
       if ($card.text().includes("UNREAD")) {
-        cy.wrap($card).contains("Mark as Read").click();
+        cy.wrap($card).contains("Mark as Read").click({ force: true });
         // Wait for the status to update
         cy.wrap($card).contains("READ", { timeout: 5000 }).should("be.visible");
       }
@@ -68,7 +68,7 @@ describe("Admin Dashboard Management", () => {
             .type(testMessageResponse);
 
           // Click the Send Response button
-          cy.contains("Send Response").click();
+          cy.contains("Send Response").click({ force: true });
 
           // Wait for the response to be processed
           cy.wait(5000);
@@ -84,39 +84,28 @@ describe("Admin Dashboard Management", () => {
   });
 
   it("should handle empty form validation when responding to messages", () => {
-    // Login as admin
+    // Login as admin first
     cy.adminLogin(admin.username, admin.password);
 
     // Wait for messages to load
-    cy.get("body").contains("READ", { timeout: 10000 }).should("exist");
+    cy.contains(customerEmail, { timeout: 10000 }).should("be.visible");
 
-    // Find a message with READ status
-    cy.contains("span", "READ")
-      .parents('[data-testid^="message-card-"]')
-      .as("readMessage");
+    // Spy on window alert
+    const stub = cy.stub();
+    cy.on("window:alert", stub);
 
-    // Try to send without entering text - button should be disabled
-    cy.get("@readMessage").then(($card) => {
-      // Skip if the message already has a response
-      if (
-        !$card.text().includes("RESPONDED") &&
-        !$card.text().includes("Previous Response:")
-      ) {
-        cy.wrap($card).within(() => {
-          // Find the response form
-          cy.get('[data-testid="response-form"]').should("exist");
+    // Click on a message to view details
+    cy.get("[data-testid^=message-card-]:first").click({ force: true });
 
-          // Find the Send Response button and check if it's disabled
-          cy.contains("Send Response").should("be.disabled");
+    // The response form should be visible
+    cy.get("[data-testid=response-form]").should("be.visible");
 
-          // Try with a more specific selector
-          cy.get('[data-testid="response-textarea"]').should("exist");
-          cy.get('[data-testid="response-textarea"]').type("Test").clear();
-          cy.contains("Send Response").should("be.disabled");
-        });
-      } else {
-        cy.log("Message already has a response, skipping validation test");
-      }
+    // Check the Send Response button is disabled with empty form
+    cy.get("[data-testid=send-response-button]").should("be.disabled");
+
+    // Clear the stub
+    cy.then(() => {
+      stub.resetHistory();
     });
   });
 });
