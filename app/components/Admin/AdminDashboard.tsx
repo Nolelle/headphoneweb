@@ -254,7 +254,9 @@ export default function AdminDashboard() {
       const data = await response.json();
       setMessages(data);
     } catch (error) {
-      console.error("Error:", error);
+      if (process.env.NODE_ENV !== "test") {
+        console.error("Error:", error);
+      }
       toast.error("Failed to load messages");
     }
   }, []);
@@ -293,12 +295,14 @@ export default function AdminDashboard() {
         // Determine the new status
         const newStatus = currentStatus === "UNREAD" ? "READ" : "UNREAD";
 
-        console.log(
-          "Updating message status:",
-          messageId,
-          "New status:",
-          newStatus
-        );
+        if (process.env.NODE_ENV !== "test") {
+          console.log(
+            "Updating message status:",
+            messageId,
+            "New status:",
+            newStatus
+          );
+        }
 
         const response = await fetch(
           `/api/admin/messages/${messageId}/status`,
@@ -311,7 +315,9 @@ export default function AdminDashboard() {
           }
         );
 
-        console.log("Response status:", response.status);
+        if (process.env.NODE_ENV !== "test") {
+          console.log("Response status:", response.status);
+        }
 
         if (!response.ok) {
           const errorData = await response.json();
@@ -319,7 +325,9 @@ export default function AdminDashboard() {
         }
 
         const data = await response.json();
-        console.log("Response data:", data);
+        if (process.env.NODE_ENV !== "test") {
+          console.log("Response data:", data);
+        }
 
         // Update the messages state with the new status
         setMessages((prev) =>
@@ -330,7 +338,9 @@ export default function AdminDashboard() {
 
         toast.success(`Message marked as ${newStatus.toLowerCase()}`);
       } catch (error) {
-        console.error("Error:", error);
+        if (process.env.NODE_ENV !== "test") {
+          console.error("Error:", error);
+        }
         toast.error(
           error instanceof Error
             ? error.message
@@ -423,11 +433,15 @@ export default function AdminDashboard() {
           // Reload messages instead of updating local state to ensure consistency
           fetchMessages();
         } else {
-          console.error("Response error:", response.statusText);
+          if (process.env.NODE_ENV !== "test") {
+            console.error("Response error:", response.statusText);
+          }
           toast.error("Failed to send response");
         }
       } catch (error) {
-        console.error("Error:", error);
+        if (process.env.NODE_ENV !== "test") {
+          console.error("Error:", error);
+        }
         toast.error(
           error instanceof Error ? error.message : "Failed to send response"
         );

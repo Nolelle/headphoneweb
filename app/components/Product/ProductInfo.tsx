@@ -84,16 +84,20 @@ const ProductInfo: React.FC = () => {
       });
 
       const responseText = await stockResponse.text();
-      console.log("Stock check raw response:", responseText);
+      if (process.env.NODE_ENV !== "test") {
+        console.log("Stock check raw response:", responseText);
+      }
 
       let stockData;
       try {
         stockData = JSON.parse(responseText);
       } catch (parseError) {
-        console.error("Response parsing error:", {
-          responseText,
-          parseError
-        });
+        if (process.env.NODE_ENV !== "test") {
+          console.error("Response parsing error:", {
+            responseText,
+            parseError
+          });
+        }
         throw new Error("Invalid server response");
       }
 
@@ -104,7 +108,9 @@ const ProductInfo: React.FC = () => {
       await addItem(product.product_id, 1);
       toast.success("Added to cart");
     } catch (error) {
-      console.error("Add to cart error:", error);
+      if (process.env.NODE_ENV !== "test") {
+        console.error("Add to cart error:", error);
+      }
       toast.error(
         error instanceof Error ? error.message : "Failed to add to cart"
       );

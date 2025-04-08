@@ -36,7 +36,9 @@ const AdminLogin = () => {
         setError("Invalid credentials");
       }
     } catch (error) {
-      console.error("Login failed:", error);
+      if (process.env.NODE_ENV !== "test") {
+        console.error("Login failed:", error);
+      }
       setError("Login failed");
     } finally {
       setIsLoading(false);

@@ -61,21 +61,27 @@ const getOrCreateSessionId = (): string => {
       // Generate new UUID and store it
       sessionId = uuidv4();
       localStorage.setItem(SESSION_ID_KEY, sessionId);
-      console.log(
-        "[CartContext] Created new session ID:",
-        sessionId.substring(0, 8) + "..."
-      );
+      if (process.env.NODE_ENV !== "test") {
+        console.log(
+          "[CartContext] Created new session ID:",
+          sessionId.substring(0, 8) + "..."
+        );
+      }
     } else {
-      console.log(
-        "[CartContext] Using existing session ID:",
-        sessionId.substring(0, 8) + "..."
-      );
+      if (process.env.NODE_ENV !== "test") {
+        console.log(
+          "[CartContext] Using existing session ID:",
+          sessionId.substring(0, 8) + "..."
+        );
+      }
     }
 
     return sessionId;
   } catch (error) {
     // If localStorage fails, generate a temporary session ID
-    console.error("[CartContext] Error accessing localStorage:", error);
+    if (process.env.NODE_ENV !== "test") {
+      console.error("[CartContext] Error accessing localStorage:", error);
+    }
     return uuidv4();
   }
 };
@@ -89,9 +95,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [isInitialized, setIsInitialized] = useState(false);
   const [isLoading, setIsLoading] = useState(true); // Initialize as true
 
-  // Debug logging function - only active in development
+  // Debug logging function - not active in test environment
   const logDebug = (action: string, details?: unknown) => {
-    if (process.env.NODE_ENV === "development") {
+    if (process.env.NODE_ENV !== "test") {
       console.log(`[CartContext] ${action}:`, details || "");
     }
   };
@@ -134,13 +140,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         // Enhanced validation: check response content type before attempting to parse
         const contentType = response.headers.get("content-type");
         if (contentType && !contentType.includes("application/json")) {
-          console.warn("Response is not JSON format:", contentType);
+          if (process.env.NODE_ENV !== "test") {
+            console.warn("Response is not JSON format:", contentType);
+          }
           return { items: [] }; // Return empty cart for non-JSON responses
         }
 
         // Check for empty response
         if (!responseText || responseText.trim() === "") {
-          console.warn("Empty response received from server");
+          if (process.env.NODE_ENV !== "test") {
+            console.warn("Empty response received from server");
+          }
           return { items: [] };
         }
 
@@ -151,7 +161,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             !responseText.trim().startsWith("{") ||
             !responseText.trim().endsWith("}")
           ) {
-            console.warn("Response doesn't appear to be JSON object format");
+            if (process.env.NODE_ENV !== "test") {
+              console.warn("Response doesn't appear to be JSON object format");
+            }
             return { items: [] };
           }
 
@@ -162,31 +174,33 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             data.items = [];
           }
         } catch (parseError) {
-          console.error("JSON Parse Error:", {
-            responseText, // This might be truncated in console
-            status: response.status,
-            url: response.url,
-            contentType: response.headers.get("content-type"),
-            parseError:
-              parseError instanceof Error
-                ? parseError.message
-                : String(parseError)
-          });
+          if (process.env.NODE_ENV !== "test") {
+            console.error("JSON Parse Error:", {
+              responseText, // This might be truncated in console
+              status: response.status,
+              url: response.url,
+              contentType: response.headers.get("content-type"),
+              parseError:
+                parseError instanceof Error
+                  ? parseError.message
+                  : String(parseError)
+            });
 
-          // Add detailed logging of the full response
-          console.log("Full response causing parse error:", responseText);
+            // Add detailed logging of the full response
+            console.log("Full response causing parse error:", responseText);
 
-          // Log more details about response characteristics
-          console.log("Response analysis:", {
-            length: responseText?.length || 0,
-            firstChar: responseText?.[0] || "none",
-            lastChar: responseText?.[responseText.length - 1] || "none",
-            containsHTML:
-              responseText?.includes("<!DOCTYPE") ||
-              responseText?.includes("<html"),
-            containsBOM: responseText?.charCodeAt(0) === 0xfeff,
-            isEmptyOrWhitespace: !responseText || /^\s*$/.test(responseText)
-          });
+            // Log more details about response characteristics
+            console.log("Response analysis:", {
+              length: responseText?.length || 0,
+              firstChar: responseText?.[0] || "none",
+              lastChar: responseText?.[responseText.length - 1] || "none",
+              containsHTML:
+                responseText?.includes("<!DOCTYPE") ||
+                responseText?.includes("<html"),
+              containsBOM: responseText?.charCodeAt(0) === 0xfeff,
+              isEmptyOrWhitespace: !responseText || /^\s*$/.test(responseText)
+            });
+          }
 
           // Recovery mechanism - try to clean up the response text
           if (responseText) {
@@ -196,7 +210,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                 responseText.includes("<!DOCTYPE html>") ||
                 responseText.includes("<html>")
               ) {
-                console.warn("Received HTML instead of JSON response");
+                if (process.env.NODE_ENV !== "test") {
+                  console.warn("Received HTML instead of JSON response");
+                }
                 return { items: [] };
               }
 
@@ -204,10 +220,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
               const jsonMatch = responseText.match(/\{.*\}/s);
               if (jsonMatch) {
                 const extractedJson = jsonMatch[0];
-                console.log(
-                  "Attempting to parse extracted JSON:",
-                  extractedJson.substring(0, 100)
-                );
+                if (process.env.NODE_ENV !== "test") {
+                  console.log(
+                    "Attempting to parse extracted JSON:",
+                    extractedJson.substring(0, 100)
+                  );
+                }
                 data = JSON.parse(extractedJson);
                 // Ensure items property exists
                 if (!data.items) {
@@ -216,12 +234,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                 return data;
               }
             } catch (secondaryError) {
-              console.error("Recovery attempt failed:", secondaryError);
+              if (process.env.NODE_ENV !== "test") {
+                console.error("Recovery attempt failed:", secondaryError);
+              }
             }
           }
 
           // If all recovery attempts fail, return empty cart
-          console.warn("Using fallback empty response");
+          if (process.env.NODE_ENV !== "test") {
+            console.warn("Using fallback empty response");
+          }
           return { items: [] };
         }
 
@@ -235,13 +257,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
         return data;
       } catch (err) {
-        console.error("API Error:", {
-          url,
-          error: err,
-          method: options.method,
-          online:
-            typeof navigator !== "undefined" ? navigator.onLine : "unknown"
-        });
+        if (process.env.NODE_ENV !== "test") {
+          console.error("API Error:", {
+            url,
+            error: err,
+            method: options.method,
+            online:
+              typeof navigator !== "undefined" ? navigator.onLine : "unknown"
+          });
+        }
         throw new Error(
           err instanceof Error ? err.message : "Operation failed"
         );
@@ -284,12 +308,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           logDebug(`Attempt ${attempt} failed`, error);
 
           // Collect more diagnostic information
-          console.warn(`Retry attempt ${attempt}/${retries} failed:`, {
-            error: error instanceof Error ? error.message : String(error),
-            timestamp: new Date().toISOString(),
-            isOnline:
-              typeof navigator !== "undefined" ? navigator.onLine : "unknown"
-          });
+          if (process.env.NODE_ENV !== "test") {
+            console.warn(`Retry attempt ${attempt}/${retries} failed:`, {
+              error: error instanceof Error ? error.message : String(error),
+              timestamp: new Date().toISOString(),
+              isOnline:
+                typeof navigator !== "undefined"
+                  ? navigator.onLine
+                  : "Not in browser"
+            });
+          }
 
           if (attempt < retries) {
             // Calculate backoff with jitter to prevent thundering herd
@@ -348,17 +376,21 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           } catch (initError) {
             // Special handling for payment success page
             if (isPaymentSuccessPage) {
-              console.log(
-                "On payment success page - using empty cart as expected"
-              );
+              if (process.env.NODE_ENV !== "test") {
+                console.log(
+                  "On payment success page - using empty cart as expected"
+                );
+              }
               return { items: [] };
             }
 
             // If this is our last attempt, use a local fallback
             if (initAttempt >= maxInitAttempts) {
-              console.warn(
-                "All cart initialization attempts failed, using empty cart"
-              );
+              if (process.env.NODE_ENV !== "test") {
+                console.warn(
+                  "All cart initialization attempts failed, using empty cart"
+                );
+              }
               return { items: [] };
             }
             throw initError; // Otherwise let it retry
@@ -520,7 +552,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         setItems(data.items);
       }
     } catch (err) {
-      console.error("Update failed:", err);
+      if (process.env.NODE_ENV !== "test") {
+        console.error("Update failed:", err);
+      }
       // Fetch current cart state on error
       fetchWithErrorHandling(`/api/cart?sessionId=${sessionId}`, {
         method: "GET"
