@@ -23,6 +23,7 @@ const config: Config = {
     "<rootDir>/__tests__/setup.ts",
     "<rootDir>/__tests__/utils/cn.test.ts",
     "<rootDir>/__tests__/types.d.ts",
+    "<rootDir>/__tests__/types/jest.d.ts",
     "<rootDir>/__tests__/polyfills.ts" // Added to exclude polyfills.ts from tests
   ],
   moduleNameMapper: {
@@ -36,7 +37,8 @@ const config: Config = {
   ], // Polyfills before environment
   setupFilesAfterEnv: [
     "<rootDir>/__tests__/setup.ts",
-    "<rootDir>/setupTests.ts"
+    "<rootDir>/setupTests.ts",
+    "<rootDir>/jest.setup.js"
   ], // Mocks and test utils after environment
   transform: {
     "^.+\\.(js|jsx|ts|tsx)$": ["babel-jest", { presets: ["next/babel"] }]
