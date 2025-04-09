@@ -75,7 +75,7 @@ const MessageResponseForm = memo(
 
     return (
       <div
-        className="space-y-2"
+        className="space-y-3"
         data-testid="response-form"
       >
         <Textarea
@@ -88,7 +88,7 @@ const MessageResponseForm = memo(
         <Button
           onClick={() => onSubmit(messageId)}
           disabled={isLoading || !localValue?.trim()}
-          className="bg-[hsl(220_70%_50%)] text-[hsl(0_0%_98%)] hover:bg-[hsl(220_70%_45%)]"
+          className="bg-[hsl(220_70%_50%)] text-[hsl(0_0%_98%)] hover:bg-[hsl(220_70%_45%)] w-full sm:w-auto"
           data-testid="send-response-button"
         >
           {isLoading ? (
@@ -142,32 +142,32 @@ const MessageCard = memo(
         >
           <div className="space-y-4">
             {/* Message Header */}
-            <div className="flex justify-between items-start">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
               <div className="space-y-1">
                 <div className="flex items-center gap-2 text-[hsl(0_0%_98%)]">
-                  <Mail className="h-4 w-4" />
+                  <Mail className="h-4 w-4 flex-shrink-0" />
                   <span
-                    className="font-medium"
+                    className="font-medium break-all"
                     data-testid="message-email"
                   >
                     {message.email}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-[hsl(0_0%_63.9%)]">
-                  <Clock className="h-4 w-4" />
+                  <Clock className="h-4 w-4 flex-shrink-0" />
                   <span>{formatDate(message.message_date)}</span>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <span
                   className={`flex items-center gap-1 ${getStatusColor(
                     message.status
                   )}`}
                 >
                   {message.status === "UNREAD" ? (
-                    <Circle className="h-4 w-4 fill-current" />
+                    <Circle className="h-4 w-4 fill-current flex-shrink-0" />
                   ) : (
-                    <CheckCircle2 className="h-4 w-4" />
+                    <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
                   )}
                   {message.status}
                 </span>
@@ -179,7 +179,7 @@ const MessageCard = memo(
                       onToggleReadStatus(message.message_id, message.status)
                     }
                     disabled={isLoading}
-                    className="bg-[hsl(0_0%_14.9%)] text-[hsl(0_0%_98%)] hover:bg-[hsl(0_0%_9%)] border-[hsl(0_0%_14.9%)]"
+                    className="bg-[hsl(0_0%_14.9%)] text-[hsl(0_0%_98%)] hover:bg-[hsl(0_0%_9%)] border-[hsl(0_0%_14.9%)] min-h-9 text-xs sm:text-sm"
                   >
                     {isLoading ? (
                       <div className="h-4 w-4 animate-spin rounded-full border-2 border-[hsl(0_0%_98%)] border-t-transparent" />
@@ -195,7 +195,9 @@ const MessageCard = memo(
 
             {/* Message Content */}
             <div className="bg-[hsl(0_0%_14.9%)] p-4 rounded-lg text-[hsl(0_0%_98%)]">
-              <p className="whitespace-pre-wrap">{message.message}</p>
+              <p className="whitespace-pre-wrap break-words">
+                {message.message}
+              </p>
             </div>
 
             {/* Response Section */}
@@ -216,7 +218,7 @@ const MessageCard = memo(
                   Previous Response:
                 </p>
                 <div className="bg-[hsl(0_0%_14.9%)] p-4 rounded-lg">
-                  <p className="whitespace-pre-wrap text-[hsl(0_0%_98%)]">
+                  <p className="whitespace-pre-wrap break-words text-[hsl(0_0%_98%)]">
                     {message.admin_response}
                   </p>
                   <p className="text-sm text-[hsl(0_0%_63.9%)] mt-2">
@@ -475,14 +477,14 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-6">
       {/* Dashboard Header */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-[hsl(0_0%_98%)]">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold text-[hsl(0_0%_98%)]">
           Admin Dashboard
         </h1>
         <Button
           onClick={handleLogout}
           variant="outline"
-          className="bg-[hsl(0_0%_14.9%)] text-[hsl(0_0%_98%)] hover:bg-[hsl(0_0%_9%)] hover:text-[hsl(0_0%_98%)] border-[hsl(0_0%_14.9%)]"
+          className="bg-[hsl(0_0%_14.9%)] text-[hsl(0_0%_98%)] hover:bg-[hsl(0_0%_9%)] hover:text-[hsl(0_0%_98%)] border-[hsl(0_0%_14.9%)] w-full sm:w-auto"
         >
           <LogOut className="mr-2 h-4 w-4" />
           Logout
@@ -491,9 +493,9 @@ export default function AdminDashboard() {
 
       {/* Messages Card */}
       <Card className="bg-[hsl(0_0%_14.9%)] border-[hsl(0_0%_14.9%)]">
-        <CardHeader>
+        <CardHeader className="px-4 sm:px-6">
           <CardTitle className="text-xl font-semibold flex items-center gap-2 text-[hsl(0_0%_98%)]">
-            <MessageCircle className="h-5 w-5" />
+            <MessageCircle className="h-5 w-5 flex-shrink-0" />
             Contact Messages
           </CardTitle>
           <CardDescription className="text-[hsl(0_0%_63.9%)]">
@@ -501,7 +503,7 @@ export default function AdminDashboard() {
           </CardDescription>
         </CardHeader>
 
-        <CardContent>
+        <CardContent className="px-4 sm:px-6">
           <div className="space-y-6">
             {messages.map((message) => (
               <MessageCard
