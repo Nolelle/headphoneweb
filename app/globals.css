@@ -8,10 +8,73 @@
 
 body {
   font-family: Arial, Helvetica, sans-serif;
+  overflow-x: hidden; /* Prevent horizontal scroll on mobile */
+  overflow-y: auto; /* Allow vertical scrolling but control it */
+  min-height: 100vh; /* Ensure full height */
+  display: flex;
+  flex-direction: column;
+  -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
+  touch-action: manipulation; /* Optimize touch actions */
 }
 
 html {
   scroll-behavior: smooth;
+  overflow-x: hidden; /* Additional overflow control */
+}
+
+/* Responsive image handling */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Improve text readability on small screens */
+@media (max-width: 640px) {
+  h1 {
+    font-size: 1.75rem !important;
+    line-height: 1.2 !important;
+  }
+
+  h2 {
+    font-size: 1.5rem !important;
+    line-height: 1.2 !important;
+  }
+
+  p {
+    font-size: 1rem !important;
+  }
+
+  /* Improve performance on mobile */
+  .will-change-contents {
+    will-change: contents;
+  }
+
+  .will-change-opacity {
+    will-change: opacity;
+  }
+
+  /* Remove hover effect delays on mobile */
+  button,
+  a {
+    transition: none !important;
+  }
+
+  /* Disable animations if user prefers reduced motion */
+  @media (prefers-reduced-motion) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* Section styling to ensure no gaps between sections */
+section {
+  width: 100%;
 }
 
 @layer base {
@@ -76,5 +139,16 @@ html {
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Improve touch targets on mobile */
+@media (max-width: 640px) {
+  button,
+  a,
+  input[type="submit"],
+  input[type="button"] {
+    min-height: 44px;
+    min-width: 44px;
   }
 }

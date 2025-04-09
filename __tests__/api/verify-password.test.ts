@@ -1,5 +1,12 @@
 // __tests__/api/verify-password.test.ts
-import { jest, expect, describe, it, beforeEach } from "@jest/globals";
+import {
+  jest,
+  expect,
+  describe,
+  it,
+  beforeEach,
+  afterEach
+} from "@jest/globals";
 import { POST } from "@/app/api/verify-password/route";
 
 // Mock NextResponse
@@ -17,10 +24,18 @@ jest.mock("next/server", () => {
 });
 
 describe("Site Password Verification", () => {
+  // Store original console.error to restore later
+  const originalConsoleError = console.error;
+
   beforeEach(() => {
     jest.clearAllMocks();
     // Set up environment variable
     process.env.SITE_PASSWORD = "mypassword";
+  });
+
+  afterEach(() => {
+    // Restore console.error after each test
+    console.error = originalConsoleError;
   });
 
   it("verifies correct password and sets cookie", async () => {
@@ -87,6 +102,9 @@ describe("Site Password Verification", () => {
   });
 
   it("handles request parsing errors", async () => {
+    // Mock console.error to prevent error output in test results
+    console.error = jest.fn();
+
     // Mock NextResponse.json to handle error case
     require("next/server").NextResponse.json.mockImplementationOnce(
       (data, options) => ({
@@ -110,6 +128,12 @@ describe("Site Password Verification", () => {
     jest.spyOn(req, "json").mockRejectedValueOnce(new Error("Invalid JSON"));
 
     const response = await POST(req);
+
+    // Verify error was logged
+    expect(console.error).toHaveBeenCalledWith(
+      "Password verification error:",
+      expect.any(Error)
+    );
 
     // Check response has error and 500 status
     expect(require("next/server").NextResponse.json).toHaveBeenCalledWith(

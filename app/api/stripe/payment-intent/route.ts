@@ -2,16 +2,29 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
 // Initialize Stripe with the secret key
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2023-10-16"
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+if (!stripeSecretKey) {
+  throw new Error("Missing STRIPE_SECRET_KEY environment variable");
+}
+
+const stripe = new Stripe(stripeSecretKey, {
+  apiVersion: "2025-02-24.acacia"
 });
+
+// Define cart item type
+interface CartItem {
+  product_id: string;
+  name: string;
+  price: number;
+  quantity: number;
+}
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     console.log("Received request body:", body);
 
-    const { items } = body;
+    const { items } = body as { items: CartItem[] };
 
     if (!items?.length) {
       return NextResponse.json({ error: "No items in cart" }, { status: 400 });
@@ -19,7 +32,7 @@ export async function POST(request: Request) {
 
     // Calculate total amount in cents
     const amount = Math.round(
-      items.reduce((sum: number, item: any) => {
+      items.reduce((sum: number, item: CartItem) => {
         return sum + item.price * item.quantity;
       }, 0) * 100
     );
@@ -33,7 +46,7 @@ export async function POST(request: Request) {
       },
       metadata: {
         order_items: JSON.stringify(
-          items.map((item: any) => ({
+          items.map((item: CartItem) => ({
             id: item.product_id,
             quantity: item.quantity,
             name: item.name

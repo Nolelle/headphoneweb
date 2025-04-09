@@ -39,10 +39,22 @@ jest.mock("next/server", () => {
 
 // Mock DB helper
 jest.mock("@/db/helpers/db", () => ({
+  __esModule: true,
   default: {
-    query: jest.fn().mockResolvedValue({ rows: [{ message_id: 1 }] })
+    query: jest.fn().mockImplementation((query, params) => {
+      // Return a message_id for successful inserts
+      if (query.includes("INSERT INTO contact_message")) {
+        return Promise.resolve({ rows: [{ message_id: 1 }] });
+      } else {
+        return Promise.resolve({ rows: [] });
+      }
+    })
   }
 }));
+
+// Suppress console logs and errors during test
+jest.spyOn(console, "log").mockImplementation(() => {});
+jest.spyOn(console, "error").mockImplementation(() => {});
 
 // Add Mock Request class
 class MockRequest {
@@ -73,6 +85,15 @@ describe("Contact API Route", () => {
     jest.clearAllMocks();
     // Access the mocked query function directly from the mock
     mockQuery = jest.requireMock("@/db/helpers/db").default.query;
+
+    // Reset the mock's behavior for each test
+    mockQuery.mockImplementation((query, params) => {
+      if (query.includes("INSERT INTO contact_message")) {
+        return Promise.resolve({ rows: [{ message_id: 1 }] });
+      } else {
+        return Promise.resolve({ rows: [] });
+      }
+    });
   });
 
   it("saves valid contact messages", async () => {

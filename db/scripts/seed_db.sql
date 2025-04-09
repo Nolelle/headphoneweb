@@ -5,7 +5,7 @@ TRUNCATE TABLE contact_message, payment, order_items, "ORDER", cart_items, cart_
 ALTER SEQUENCE headphones_product_id_seq RESTART WITH 1;
 ALTER SEQUENCE admin_admin_id_seq RESTART WITH 1;
 ALTER SEQUENCE cart_session_session_id_seq RESTART WITH 1;
-ALTER SEQUENCE cart_items_cart_item_id_seq RESTART WITH 1::bigint;
+ALTER SEQUENCE cart_items_cart_item_id_seq RESTART WITH 1;
 ALTER SEQUENCE "ORDER_order_id_seq" RESTART WITH 1;
 ALTER SEQUENCE order_items_order_item_id_seq RESTART WITH 1;
 ALTER SEQUENCE payment_payment_id_seq RESTART WITH 1;

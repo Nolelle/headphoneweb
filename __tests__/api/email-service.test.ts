@@ -144,7 +144,8 @@ class EmailService {
         messageId: result.id
       };
     } catch (error) {
-      console.error("Failed to send email:", error);
+      // Silence console errors in tests
+      // console.error("Failed to send email:", error);
 
       return {
         success: false,

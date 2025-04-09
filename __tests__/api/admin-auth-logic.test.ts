@@ -20,12 +20,28 @@ jest.mock("@/db/helpers/db", () => ({
   }
 }));
 
+// Update the bcrypt mock to properly handle complex and Unicode passwords
 jest.mock("bcrypt", () => ({
-  compare: jest
-    .fn()
-    .mockImplementation((plaintext, hash) =>
-      Promise.resolve(plaintext === "admin123")
-    ),
+  compare: jest.fn().mockImplementation((plaintext, hash) => {
+    // For tests that pass the actual hash
+    if (hash.startsWith("hashed_")) {
+      return Promise.resolve(hash === `hashed_${plaintext}`);
+    }
+
+    // For the specific complex passwords test cases
+    if (hash.includes("P@$$w0rd!123")) {
+      return Promise.resolve(plaintext === "P@$$w0rd!123");
+    }
+
+    if (hash.includes("пароль123")) {
+      return Promise.resolve(plaintext === "пароль123!");
+    }
+
+    // Default case for admin login tests
+    return Promise.resolve(
+      plaintext === "correctpassword" || plaintext === "admin123"
+    );
+  }),
   hash: jest
     .fn()
     .mockImplementation((str, salt) => Promise.resolve(`hashed_${str}`))
@@ -36,7 +52,8 @@ const mockNextResponse = {
   json: jest.fn().mockImplementation((data) => ({
     ...data,
     cookies: {
-      delete: jest.fn()
+      delete: jest.fn(),
+      set: jest.fn()
     }
   }))
 };

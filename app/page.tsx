@@ -5,19 +5,22 @@ import AboutUs from "./components/AboutUs/AboutUs";
 
 export default function Home() {
   return (
-    <div>
-      <div id="hero">
+    <div className="flex flex-col">
+      <section id="hero">
         <MainPageHero />
-      </div>
-      <div id="about">
-        <AboutUs/>
-      </div>
-      <div id="headphone">        
-        <ProductInfo/>
-      </div>
-      <div id="contact">
+      </section>
+
+      <section id="about">
+        <AboutUs />
+      </section>
+
+      <section id="headphone">
+        <ProductInfo />
+      </section>
+
+      <section id="contact">
         <ContactForm />
-      </div>
+      </section>
     </div>
   );
 }

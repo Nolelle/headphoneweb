@@ -14,6 +14,16 @@ jest.mock("next/server", () => ({
   }
 }));
 
+// Mock Response constructor for GET endpoint
+global.Response = jest.fn().mockImplementation((body, init) => {
+  return {
+    status: init?.status || 200,
+    headers: new Map(Object.entries(init?.headers || {})),
+    json: async () => JSON.parse(body),
+    text: async () => body
+  };
+});
+
 // Mock DB pool
 jest.mock("@/db/helpers/db", () => {
   const mockRelease = jest.fn();
@@ -42,6 +52,10 @@ interface MockNextResponse {
   json: jest.Mock;
 }
 
+// Suppress console logs during tests
+jest.spyOn(console, "log").mockImplementation(() => {});
+jest.spyOn(console, "error").mockImplementation(() => {});
+
 describe("CartAPI Integration", () => {
   // Use type assertions for mocked objects
   const mockPool = jest.requireMock("@/db/helpers/db").default as MockPool;
@@ -50,7 +64,6 @@ describe("CartAPI Integration", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    console.error = jest.fn();
   });
 
   describe("GET /api/cart", () => {
@@ -87,7 +100,8 @@ describe("CartAPI Integration", () => {
       const req = new Request(url);
 
       // Call the handler
-      await GET(req);
+      const response = await GET(req);
+      const data = await response.json();
 
       // Verify session query
       expect(mockPool.query).toHaveBeenCalledWith(
@@ -101,8 +115,8 @@ describe("CartAPI Integration", () => {
         [123]
       );
 
-      // Verify response
-      expect(mockNextResponse.json).toHaveBeenCalledWith({
+      // Verify response data rather than the mocked function call
+      expect(data).toEqual({
         items: mockCartItems
       });
     });
@@ -112,13 +126,15 @@ describe("CartAPI Integration", () => {
       const req = new Request("http://localhost:3000/api/cart");
 
       // Call the handler
-      await GET(req);
+      const response = await GET(req);
+      const data = await response.json();
 
-      // Verify error response
-      expect(mockNextResponse.json).toHaveBeenCalledWith(
-        { error: "Session ID is required" },
-        { status: 400 }
-      );
+      // Verify status code and response data
+      expect(response.status).toBe(400);
+      expect(data).toEqual({
+        error: "Session ID is required",
+        items: []
+      });
     });
 
     it("handles database errors", async () => {
@@ -131,13 +147,12 @@ describe("CartAPI Integration", () => {
       );
 
       // Call the handler
-      await GET(req);
+      const response = await GET(req);
+      const data = await response.json();
 
       // Verify error response
-      expect(mockNextResponse.json).toHaveBeenCalledWith(
-        { error: "Failed to fetch cart" },
-        { status: 500 }
-      );
+      expect(response.status).toBe(500);
+      expect(data.error).toBe("Failed to fetch cart");
     });
   });
 

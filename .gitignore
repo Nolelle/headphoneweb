@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# performance test results
+/performance/results/
+/performance/*.js
+/results/
+/cypress/screenshots/
+/cypress/videos/

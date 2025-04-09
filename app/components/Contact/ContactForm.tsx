@@ -9,13 +9,13 @@ import {
   DialogContent,
   DialogDescription,
   DialogHeader,
-  DialogTitle,
+  DialogTitle
 } from "../ui/dialog";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
+  TooltipTrigger
 } from "@/app/components/ui/tooltip";
 import { Label } from "../ui/label";
 import { CheckCircle2, ChevronUp } from "lucide-react";
@@ -34,8 +34,12 @@ const ContactForm: React.FC = () => {
     const form = event.currentTarget;
     const formData = {
       name: (form.elements.namedItem("name") as HTMLInputElement)?.value.trim(),
-      email: (form.elements.namedItem("email") as HTMLInputElement)?.value.trim(),
-      message: (form.elements.namedItem("message") as HTMLTextAreaElement)?.value.trim(),
+      email: (
+        form.elements.namedItem("email") as HTMLInputElement
+      )?.value.trim(),
+      message: (
+        form.elements.namedItem("message") as HTMLTextAreaElement
+      )?.value.trim()
     };
 
     if (!formData.name || !formData.email || !formData.message) {
@@ -54,7 +58,7 @@ const ContactForm: React.FC = () => {
       const response = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(formData)
       });
 
       if (response.ok) {
@@ -70,6 +74,13 @@ const ContactForm: React.FC = () => {
       console.error(error);
       setStatus("error");
       setErrorMessage("An unexpected error occurred");
+    } finally {
+      // Ensure status is eventually set back to null if not success
+      if (status !== "success") {
+        setTimeout(() => {
+          setStatus(null);
+        }, 5000);
+      }
     }
   };
 
@@ -87,20 +98,31 @@ const ContactForm: React.FC = () => {
   };
 
   return (
-    <section className="bg-[hsl(0_0%_3.9%)] text-[hsl(0_0%_98%)]">
-      <div className="py-8 lg:py-20 px-4 mx-auto max-w-screen-md">
+    <section
+      className="bg-[hsl(0_0%_3.9%)] text-[hsl(0_0%_98%)] w-full flex justify-center"
+      data-testid="contact-form-section"
+    >
+      <div className="container max-w-[1400px] py-8 lg:py-20 px-4">
         <h2 className="mb-4 text-4xl font-extrabold text-center text-[hsl(0_0%_98%)]">
           Contact Us
         </h2>
         <p className="mb-8 lg:mb-16 text-center text-[hsl(0_0%_63.9%)] text-lg">
-          Have questions about our products? Whether you&apos;re seeking technical
-          details, exploring features, or interested in learning more about our
-          solutions, we&apos;re here to help.
+          Have questions about our products? Whether you&apos;re seeking
+          technical details, exploring features, or interested in learning more
+          about our solutions, we&apos;re here to help.
         </p>
 
-        <form className="space-y-8" onSubmit={handleSubmit} noValidate>
+        <form
+          className="space-y-8 max-w-screen-md mx-auto"
+          onSubmit={handleSubmit}
+          noValidate
+          data-testid="contact-form"
+        >
           <div className="space-y-2">
-            <Label htmlFor="name" className="text-[hsl(0_0%_98%)]">
+            <Label
+              htmlFor="name"
+              className="text-[hsl(0_0%_98%)]"
+            >
               Your name
             </Label>
             <Input
@@ -111,11 +133,15 @@ const ContactForm: React.FC = () => {
               required
               minLength={2}
               className="bg-[hsl(0_0%_14.9%)] border-[hsl(0_0%_14.9%)] text-[hsl(0_0%_98%)] placeholder:text-[hsl(0_0%_63.9%)]"
+              data-testid="name-input"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-[hsl(0_0%_98%)]">
+            <Label
+              htmlFor="email"
+              className="text-[hsl(0_0%_98%)]"
+            >
               Your email
             </Label>
             <Input
@@ -125,11 +151,15 @@ const ContactForm: React.FC = () => {
               placeholder="name@example.com"
               required
               className="bg-[hsl(0_0%_14.9%)] border-[hsl(0_0%_14.9%)] text-[hsl(0_0%_98%)] placeholder:text-[hsl(0_0%_63.9%)]"
+              data-testid="email-input"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="message" className="text-[hsl(0_0%_98%)]">
+            <Label
+              htmlFor="message"
+              className="text-[hsl(0_0%_98%)]"
+            >
               Your message
             </Label>
             <Textarea
@@ -140,6 +170,7 @@ const ContactForm: React.FC = () => {
               required
               minLength={10}
               className="bg-[hsl(0_0%_14.9%)] border-[hsl(0_0%_14.9%)] text-[hsl(0_0%_98%)] placeholder:text-[hsl(0_0%_63.9%)]"
+              data-testid="message-input"
             />
           </div>
 
@@ -148,12 +179,21 @@ const ContactForm: React.FC = () => {
               type="submit"
               className="w-full bg-[hsl(220_70%_50%)] text-[hsl(0_0%_98%)] hover:bg-[hsl(220_70%_45%)]"
               disabled={status === "loading"}
+              data-testid={
+                status === "loading" ? "sending-button" : "send-button"
+              }
+              aria-label={
+                status === "loading" ? "Sending message..." : "Send message"
+              }
             >
               {status === "loading" ? "Sending..." : "Send message"}
             </Button>
 
             {status === "error" && (
-              <Alert variant="destructive">
+              <Alert
+                variant="destructive"
+                data-testid="error-alert"
+              >
                 <AlertDescription>
                   {errorMessage || "Failed to send message"}
                 </AlertDescription>
@@ -162,16 +202,22 @@ const ContactForm: React.FC = () => {
           </div>
         </form>
 
-        <Dialog open={showModal} onOpenChange={setShowModal}>
-          <DialogContent className="bg-[hsl(0_0%_3.9%)] text-[hsl(0_0%_98%)]">
+        <Dialog
+          open={showModal}
+          onOpenChange={setShowModal}
+        >
+          <DialogContent
+            className="bg-[hsl(0_0%_3.9%)] text-[hsl(0_0%_98%)]"
+            data-testid="success-dialog"
+          >
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <CheckCircle2 className="h-6 w-6 text-[hsl(220_70%_50%)]" />
                 Message Sent Successfully!
               </DialogTitle>
               <DialogDescription className="text-[hsl(0_0%_63.9%)]">
-                Thank you for contacting us! We&apos;ll get back to you as soon as
-                possible.
+                Thank you for contacting us! We&apos;ll get back to you as soon
+                as possible.
               </DialogDescription>
             </DialogHeader>
           </DialogContent>
@@ -186,11 +232,15 @@ const ContactForm: React.FC = () => {
                   size="icon"
                   className="fixed bottom-4 right-4 z-50 rounded-full bg-[hsl(0_0%_14.9%)] text-[hsl(0_0%_98%)] hover:bg-[hsl(0_0%_83.1%)] hover:text-[hsl(0_0%_3.9%)]"
                   onClick={scrollToTop}
+                  data-testid="scroll-to-top"
                 >
                   <ChevronUp className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="top" align="center">
+              <TooltipContent
+                side="top"
+                align="center"
+              >
                 <p>Scroll to top</p>
               </TooltipContent>
             </Tooltip>

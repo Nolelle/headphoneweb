@@ -18,6 +18,7 @@ import "./commands";
 import "./admin-commands";
 import "./db-commands";
 import "./auth-commands";
+import "./db-checker";
 
 // Alternatively you can use CommonJS syntax:
 // require('./commands')

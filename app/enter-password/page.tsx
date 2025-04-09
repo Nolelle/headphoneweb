@@ -2,7 +2,12 @@
 import { useState } from "react";
 import { Input } from "@/app/components/ui/input";
 import { Button } from "@/app/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle
+} from "@/app/components/ui/card";
 import { Alert, AlertDescription } from "@/app/components/ui/alert";
 import { Lock } from "lucide-react";
 
@@ -20,20 +25,22 @@ export default function PasswordProtectionPage() {
       const response = await fetch("/api/verify-password", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type": "application/json"
         },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ password })
       });
 
       if (response.ok) {
         // Redirect to the originally requested URL or home page
-        window.location.href = window.location.search.includes("from=") 
-          ? decodeURIComponent(window.location.search.split("from=")[1])
+        const searchParams = window.location.search || "";
+        window.location.href = searchParams.includes("from=")
+          ? decodeURIComponent(searchParams.split("from=")[1])
           : "/";
       } else {
         setError("Invalid password");
       }
     } catch (err) {
+      console.error("Password verification error:", err);
       setError("An error occurred. Please try again.");
     } finally {
       setIsLoading(false);
@@ -50,7 +57,10 @@ export default function PasswordProtectionPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form
+            onSubmit={handleSubmit}
+            className="space-y-4"
+          >
             <div className="space-y-2">
               <Input
                 type="password"
@@ -65,7 +75,10 @@ export default function PasswordProtectionPage() {
             </div>
 
             {error && (
-              <Alert variant="destructive" className="bg-[hsl(0_62.8%_30.6%)] border-[hsl(0_62.8%_30.6%)]">
+              <Alert
+                variant="destructive"
+                className="bg-[hsl(0_62.8%_30.6%)] border-[hsl(0_62.8%_30.6%)]"
+              >
                 <AlertDescription className="text-[hsl(0_0%_98%)]">
                   {error}
                 </AlertDescription>
