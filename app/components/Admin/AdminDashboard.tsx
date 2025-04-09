@@ -163,6 +163,40 @@ const MessageCard = memo(
     formatDate: (date: string) => string;
     getStatusColor: (status: Message["status"]) => string;
   }) => {
+    // Create a local state to reflect loading state changes immediately
+    const [localIsLoading, setLocalIsLoading] = useState(isLoading);
+    const [localStatus, setLocalStatus] = useState(message.status);
+
+    // Update local state when props change
+    useEffect(() => {
+      setLocalIsLoading(isLoading);
+    }, [isLoading]);
+
+    useEffect(() => {
+      setLocalStatus(message.status);
+    }, [message.status]);
+
+    // Handle status toggle with immediate local feedback
+    const handleToggleStatus = useCallback(() => {
+      if (localIsLoading) return;
+
+      // Set local loading and status immediately for UI feedback
+      setLocalIsLoading(true);
+      const newStatus = localStatus === "UNREAD" ? "READ" : "UNREAD";
+      setLocalStatus(newStatus);
+
+      // Trigger the actual state change in parent
+      requestAnimationFrame(() => {
+        onToggleReadStatus(message.message_id, message.status);
+      });
+    }, [
+      localIsLoading,
+      localStatus,
+      message.message_id,
+      message.status,
+      onToggleReadStatus
+    ]);
+
     return (
       <Card
         className="bg-[hsl(0_0%_9%)] border-[hsl(0_0%_14.9%)]"
@@ -193,34 +227,33 @@ const MessageCard = memo(
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <span
-                  className={`flex items-center gap-1 transition-colors duration-200 ${getStatusColor(
-                    message.status
+                  className={`flex items-center gap-1 will-change-contents ${getStatusColor(
+                    localStatus
                   )}`}
                 >
-                  {isLoading ? (
+                  {localIsLoading ? (
                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent flex-shrink-0" />
-                  ) : message.status === "UNREAD" ? (
+                  ) : localStatus === "UNREAD" ? (
                     <Circle className="h-4 w-4 fill-current flex-shrink-0" />
                   ) : (
                     <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
                   )}
-                  {message.status}
+                  {localStatus}
                 </span>
                 {message.status !== "RESPONDED" && (
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() =>
-                      onToggleReadStatus(message.message_id, message.status)
-                    }
-                    disabled={isLoading}
-                    className={`bg-[hsl(0_0%_14.9%)] text-[hsl(0_0%_98%)] hover:bg-[hsl(0_0%_9%)] border-[hsl(0_0%_14.9%)] min-h-9 text-xs sm:text-sm transition-opacity duration-200 ${
-                      isLoading ? "opacity-70" : "opacity-100"
+                    onClick={handleToggleStatus}
+                    disabled={localIsLoading}
+                    style={{ WebkitTapHighlightColor: "transparent" }}
+                    className={`bg-[hsl(0_0%_14.9%)] text-[hsl(0_0%_98%)] hover:bg-[hsl(0_0%_9%)] border-[hsl(0_0%_14.9%)] min-h-9 text-xs sm:text-sm will-change-opacity active:opacity-80 ${
+                      localIsLoading ? "opacity-70" : "opacity-100"
                     }`}
                   >
-                    {isLoading ? (
+                    {localIsLoading ? (
                       <div className="h-4 w-4 animate-spin rounded-full border-2 border-[hsl(0_0%_98%)] border-t-transparent" />
-                    ) : message.status === "UNREAD" ? (
+                    ) : localStatus === "UNREAD" ? (
                       "Mark as Read"
                     ) : (
                       "Mark as Unread"
@@ -342,15 +375,8 @@ export default function AdminDashboard() {
         // Set loading state for this specific message
         setLoadingItems((prev) => ({ ...prev, [messageId]: true }));
 
-        // Determine the new status
+        // Determine the new status (the UI has already updated optimistically via local state)
         const newStatus = currentStatus === "UNREAD" ? "READ" : "UNREAD";
-
-        // Optimistic UI update - update state immediately before API call completes
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.message_id === messageId ? { ...msg, status: newStatus } : msg
-          )
-        );
 
         if (process.env.NODE_ENV !== "test") {
           console.log(
@@ -361,6 +387,7 @@ export default function AdminDashboard() {
           );
         }
 
+        // Send the API request
         const response = await fetch(
           `/api/admin/messages/${messageId}/status`,
           {
@@ -378,7 +405,7 @@ export default function AdminDashboard() {
 
         if (!response.ok) {
           const errorData = await response.json();
-          // Revert the optimistic update if API call fails
+          // Update global state if API call fails (local state will sync through props)
           setMessages((prev) =>
             prev.map((msg) =>
               msg.message_id === messageId
@@ -393,6 +420,13 @@ export default function AdminDashboard() {
         if (process.env.NODE_ENV !== "test") {
           console.log("Response data:", data);
         }
+
+        // Update the global state only after successful API response
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.message_id === messageId ? { ...msg, status: newStatus } : msg
+          )
+        );
 
         // API call succeeded, toast notification
         toast.success(`Message marked as ${newStatus.toLowerCase()}`);

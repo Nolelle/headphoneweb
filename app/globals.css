@@ -13,6 +13,8 @@ body {
   min-height: 100vh; /* Ensure full height */
   display: flex;
   flex-direction: column;
+  -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
+  touch-action: manipulation; /* Optimize touch actions */
 }
 
 html {
@@ -40,6 +42,33 @@ img {
 
   p {
     font-size: 1rem !important;
+  }
+
+  /* Improve performance on mobile */
+  .will-change-contents {
+    will-change: contents;
+  }
+
+  .will-change-opacity {
+    will-change: opacity;
+  }
+
+  /* Remove hover effect delays on mobile */
+  button,
+  a {
+    transition: none !important;
+  }
+
+  /* Disable animations if user prefers reduced motion */
+  @media (prefers-reduced-motion) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 
