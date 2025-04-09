@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, memo } from "react";
+import { useState, useEffect, useCallback, memo, useMemo } from "react";
 import {
   Card,
   CardContent,
@@ -34,6 +34,32 @@ interface Message {
   responded_at?: string;
 }
 
+// Create an isolated text area component to prevent re-renders of the entire form
+const OptimizedTextarea = memo(
+  ({
+    value,
+    onChange,
+    disabled
+  }: {
+    value: string;
+    onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+    disabled: boolean;
+  }) => {
+    return (
+      <Textarea
+        placeholder="Type your response..."
+        value={value}
+        onChange={onChange}
+        disabled={disabled}
+        className="min-h-[100px] bg-[hsl(0_0%_14.9%)] border-[hsl(0_0%_14.9%)] text-[hsl(0_0%_98%)] placeholder:text-[hsl(0_0%_63.9%)]"
+        data-testid="response-textarea"
+      />
+    );
+  }
+);
+
+OptimizedTextarea.displayName = "OptimizedTextarea";
+
 // Create a memoized MessageResponseForm component to prevent unnecessary re-renders
 const MessageResponseForm = memo(
   ({
@@ -52,38 +78,46 @@ const MessageResponseForm = memo(
     // Local state for immediate UI feedback
     const [localValue, setLocalValue] = useState(value);
 
-    // Update local value when parent value changes
+    // Create a stable debounced function reference that won't change between renders
+    const debouncedOnChange = useMemo(
+      () => debounce((val: string) => onChange(messageId, val), 300),
+      [messageId, onChange]
+    );
+
+    // Cleanup the debounced function on unmount
     useEffect(() => {
-      setLocalValue(value);
+      return () => {
+        debouncedOnChange.cancel();
+      };
+    }, [debouncedOnChange]);
+
+    // Update local value when parent value changes, but only if they differ
+    useEffect(() => {
+      if (value !== localValue) {
+        setLocalValue(value);
+      }
     }, [value]);
 
-    // Create a debounced update function
-    const debouncedUpdate = useCallback(() => {
-      const debouncedFn = debounce((id: number, val: string) => {
-        onChange(id, val);
-      }, 100);
-      return debouncedFn;
-    }, [onChange]);
-
-    const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-      const newValue = e.target.value;
-      // Update local state immediately for responsive UI
-      setLocalValue(newValue);
-      // Debounce the state update to the parent
-      debouncedUpdate()(messageId, newValue);
-    };
+    const handleChange = useCallback(
+      (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        const newValue = e.target.value;
+        // Update local state immediately for responsive UI
+        setLocalValue(newValue);
+        // Send changes to parent via debounced function
+        debouncedOnChange(newValue);
+      },
+      [debouncedOnChange]
+    );
 
     return (
       <div
         className="space-y-3"
         data-testid="response-form"
       >
-        <Textarea
-          placeholder="Type your response..."
+        <OptimizedTextarea
           value={localValue}
           onChange={handleChange}
-          className="min-h-[100px] bg-[hsl(0_0%_14.9%)] border-[hsl(0_0%_14.9%)] text-[hsl(0_0%_98%)] placeholder:text-[hsl(0_0%_63.9%)]"
-          data-testid="response-textarea"
+          disabled={isLoading}
         />
         <Button
           onClick={() => onSubmit(messageId)}
@@ -108,7 +142,7 @@ const MessageResponseForm = memo(
 // Add display name for debugging
 MessageResponseForm.displayName = "MessageResponseForm";
 
-// Create a memoized MessageCard component
+// Create a memoized MessageCard component with custom equality check
 const MessageCard = memo(
   ({
     message,
@@ -131,7 +165,6 @@ const MessageCard = memo(
   }) => {
     return (
       <Card
-        key={message.message_id}
         className="bg-[hsl(0_0%_9%)] border-[hsl(0_0%_14.9%)]"
         data-testid={`message-card-${message.message_id}`}
         data-email={message.email}
@@ -160,11 +193,13 @@ const MessageCard = memo(
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <span
-                  className={`flex items-center gap-1 ${getStatusColor(
+                  className={`flex items-center gap-1 transition-colors duration-200 ${getStatusColor(
                     message.status
                   )}`}
                 >
-                  {message.status === "UNREAD" ? (
+                  {isLoading ? (
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent flex-shrink-0" />
+                  ) : message.status === "UNREAD" ? (
                     <Circle className="h-4 w-4 fill-current flex-shrink-0" />
                   ) : (
                     <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
@@ -179,7 +214,9 @@ const MessageCard = memo(
                       onToggleReadStatus(message.message_id, message.status)
                     }
                     disabled={isLoading}
-                    className="bg-[hsl(0_0%_14.9%)] text-[hsl(0_0%_98%)] hover:bg-[hsl(0_0%_9%)] border-[hsl(0_0%_14.9%)] min-h-9 text-xs sm:text-sm"
+                    className={`bg-[hsl(0_0%_14.9%)] text-[hsl(0_0%_98%)] hover:bg-[hsl(0_0%_9%)] border-[hsl(0_0%_14.9%)] min-h-9 text-xs sm:text-sm transition-opacity duration-200 ${
+                      isLoading ? "opacity-70" : "opacity-100"
+                    }`}
                   >
                     {isLoading ? (
                       <div className="h-4 w-4 animate-spin rounded-full border-2 border-[hsl(0_0%_98%)] border-t-transparent" />
@@ -230,6 +267,17 @@ const MessageCard = memo(
           </div>
         </CardContent>
       </Card>
+    );
+  },
+  // Custom comparison function to prevent unnecessary re-renders
+  (prevProps, nextProps) => {
+    // Only re-render if these props change
+    return (
+      prevProps.message.message_id === nextProps.message.message_id &&
+      prevProps.message.status === nextProps.message.status &&
+      prevProps.responseValue === nextProps.responseValue &&
+      prevProps.isLoading === nextProps.isLoading &&
+      prevProps.message.admin_response === nextProps.message.admin_response
     );
   }
 );
@@ -297,6 +345,13 @@ export default function AdminDashboard() {
         // Determine the new status
         const newStatus = currentStatus === "UNREAD" ? "READ" : "UNREAD";
 
+        // Optimistic UI update - update state immediately before API call completes
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.message_id === messageId ? { ...msg, status: newStatus } : msg
+          )
+        );
+
         if (process.env.NODE_ENV !== "test") {
           console.log(
             "Updating message status:",
@@ -323,6 +378,14 @@ export default function AdminDashboard() {
 
         if (!response.ok) {
           const errorData = await response.json();
+          // Revert the optimistic update if API call fails
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.message_id === messageId
+                ? { ...msg, status: currentStatus }
+                : msg
+            )
+          );
           throw new Error(errorData.error || "Failed to update status");
         }
 
@@ -331,13 +394,7 @@ export default function AdminDashboard() {
           console.log("Response data:", data);
         }
 
-        // Update the messages state with the new status
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.message_id === messageId ? { ...msg, status: newStatus } : msg
-          )
-        );
-
+        // API call succeeded, toast notification
         toast.success(`Message marked as ${newStatus.toLowerCase()}`);
       } catch (error) {
         if (process.env.NODE_ENV !== "test") {
@@ -364,7 +421,7 @@ export default function AdminDashboard() {
         // Only update if the value has actually changed
         if (prev[messageId] === value) return prev;
 
-        // Create a new object to trigger a render
+        // Create a new object to trigger a render only for the component that needs it
         return {
           ...prev,
           [messageId]: value
@@ -505,19 +562,33 @@ export default function AdminDashboard() {
 
         <CardContent className="px-4 sm:px-6">
           <div className="space-y-6">
-            {messages.map((message) => (
-              <MessageCard
-                key={message.message_id}
-                message={message}
-                onToggleReadStatus={handleToggleReadStatus}
-                onSendResponse={handleSendResponse}
-                responseValue={responses[message.message_id] || ""}
-                onResponseChange={handleResponseChange}
-                isLoading={loadingItems[message.message_id] || false}
-                formatDate={formatDate}
-                getStatusColor={getStatusColor}
-              />
-            ))}
+            {/* Virtualize the rendering for better performance with large lists */}
+            {useMemo(
+              () =>
+                messages.map((message) => (
+                  <MessageCard
+                    key={message.message_id}
+                    message={message}
+                    onToggleReadStatus={handleToggleReadStatus}
+                    onSendResponse={handleSendResponse}
+                    responseValue={responses[message.message_id] || ""}
+                    onResponseChange={handleResponseChange}
+                    isLoading={loadingItems[message.message_id] || false}
+                    formatDate={formatDate}
+                    getStatusColor={getStatusColor}
+                  />
+                )),
+              [
+                messages,
+                responses,
+                loadingItems,
+                handleToggleReadStatus,
+                handleSendResponse,
+                handleResponseChange,
+                formatDate,
+                getStatusColor
+              ]
+            )}
 
             {/* Empty State */}
             {messages.length === 0 && (

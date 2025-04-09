@@ -22,7 +22,45 @@ export async function PATCH(
       );
     }
 
-    // Update message status in database
+    // For READ/UNREAD status updates, we can use a simpler query without a transaction
+    // since these are straightforward updates
+    if (status === "READ" || status === "UNREAD") {
+      try {
+        const query = `
+          UPDATE contact_message
+          SET 
+            status = $1,
+            updated_at = NOW()
+          WHERE message_id = $2
+          RETURNING *
+        `;
+
+        const result = await pool.query(query, [status, messageId]);
+
+        if (result.rows.length === 0) {
+          return NextResponse.json(
+            { error: "Message not found" },
+            { status: 404 }
+          );
+        }
+
+        return NextResponse.json({
+          success: true,
+          message: result.rows[0]
+        });
+      } catch (err) {
+        console.error("Error updating message status:", err);
+        return NextResponse.json(
+          {
+            error: "Failed to update message status",
+            details: err instanceof Error ? err.message : String(err)
+          },
+          { status: 500 }
+        );
+      }
+    }
+
+    // For RESPONDED status, we still use a transaction as it might involve more complex logic
     const client = await pool.connect();
     try {
       await client.query("BEGIN");
