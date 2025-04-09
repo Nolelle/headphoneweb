@@ -1,128 +1,130 @@
 # HeadphoneWeb 🎧
 
-An e-commerce platform for premium headphones built with Next.js.
+An e-commerce platform for premium headphones built with Next.js 14.
 
-## 🚀 Quick Start
+## ✨ Features
 
-### Prerequisites
-
-- Node.js (v18 or higher)
-- PostgreSQL
-- Stripe CLI (for payment processing)
-
-### Database Setup
-
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
-
-## Getting Started
-
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-
-# headphoneweb
-
-psql
-database = headphoneweb all privileges
-user = myuser
-password  = mypassword
-
-psql command: psql -d headphoneweb -U myuser
-
-Stripe web hook listener command local = stripe listen --forward-to localhost:3000/api/stripe/webhook
-
-### Installation
-
-1. Clone the repository:
-
-```bash
-git clone [your-repo-url]
-cd headphoneweb
-```
-
-2. Install dependencies:
-
-```bash
-npm install
-```
-
-3. Start the development server:
-
-```bash
-npm run dev
-```
-
-4. Start Stripe webhook listener (in a separate terminal):
-
-```bash
-stripe listen --forward-to localhost:3000/api/stripe/webhook
-```
-
-Visit [http://localhost:3000](http://localhost:3000) to view the application.
+* Product browsing and display
+* Shopping cart functionality
+* Secure checkout process via Stripe
+* Admin dashboard for message management
+* Contact form
+* Unit and Integration testing
 
 ## 🛠 Tech Stack
 
-- **Framework**: [Next.js 14](https://nextjs.org/)
-- **Database**: PostgreSQL
-- **Payment Processing**: Stripe
-- **Styling**: Tailwind CSS
-- **Font**: Geist (via next/font)
+* **Framework**: [Next.js 14](https://nextjs.org/)
+* **Database**: PostgreSQL
+* **Payment Processing**: [Stripe](https://stripe.com/)
+* **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+* **UI Components**: Likely custom or using a library like Shadcn/ui (based on `components.json`)
+* **Testing**: [Jest](https://jestjs.io/), [Cypress](https://www.cypress.io/)
+* **Font**: [Geist](https://vercel.com/font) (via `next/font`)
 
-## 📚 Documentation
+## 🚀 Getting Started
 
-For more information about the technologies used:
+### Prerequisites
 
-- [Next.js Documentation](https://nextjs.org/docs)
-- [Next.js Learning Guide](https://nextjs.org/learn)
-- [PostgreSQL Documentation](https://www.postgresql.org/docs/)
-- [Stripe Documentation](https://stripe.com/docs)
+* Node.js (v18 or higher recommended)
+* PostgreSQL database server
+* [Stripe CLI](https://stripe.com/docs/stripe-cli) (for local webhook testing)
+* `psql` command-line tool (or other PostgreSQL client)
 
-## 🚀 Deployment
+### Installation & Setup
 
-Deploy easily with [Vercel](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme), the platform from the creators of Next.js.
+1. **Clone the repository:**
 
-## 🤝 Contributing
+    ```bash
+    git clone <your-repo-url> # Replace with the actual repository URL
+    cd headphoneweb
+    ```
 
-Contributions, issues, and feature requests are welcome! Feel free to check the [issues page](your-issues-url).
+2. **Install dependencies:**
 
-## 📝 License
+    ```bash
+    npm install
+    # or yarn install or pnpm install or bun install
+    ```
 
-This project is licensed under the [MIT License](LICENSE).
+3. **Database Setup:**
+    * Ensure your PostgreSQL server is running.
+    * Create a database user and database:
 
-## Test Status Summary
+        ```sql
+        -- Example using psql:
+        CREATE USER myuser WITH PASSWORD 'mypassword';
+        CREATE DATABASE headphoneweb OWNER myuser;
+        GRANT ALL PRIVILEGES ON DATABASE headphoneweb TO myuser;
+        ```
 
-The project has comprehensive test coverage using both Jest (unit tests) and Cypress (integration and E2E tests).
+        *(Adjust username, password, and database name as needed)*
+    * Connect to the database: `psql -d headphoneweb -U myuser`
+    * *(Add steps here if database migrations/schema setup is required, e.g., `npm run db:migrate`)*
 
-### Test Status by Feature
+4. **Environment Variables:**
+    * Copy the example environment file:
+
+        ```bash
+        cp .env.local.example .env.local # Assuming .env.local.example exists, otherwise create .env.local
+        cp .env.test.example .env.test   # Assuming .env.test.example exists, otherwise create .env.test
+        ```
+
+    * Fill in the required values in `.env.local` and `.env.test` (Database connection string, Stripe keys, etc.). Refer to `paymentinfo.txt` and `.env.local` / `.env.test` for potential variable names.
+        * `DATABASE_URL="postgresql://myuser:mypassword@localhost:5432/headphoneweb"` (Example)
+        * `STRIPE_SECRET_KEY="sk_test_..."`
+        * `STRIPE_PUBLIC_KEY="pk_test_..."`
+        * `STRIPE_WEBHOOK_SECRET="whsec_..."`
+        * *(Add other necessary variables)*
+
+5. **Run the development server:**
+
+    ```bash
+    npm run dev
+    # or yarn dev or pnpm dev or bun dev
+    ```
+
+    The application should be available at [http://localhost:3000](http://localhost:3000).
+
+6. **Start Stripe Webhook Listener (Optional, for testing payments):**
+    * In a separate terminal, run:
+
+        ```bash
+        stripe listen --forward-to localhost:3000/api/stripe/webhook
+        ```
+
+    * This requires the Stripe CLI to be installed and configured.
+
+## 🧪 Testing
+
+The project includes unit, integration, and potentially E2E tests.
+
+* **Run all Jest unit tests:**
+
+    ```bash
+    npm test
+    ```
+
+* **Run specific Jest tests (e.g., tests tagged "Admin"):**
+
+    ```bash
+    npm test -- -t "Admin"
+    ```
+
+* **Open Cypress for integration/E2E tests:**
+
+    ```bash
+    npm run cypress:open
+    ```
+
+* **Run Cypress E2E tests headlessly (if configured):**
+
+    ```bash
+    npm run test:e2e
+    ```
+
+### Test Status Summary
+
+(The existing test status table provides a good overview and can remain here)
 
 | Test Case | Priority | Type | Feature | Status | Notes |
 |-----------|----------|------|---------|--------|-------|
@@ -154,9 +156,23 @@ The project has comprehensive test coverage using both Jest (unit tests) and Cyp
 | #89 | High | Unit | CheckoutSummary Order Review | PASS | Order calculation tested |
 | #91 | High | Security | DataEncryption Sensitive Data Handling | PASS | PII and payment data security tested |
 
-### Test Commands
+## 📚 Learn More (Next.js)
 
-- Run Jest unit tests: `npm test`
-- Run Cypress integration tests: `npm run cypress:open`
-- Run E2E tests: `npm run test:e2e`
-- Run specific test category: `npm test -- -t "Admin"`
+To learn more about Next.js, take a look at the following resources:
+
+* [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+* [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+
+## ☁️ Deployment
+
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+
+Check out the [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## 🤝 Contributing
+
+Contributions, issues, and feature requests are welcome! *(Consider adding a link to the issues page if applicable)*
+
+## 📝 License
+
+*(Specify the license if available, e.g., This project is licensed under the MIT License. Link to LICENSE file if it exists.)*
