@@ -1,4 +1,4 @@
-import { CartResponse, CartItem } from './../../../app/components/Cart/CartTypes';
+import { CartItem, CartResponse } from './../../../app/components/Cart/CartTypes';
 
 describe("Cart Types", () => {
   it("should create a CartItem object correctly", () => {
