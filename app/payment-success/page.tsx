@@ -60,6 +60,10 @@ export default function PaymentSuccessPage() {
   // Function to verify payment with retries
   const verifyPayment = useCallback(async () => {
     if (verificationInProgress) return;
+    if (orderDetails) {
+      console.log("Payment already verified, skipping verification");
+      return;
+    }
 
     try {
       setVerificationInProgress(true);
@@ -119,7 +123,13 @@ export default function PaymentSuccessPage() {
       setIsLoading(false);
       setVerificationInProgress(false);
     }
-  }, [clearCart, paymentIntent, retryCount, verificationInProgress]);
+  }, [
+    clearCart,
+    paymentIntent,
+    retryCount,
+    verificationInProgress,
+    orderDetails
+  ]);
 
   // Manual retry function for user-initiated retries
   const handleRetry = () => {
@@ -129,13 +139,16 @@ export default function PaymentSuccessPage() {
   };
 
   useEffect(() => {
-    // Add a delay that increases with each retry to allow for webhook processing
-    const timer = setTimeout(() => {
-      verifyPayment();
-    }, 2000 + retryCount * 1500); // Increasing delay for each retry
+    // Only run verification if not already verified and not too many retries
+    if (!orderDetails && !error && retryCount < 4) {
+      // Add a delay that increases with each retry to allow for webhook processing
+      const timer = setTimeout(() => {
+        verifyPayment();
+      }, 2000 + retryCount * 1500); // Increasing delay for each retry
 
-    return () => clearTimeout(timer);
-  }, [paymentIntent, retryCount, verifyPayment]);
+      return () => clearTimeout(timer);
+    }
+  }, [paymentIntent, retryCount, verifyPayment, orderDetails, error]);
 
   // Loading state
   if (isLoading) {
